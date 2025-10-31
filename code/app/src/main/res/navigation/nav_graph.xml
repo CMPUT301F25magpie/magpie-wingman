@@ -63,6 +63,12 @@
         <action
             android:id="@+id/action_entrantLandingFragment3_to_entrantDetailsFragment"
             app:destination="@id/entrantDetailsFragment" />
+        <action
+            android:id="@+id/action_entrantLandingFragment3_to_detailedEventDescriptionFragment"
+            app:destination="@id/detailedEventDescriptionFragment" />
+        <action
+            android:id="@+id/action_entrantLandingFragment3_to_scanQRFragment"
+            app:destination="@id/scanQRFragment" />
     </fragment>
     <fragment
         android:id="@+id/organizerLandingFragment2"
@@ -241,9 +247,6 @@
             android:id="@+id/action_organizerEventDetailsFragment_to_organizerLandingFragment2"
             app:destination="@id/organizerLandingFragment2" />
         <action
-            android:id="@+id/action_organizerEventDetailsFragment_to_organizerGeolocationFragment"
-            app:destination="@id/organizerGeolocationFragment" />
-        <action
             android:id="@+id/action_organizerEventDetailsFragment_to_organizerFinalizedListFragment"
             app:destination="@id/organizerFinalizedListFragment" />
         <action
@@ -252,6 +255,18 @@
         <action
             android:id="@+id/action_organizerEventDetailsFragment_to_organizerLotteryFragment"
             app:destination="@id/organizerLotteryFragment" />
+        <action
+            android:id="@+id/action_organizerEventDetailsFragment_to_waitingListFragment"
+            app:destination="@id/waitingListFragment" />
+        <action
+            android:id="@+id/action_organizerEventDetailsFragment_to_selectedEntrantsListFragment"
+            app:destination="@id/selectedEntrantsListFragment" />
+        <action
+            android:id="@+id/action_organizerEventDetailsFragment_to_acceptedListFragment"
+            app:destination="@id/acceptedListFragment" />
+        <action
+            android:id="@+id/action_organizerEventDetailsFragment_to_cancelledListFragment"
+            app:destination="@id/cancelledListFragment" />
     </fragment>
     <fragment
         android:id="@+id/organizerLotteryFragment"
@@ -286,8 +301,8 @@
         android:label="fragment_organizer_geolocation"
         tools:layout="@layout/fragment_organizer_geolocation" >
         <action
-            android:id="@+id/action_organizerGeolocationFragment_to_organizerEventDetailsFragment"
-            app:destination="@id/organizerEventDetailsFragment" />
+            android:id="@+id/action_organizerGeolocationFragment_to_waitingListFragment"
+            app:destination="@id/waitingListFragment" />
     </fragment>
     <fragment
         android:id="@+id/organizerAboutUsFragment"
@@ -375,5 +390,65 @@
         <action
             android:id="@+id/action_adminEditProfileFragment_to_adminSettingsFragment"
             app:destination="@id/adminSettingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/detailedEventDescriptionFragment"
+        android:name="com.example.magpie_wingman.entrant.DetailedEventDescriptionFragment"
+        android:label="fragment_detailed_event_description"
+        tools:layout="@layout/fragment_detailed_event_description" >
+        <action
+            android:id="@+id/action_detailedEventDescriptionFragment_to_entrantLandingFragment3"
+            app:destination="@id/entrantLandingFragment3" />
+    </fragment>
+    <fragment
+        android:id="@+id/scanQRFragment"
+        android:name="com.example.magpie_wingman.entrant.ScanQRFragment"
+        android:label="fragment_scan_q_r"
+        tools:layout="@layout/fragment_scan_q_r" >
+        <action
+            android:id="@+id/action_scanQRFragment_to_entrantLandingFragment3"
+            app:destination="@id/entrantLandingFragment3" />
+        <action
+            android:id="@+id/action_scanQRFragment_to_detailedEventDescriptionFragment"
+            app:destination="@id/detailedEventDescriptionFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/waitingListFragment"
+        android:name="com.example.magpie_wingman.organizer.WaitingListFragment"
+        android:label="fragment_waiting_list"
+        tools:layout="@layout/fragment_waiting_list" >
+        <action
+            android:id="@+id/action_waitingListFragment_to_organizerEventDetailsFragment"
+            app:destination="@id/organizerEventDetailsFragment" />
+        <action
+            android:id="@+id/action_waitingListFragment_to_organizerGeolocationFragment"
+            app:destination="@id/organizerGeolocationFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/selectedEntrantsListFragment"
+        android:name="com.example.magpie_wingman.organizer.SelectedEntrantsListFragment"
+        android:label="fragment_selected_entrants_list"
+        tools:layout="@layout/fragment_selected_entrants_list" >
+        <action
+            android:id="@+id/action_selectedEntrantsListFragment_to_organizerEventDetailsFragment"
+            app:destination="@id/organizerEventDetailsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/acceptedListFragment"
+        android:name="com.example.magpie_wingman.organizer.AcceptedListFragment"
+        android:label="fragment_accepted_list"
+        tools:layout="@layout/fragment_accepted_list" >
+        <action
+            android:id="@+id/action_acceptedListFragment_to_organizerEventDetailsFragment"
+            app:destination="@id/organizerEventDetailsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/cancelledListFragment"
+        android:name="com.example.magpie_wingman.organizer.CancelledListFragment"
+        android:label="fragment_cancelled_list"
+        tools:layout="@layout/fragment_cancelled_list" >
+        <action
+            android:id="@+id/action_cancelledListFragment_to_organizerEventDetailsFragment"
+            app:destination="@id/organizerEventDetailsFragment" />
     </fragment>
 </navigation>
