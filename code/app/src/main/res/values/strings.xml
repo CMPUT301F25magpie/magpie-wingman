@@ -2,6 +2,10 @@
     <string name="app_name">Magpie-Wingman</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
+    <string name="profile_picture">Profile Picture</string>
+    <string name="remove_entrant">Remove entrant</string>
+    <string name="remove_profile">Remove profile</string>
+    <string name="event_poster">Event Poster</string>
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
