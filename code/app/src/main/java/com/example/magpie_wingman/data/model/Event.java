@@ -14,7 +14,11 @@ public class Event {
     private String eventPosterURL;
     private int eventCapacity;
 
-    public Event(String eventId, String organizerId, String eventName, String eventDate, String eventLocation, String eventDescription, String eventPosterURL, int eventCapacity) {
+    private int waitlistCount;
+
+    public Event(String eventId, String organizerId, String eventName, String eventDate,
+                 String eventLocation, String eventDescription, String eventPosterURL,
+                 int eventCapacity) {
         this.eventId = eventId;
         this.organizerId = organizerId;
         this.eventName = eventName;
@@ -23,6 +27,8 @@ public class Event {
         this.eventDescription = eventDescription;
         this.eventPosterURL = null;
         this.eventCapacity = eventCapacity;
+        this.waitlistCount = 0;
+
     }
 
     // --- Getters ---
@@ -53,6 +59,8 @@ public class Event {
 
     public int getEventCapacity() { return eventCapacity; }
 
+    public int getWaitlistCount() { return waitlistCount; }
+
     // Setters
 
     public void setEventId(String eventId) { this.eventId = eventId; }
@@ -70,4 +78,6 @@ public class Event {
     public void setEventPosterURL(String eventPosterURL) { this.eventPosterURL = eventPosterURL; }
 
     public void setEventCapacity(int eventCapacity) { this.eventCapacity = eventCapacity; }
+
+    public void setWaitlistCount(int waitlistCount) { this.waitlistCount = waitlistCount; }
 }
