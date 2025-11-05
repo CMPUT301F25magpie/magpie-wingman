@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1092696559477",
+    "project_id": "magpie-1974e",
+    "storage_bucket": "magpie-1974e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092696559477:android:7ca5c6f7e19c83a15b0d3c",
+        "android_client_info": {
+          "package_name": "com.example.magpie_wingman"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEhF-0qleCIGt0cgozB9GqQ1-Ki220Bbc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
