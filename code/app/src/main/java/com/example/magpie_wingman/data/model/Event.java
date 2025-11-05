@@ -8,7 +8,8 @@ public class Event {
     private String eventId;
     private String organizerId;
     private String eventName;
-    private String eventDate;
+    private long eventStartTime;
+    private long eventEndTime;
     private String eventLocation;
     private String eventDescription;
     private String eventPosterURL;
@@ -16,13 +17,14 @@ public class Event {
 
     private int waitlistCount;
 
-    public Event(String eventId, String organizerId, String eventName, String eventDate,
-                 String eventLocation, String eventDescription, String eventPosterURL,
-                 int eventCapacity) {
+    public Event(String eventId, String organizerId, String eventName, long eventStartTime,
+                 long eventEndTime, String eventLocation, String eventDescription,
+                 String eventPosterURL, int eventCapacity) {
         this.eventId = eventId;
         this.organizerId = organizerId;
         this.eventName = eventName;
-        this.eventDate = eventDate;
+        this.eventStartTime = eventStartTime;
+        this.eventEndTime = eventEndTime;
         this.eventLocation = eventLocation;
         this.eventDescription = eventDescription;
         this.eventPosterURL = null;
@@ -38,9 +40,10 @@ public class Event {
     public String getEventName() {
         return eventName;
     }
-    public String getEventDate() {
-        return eventDate;
+    public long getEventStartTime() {
+        return eventStartTime;
     }
+    public long getEventEndTime() { return eventEndTime;  }
     public String getEventLocation() {
         return eventLocation;
     }
@@ -69,7 +72,8 @@ public class Event {
 
     public void setEventName(String eventName) { this.eventName = eventName; }
 
-    public void setEventDate(String eventDate) { this.eventDate = eventDate; }
+    public void setEventStartTime(long eventStartTime) { this.eventStartTime = eventStartTime; }
+    public void setEventEndTime(long eventEndTime) { this.eventEndTime = eventEndTime; }
 
     public void setEventLocation(String eventLocation) { this.eventLocation = eventLocation; }
 
