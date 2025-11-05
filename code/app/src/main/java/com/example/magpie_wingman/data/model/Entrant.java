@@ -1,27 +1,42 @@
 package com.example.magpie_wingman.data.model; // This matches its location
 
-public class Entrant {
-    private String name;
-    private String profileImageUrl;
-    private String status;
+import java.util.ArrayList;
+import java.util.List;
 
-    public Entrant(String name, String status) {
-        this.name = name;
-        this.status = status;
-        this.profileImageUrl = null;
+public class Entrant extends User{
+    private List<String> waitlistedEvents = new ArrayList<>();
+    private List<String> enrolledEvents = new ArrayList<>();
+    private String profileImageUrl;
+
+    public Entrant(String userId, String userName, String userEmail, String userPhone, String userDeviceId) {
+        super(userId, userName, userEmail, userPhone, userDeviceId);
+        this.waitlistedEvents = new ArrayList<>();
+        this.enrolledEvents = new ArrayList<>();
     }
 
-    // --- Getters ---
-    public String getName() {
-        return name;
+
+    public List<String> getWaitlistedEvents() {
+        return waitlistedEvents;
+    }
+
+    public void setWaitlistedEvents(List<String> waitlistedEvents) {
+        this.waitlistedEvents = waitlistedEvents;
+    }
+
+    public List<String> getEnrolledEvents() {
+        return enrolledEvents;
+    }
+
+    public void setEnrolledEvents(List<String> enrolledEvents) {
+        this.enrolledEvents = enrolledEvents;
     }
 
     public String getProfileImageUrl() {
         return profileImageUrl;
     }
 
-    public String getStatus() {
-        return status;
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }
 
