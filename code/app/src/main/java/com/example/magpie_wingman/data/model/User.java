@@ -1,23 +1,18 @@
 package com.example.magpie_wingman.data.model;
 
-import java.io.Serializable;
-
-public class User implements Serializable {
+public class User {
      protected String userId;
      protected String userName;
      protected String userEmail;
      protected String userPhone;
      protected String userDeviceId;
-     protected UserRole userRole;
-     public User() {}
 
-    public User(String userId, String userName, String userEmail, String userPhone, String userDeviceId, UserRole role) {
+    public User(String userId, String userName, String userEmail, String userPhone, String userDeviceId) {
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
         this.userPhone = userPhone;
         this.userDeviceId = userDeviceId;
-        this.userRole = role;
     }
 
     public String getUserId() {
