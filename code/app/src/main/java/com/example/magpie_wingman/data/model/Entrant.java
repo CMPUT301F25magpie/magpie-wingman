@@ -8,10 +8,13 @@ public class Entrant extends User{
     private List<String> enrolledEvents = new ArrayList<>();
     private String profileImageUrl;
 
-    public Entrant(String userId, String userName, String userEmail, String userPhone, String userDeviceId) {
-        super(userId, userName, userEmail, userPhone, userDeviceId);
-        this.waitlistedEvents = new ArrayList<>();
-        this.enrolledEvents = new ArrayList<>();
+    public Entrant() {
+        super();
+        this.userRole = UserRole.ENTRANT;
+    }
+
+    public Entrant(String userId, String userName, String userEmail, String userPhone, String  userDeviceId) {
+        super(userId, userName, userEmail, userPhone, userDeviceId, UserRole.ENTRANT);
     }
 
 
