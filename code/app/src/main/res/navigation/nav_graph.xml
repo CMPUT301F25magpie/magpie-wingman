@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/adminEventsFragment">
+    app:startDestination="@id/entrantEventsFragment">
 
 
 
@@ -157,9 +157,14 @@
         android:name="com.example.magpie_wingman.entrant.EntrantEventsFragment"
         android:label="fragment_entrant_events"
         tools:layout="@layout/fragment_entrant_events" >
+
         <action
             android:id="@+id/action_entrantEventsFragment_to_entrantLandingFragment3"
             app:destination="@id/entrantLandingFragment3" />
+
+        <action
+            android:id="@+id/action_entrantEventsFragment_to_detailedEventDescriptionFragment"
+            app:destination="@id/detailedEventDescriptionFragment" />
     </fragment>
     <fragment
         android:id="@+id/entrantDetailsFragment"
@@ -398,9 +403,23 @@
         android:name="com.example.magpie_wingman.entrant.DetailedEventDescriptionFragment"
         android:label="fragment_detailed_event_description"
         tools:layout="@layout/fragment_detailed_event_description" >
+
         <action
             android:id="@+id/action_detailedEventDescriptionFragment_to_entrantLandingFragment3"
             app:destination="@id/entrantLandingFragment3" />
+
+        <argument
+            android:name="eventId"
+            app:argType="string" />
+        <argument
+            android:name="eventName"
+            app:argType="string" />
+        <argument
+            android:name="eventDescription"
+            app:argType="string" />
+        <argument
+            android:name="eventLocation"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/scanQRFragment"
