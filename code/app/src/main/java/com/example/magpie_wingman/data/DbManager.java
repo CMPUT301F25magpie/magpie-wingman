@@ -283,10 +283,6 @@ public class DbManager {
         return deleteEntrant(userId);
     }
 
-    public Task<Void> deleteProfile(com.example.magpie_wingman.data.model.UserProfile profile) {
-        return deleteProfile(profile.getUserId(), profile.getRole());
-    }
-
     /**
      * Deletes an event document and its subcollections
      * ("waitlist", "registrable", "registered") from Firestore.
