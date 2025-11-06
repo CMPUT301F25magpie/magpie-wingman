@@ -1,66 +1,106 @@
 package com.example.magpie_wingman.organizer;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.NotificationFunction;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link OrganizerNotifyFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * US 02.05.01, US 02.07.01, US 02.07.02 and US 02.07.03
  */
 public class OrganizerNotifyFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private EditText titleInput, messageInput;
+    private CheckBox waitlistCheck, registrableCheck, cancelledCheck;
+    private Button sendButton;
+    private String eventId;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private final NotificationFunction notificationFunction = new NotificationFunction();
 
-    public OrganizerNotifyFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment OrganizerNotifyFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static OrganizerNotifyFragment newInstance(String param1, String param2) {
-        OrganizerNotifyFragment fragment = new OrganizerNotifyFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
+        View view = inflater.inflate(R.layout.fragment_organizer_notify, container, false);
+
+        NavController navController = NavHostFragment.findNavController(this);
+        View toolbar = view.findViewById(R.id.toolbar_notify);
+        if (toolbar != null) toolbar.setOnClickListener(v -> navController.navigateUp());
+
+        titleInput = view.findViewById(R.id.notify_title_input);
+        messageInput = view.findViewById(R.id.notify_message_input);
+        waitlistCheck = view.findViewById(R.id.checkbox_waiting);
+        registrableCheck = view.findViewById(R.id.checkbox_selected);
+        cancelledCheck = view.findViewById(R.id.checkbox_cancelled);
+        sendButton = view.findViewById(R.id.notify_send_button);
+
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            eventId = getArguments().getString("eventId");
+        }
+
+        sendButton.setOnClickListener(v -> sendNotifications());
+        return view;
+    }
+
+    private void sendNotifications() {
+        String title = titleInput.getText().toString().trim();
+        String message = messageInput.getText().toString().trim();
+
+        if (title.isEmpty() || message.isEmpty()) {
+            Toast.makeText(getContext(),
+                    R.string.error_empty_title_or_message,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!waitlistCheck.isChecked() && !registrableCheck.isChecked() && !cancelledCheck.isChecked()) {
+            Toast.makeText(getContext(),
+                    R.string.error_no_group_selected,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (waitlistCheck.isChecked()) {
+            notifyGroup("waitlist", title, message);
+        }
+
+        if (registrableCheck.isChecked()) {
+            notifyGroup("registrable", title, message);
+        }
+
+        if (cancelledCheck.isChecked()) {
+            notifyGroup("cancelled", title, message);
         }
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_organizer_notify, container, false);
+    private void notifyGroup(String subcollection, String title, String message) {
+        String fullMessage = title + ": " + message;
+
+        notificationFunction.notifyEntrants(eventId, subcollection, fullMessage)
+                .addOnSuccessListener(aVoid -> Toast.makeText(
+                        getContext(),
+                        getString(R.string.msg_notification_sent, subcollection),
+                        Toast.LENGTH_SHORT
+                ).show())
+                .addOnFailureListener(e -> Toast.makeText(
+                        getContext(),
+                        getString(R.string.error_notification_failed, subcollection, e.getMessage()),
+                        Toast.LENGTH_LONG
+                ).show());
     }
 }

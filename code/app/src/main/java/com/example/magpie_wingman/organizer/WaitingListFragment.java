@@ -1,66 +1,158 @@
 package com.example.magpie_wingman.organizer;
 
+import android.graphics.Color;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link WaitingListFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * US 02.02.01
+ * organizer can view the list of entrants currently on the event’s waiting list
  */
 public class WaitingListFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private RecyclerView recyclerView;
+    private ProgressBar progressBar;
+    private TextView emptyText;
+    private WaitlistAdapter adapter;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private String eventId;
 
     public WaitingListFragment() {
-        // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment WaitingListFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static WaitingListFragment newInstance(String param1, String param2) {
-        WaitingListFragment fragment = new WaitingListFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
+        View view = inflater.inflate(R.layout.fragment_waiting_list, container, false);
+
+        MaterialToolbar toolbar = view.findViewById(R.id.toolbar_waitlist);
+        NavController navController = NavHostFragment.findNavController(this);
+        toolbar.setNavigationOnClickListener(v -> navController.navigateUp());
+
+        recyclerView = view.findViewById(R.id.recycler_waitlist);
+        progressBar = view.findViewById(R.id.waitlist_progress);
+        emptyText = view.findViewById(R.id.waitlist_empty_text);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new WaitlistAdapter(new ArrayList<>());
+        recyclerView.setAdapter(adapter);
+
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            eventId = getArguments().getString("eventId");
         }
+
+        if (eventId != null) {
+            loadWaitlist(eventId);
+        } else {
+            Toast.makeText(requireContext(),
+                    getString(R.string.toast_failed_waitlist, "Invalid event ID"),
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        return view;
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_waiting_list, container, false);
+    private void loadWaitlist(String eventId) {
+        progressBar.setVisibility(View.VISIBLE);
+        emptyText.setVisibility(View.GONE);
+
+        FirebaseFirestore db = DbManager.getInstance().getDb();
+
+        db.collection("events")
+                .document(eventId)
+                .collection("waitlist")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    progressBar.setVisibility(View.GONE);
+
+                    List<String> entrants = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        String name = doc.getString("name");
+                        if (name == null || name.isEmpty()) {
+                            name = getString(R.string.waitlist_default_name);
+                        }
+                        entrants.add(name);
+                    }
+
+                    if (entrants.isEmpty()) {
+                        emptyText.setVisibility(View.VISIBLE);
+                    } else {
+                        adapter.setData(entrants);
+                        recyclerView.setVisibility(View.VISIBLE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(requireContext(),
+                            getString(R.string.toast_failed_waitlist, e.getMessage()),
+                            Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private static class WaitlistAdapter extends RecyclerView.Adapter<WaitlistAdapter.ViewHolder> {
+        private List<String> entrantList;
+
+        public WaitlistAdapter(List<String> entrantList) {
+            this.entrantList = entrantList;
+        }
+
+        public void setData(List<String> entrantList) {
+            this.entrantList = entrantList;
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(android.R.layout.simple_list_item_1, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            holder.textView.setText(entrantList.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return entrantList.size();
+        }
+
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textView = itemView.findViewById(android.R.id.text1);
+                textView.setTextColor(Color.WHITE);
+                textView.setTextSize(16);
+            }
+        }
     }
 }

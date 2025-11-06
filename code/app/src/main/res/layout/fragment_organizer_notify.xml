@@ -1,14 +1,173 @@
-<?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#0B0B1A"
     tools:context=".organizer.OrganizerNotifyFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar_notify"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="@string/notify_title"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIconTint="@android:color/white"
+            app:titleTextColor="@android:color/white"
+            android:background="#0B0B1A" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Content -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-</FrameLayout>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="24dp">
+
+            <!-- Title Label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/enter_notification_title"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Title Input -->
+            <EditText
+                android:id="@+id/notify_title_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/notification_title_hint"
+                android:textColor="@android:color/white"
+                android:textColorHint="#999999"
+                android:backgroundTint="#3F51B5"
+                android:inputType="textCapSentences"
+                android:autofillHints="none"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Message Label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/enter_notification"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Message Input -->
+            <EditText
+                android:id="@+id/notify_message_input"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:hint="@string/notification_message_hint"
+                android:gravity="top|start"
+                android:inputType="textMultiLine"
+                android:autofillHints="none"
+                android:backgroundTint="#3F51B5"
+                android:textColor="@android:color/white"
+                android:textColorHint="#999999"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Checkboxes -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:baselineAligned="false">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/waiting_list"
+                        android:gravity="center"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_waiting"
+                        android:checked="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="#3F51B5" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/selected_entrants"
+                        android:gravity="center"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_selected"
+                        android:checked="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="#3F51B5" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/cancelled_entrants"
+                        android:gravity="center"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_cancelled"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="#3F51B5" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Send Button -->
+            <Button
+                android:id="@+id/notify_send_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/send_notification"
+                android:backgroundTint="#FFEB3B"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:layout_marginTop="24dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

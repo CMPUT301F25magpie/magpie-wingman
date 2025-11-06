@@ -6,9 +6,9 @@ import com.google.android.gms.tasks.Task;
 public class LotteryFunction {
 
     /**
-     * Triggers random sampling of attendees for an event
-     * @param eventId the event document ID
-     * @param sampleCount number of attendees to move from waitlist to registrable
+     * calls existing DbManager method that randomly samples entrants and moves them from waitlist → registrable
+     * @param eventId   ID of the event
+     * @param sampleCount   Number of entrants to select
      * @return Task<Void> to monitor completion
      */
     public static Task<Void> sampleEntrantsForEvent(String eventId, int sampleCount) {
