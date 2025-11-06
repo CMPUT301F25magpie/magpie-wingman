@@ -29,8 +29,7 @@
             android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearance="@style/ShapeAppearance.App.Small" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- Text content -->
         <LinearLayout
