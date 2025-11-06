@@ -7,45 +7,64 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.LotteryFunction;
+import com.google.android.material.appbar.MaterialToolbar;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 
 public class OrganizerLotteryFragment extends Fragment {
-    private EditText enterMaximum;
-    private Button buttonSample;
 
+    private EditText sampleInput;
+    private Button selectButton;
+    private String eventId;
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_organizer_lottery, container, false);
-        enterMaximum = view.findViewById(R.id.inputSampleSize);
-        buttonSample = view.findViewById(R.id.buttonSampleEntrants);
-        String eventId = getArguments() != null ? getArguments().getString("EVENT_ID") : "testEvent123";
-
-        buttonSample.setOnClickListener(v -> {
-            String input = enterMaximum.getText().toString().trim();
-            if (input.isEmpty()) {
-                Toast.makeText(getContext(), "Enter number to sample", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            int sampleSize = Integer.parseInt(input);
-
-            // call backend method here (replace with actual function name)
-            try {
-                // example placeholder until confirmed
-                // LotteryHelper.createRegistrableUsers(eventId, sampleSize);
-                Toast.makeText(getContext(), "Sampling started for " + sampleSize + " users", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
+        MaterialToolbar toolbar = view.findViewById(R.id.toolbar_lottery);
+        NavController navController = NavHostFragment.findNavController(this);
+        toolbar.setNavigationOnClickListener(v -> {
+            navController.navigateUp();
         });
 
+        sampleInput = view.findViewById(R.id.lottery_sample_input);
+        selectButton = view.findViewById(R.id.lottery_select_button);
+
+        // TODO: Replace w/ however the app provides eventId
+        eventId = getArguments() != null ? getArguments().getString("eventId") : "testEvent1234";
+
+        selectButton.setOnClickListener(v -> runLottery());
+
         return view;
+    }
+
+    private void runLottery() {
+        String input = sampleInput.getText().toString().trim();
+
+        if (input.isEmpty()) {
+            Toast.makeText(getContext(), "Please enter a number", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int sampleCount;
+        try {
+            sampleCount = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            Toast.makeText(getContext(), "Invalid number", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Call the backend logic
+        LotteryFunction.sampleEntrantsForEvent(eventId, sampleCount)
+                .addOnSuccessListener(aVoid -> Toast.makeText(getContext(),
+                        "Successfully sampled " + sampleCount + " users!", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(getContext(),
+                        "Error: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 }
