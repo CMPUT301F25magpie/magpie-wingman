@@ -1,5 +1,7 @@
 package com.example.magpie_wingman.data.model;
 
+import com.google.firebase.Timestamp;
+
 /**
  * Event an organizer creates/
  * Entrant membership is tracked on Entrant side as a list of event IDs
@@ -16,6 +18,9 @@ public class Event {
     private int eventCapacity;
 
     private int waitlistCount;
+
+    // required empty constructor for Firestore / deserialization
+    public Event() {}
 
     public Event(String eventId, String organizerId, String eventName, long eventStartTime,
                  long eventEndTime, String eventLocation, String eventDescription,
