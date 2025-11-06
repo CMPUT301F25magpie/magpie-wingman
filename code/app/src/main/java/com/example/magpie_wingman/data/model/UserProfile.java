@@ -1,26 +1,18 @@
 package com.example.magpie_wingman.data.model;
 
 public class UserProfile {
+    private String userId;
     private String name;
-    private String role; // e.g., "Entrant", "Organizer", "Admin"
+    private UserRole role;
     private String profileImageUrl;
 
-    public UserProfile(String name, String role) {
-        this.name = name;
-        this.role = role;
-        this.profileImageUrl = null; // Placeholder for now
+    public UserProfile(String userId, String name, UserRole role) {
+        this.userId = userId; this.name = name; this.role = role; this.profileImageUrl = null;
     }
 
-    // --- Getters ---
-    public String getName() {
-        return name;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public String getProfileImageUrl() {
-        return profileImageUrl;
-    }
+    public String getUserId() { return userId; }
+    public String getName() { return name; }
+    public UserRole getRole() { return role; }
+    public String getProfileImageUrl() { return profileImageUrl; }
+    public void setProfileImageUrl( String url) { this.profileImageUrl = url; }
 }
