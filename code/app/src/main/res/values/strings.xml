@@ -72,4 +72,21 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+    <!-- Strings related to edit profile -->
+    <string name="title_edit_profile">Edit Profile</string>
+    <string name="hint_first_name">First Name</string>
+    <string name="hint_last_name">Last Name</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_dob">DD/MM/YYYY</string>
+    <string name="hint_phone">Phone Number</string>
+    <string name="hint_edit_password">Edit Password</string>
+    <string name="role_entrant">Entrant</string>
+    <string name="role_organizer">Organizer</string>
+    <string name="action_update">Update</string>
+
+    <!-- Strings related to invitation items -->
+    <string name="content_desc_event_poster">Event poster</string>
+    <string name="content_desc_accept_invitation">Accept invitation</string>
+    <string name="content_desc_decline_invitation">Decline invitation</string>
 </resources>
