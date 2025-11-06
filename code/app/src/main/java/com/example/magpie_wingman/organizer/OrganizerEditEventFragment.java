@@ -1,60 +1,45 @@
 package com.example.magpie_wingman.organizer;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.google.android.material.textfield.TextInputEditText;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link OrganizerEditEventFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 public class OrganizerEditEventFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    // UI Components
+    private TextInputEditText eventTitleField;
+    private TextInputEditText eventAddressField;
+    private TextInputEditText eventDescriptionField;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    // Registration Date/Time fields
+    private TextInputEditText regStartDateField;
+    private TextInputEditText regStartTimeField;
+    private TextInputEditText regEndDateField;
+    private TextInputEditText regEndTimeField;
+
+    private Button saveButton;
+
+    // Date/Time holders
+    private Calendar regStartCalendar = Calendar.getInstance();
+    private Calendar regEndCalendar = Calendar.getInstance();
 
     public OrganizerEditEventFragment() {
         // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment OrganizerEditEventFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static OrganizerEditEventFragment newInstance(String param1, String param2) {
-        OrganizerEditEventFragment fragment = new OrganizerEditEventFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -62,5 +47,90 @@ public class OrganizerEditEventFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_organizer_edit_event, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Find all the views
+        eventTitleField = view.findViewById(R.id.edit_text_event_title);
+        eventAddressField = view.findViewById(R.id.edit_text_location_address);
+        eventDescriptionField = view.findViewById(R.id.edit_text_event_description);
+
+        regStartDateField = view.findViewById(R.id.text_reg_start_date);
+        regStartTimeField = view.findViewById(R.id.text_reg_start_time);
+        regEndDateField = view.findViewById(R.id.text_reg_end_date);
+        regEndTimeField = view.findViewById(R.id.text_reg_end_time);
+
+        saveButton = view.findViewById(R.id.button_save);
+
+        // **NOTE:** This is where you would load existing event data.
+        // For example:
+        // Event myEvent = ... (load from Firebase) ...
+        // eventTitleField.setText(myEvent.getName());
+        // regStartCalendar.setTimeInMillis(myEvent.getRegStart());
+        // regEndCalendar.setTimeInMillis(myEvent.getRegEnd());
+        // updateDateFields(); // A helper to set the text
+
+        // Set click listeners for the registration fields
+        regStartDateField.setOnClickListener(v ->
+                showDatePicker(regStartDateField, regStartCalendar)
+        );
+        regStartTimeField.setOnClickListener(v ->
+                showTimePicker(regStartTimeField, regStartCalendar)
+        );
+        regEndDateField.setOnClickListener(v ->
+                showDatePicker(regEndDateField, regEndCalendar)
+        );
+        regEndTimeField.setOnClickListener(v ->
+                showTimePicker(regEndTimeField, regEndCalendar)
+        );
+
+        saveButton.setOnClickListener(v -> {
+            // Here is where you would get all the data and UPDATE Firebase
+            String eventName = eventTitleField.getText().toString();
+            Toast.makeText(getContext(), "Saving changes for: " + eventName, Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    /**
+     * Shows a DatePicker dialog and updates the provided EditText.
+     * @param dateField The EditText to display the formatted date.
+     * @param calendar  The Calendar instance to store the selected date.
+     */
+    private void showDatePicker(final TextInputEditText dateField, final Calendar calendar) {
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        new DatePickerDialog(getContext(), (datePicker, y, m, d) -> {
+            calendar.set(Calendar.YEAR, y);
+            calendar.set(Calendar.MONTH, m);
+            calendar.set(Calendar.DAY_OF_MONTH, d);
+
+            // Format date as "yyyy-MM-dd" to match mockup
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            dateField.setText(sdf.format(calendar.getTime()));
+        }, year, month, day).show();
+    }
+
+    /**
+     * Shows a TimePicker dialog and updates the provided EditText.
+     * @param timeField The EditText to display the formatted time.
+     * @param calendar  The Calendar instance to store the selected time.
+     */
+    private void showTimePicker(final TextInputEditText timeField, final Calendar calendar) {
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        new TimePickerDialog(getContext(), (timePicker, h, m) -> {
+            calendar.set(Calendar.HOUR_OF_DAY, h);
+            calendar.set(Calendar.MINUTE, m);
+
+            // Format time as "HH:mm" (24-hour) to match mockup
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            timeField.setText(sdf.format(calendar.getTime()));
+        }, hour, minute, true).show(); // true for 24-hour format
     }
 }

@@ -5,10 +5,11 @@
     android:layout_height="match_parent"
     tools:context=".admin.AdminProfilesFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- This RecyclerView will display the list of all profiles -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_admin_profiles"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        tools:listitem="@layout/list_item_profile" />
 
 </FrameLayout>

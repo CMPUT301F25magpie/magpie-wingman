@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/adminProfilesFragment">
+
+
 
     <fragment
         android:id="@+id/FirstFragment"
@@ -342,7 +344,7 @@
     <fragment
         android:id="@+id/adminProfilesFragment"
         android:name="com.example.magpie_wingman.admin.AdminProfilesFragment"
-        android:label="fragment_admin_profiles"
+        android:label="Admin Profiles (Replace with search)"
         tools:layout="@layout/fragment_admin_profiles" >
         <action
             android:id="@+id/action_adminProfilesFragment_to_adminLandingFragment2"
@@ -427,8 +429,8 @@
     <fragment
         android:id="@+id/selectedEntrantsListFragment"
         android:name="com.example.magpie_wingman.organizer.SelectedEntrantsListFragment"
-        android:label="fragment_selected_entrants_list"
-        tools:layout="@layout/fragment_selected_entrants_list" >
+        android:label="Selected Entrants List"
+        tools:layout="@layout/fragment_selected_entrants_list">
         <action
             android:id="@+id/action_selectedEntrantsListFragment_to_organizerEventDetailsFragment"
             app:destination="@id/organizerEventDetailsFragment" />
