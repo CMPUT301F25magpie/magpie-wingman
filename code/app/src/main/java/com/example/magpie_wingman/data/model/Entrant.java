@@ -9,10 +9,6 @@ public class Entrant extends User{
     private List<String> enrolledEvents = new ArrayList<>();
     private String profileImageUrl;
 
-    public Entrant() {
-        super();
-        this.userRole = UserRole.ENTRANT;
-    }
 
     public Entrant(String userId,
                    String name,

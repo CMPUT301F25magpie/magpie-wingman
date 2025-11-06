@@ -275,7 +275,13 @@ public class DbManager {
         });
         return tcs.getTask();
     }
-
+    /**
+     * Deletes a user profile based on their role.
+     *
+     * @param userId the Firestore document id of the user
+     * @param role   the user's current role
+     * @return a Task that completes when all writes are finished or fails with the underlying exception
+     */
     public Task<Void> deleteProfile(String userId, com.example.magpie_wingman.data.model.UserRole role) {
         if (role == com.example.magpie_wingman.data.model.UserRole.ORGANIZER) {
             return deleteOrganizer(userId);

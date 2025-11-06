@@ -21,6 +21,10 @@ import com.example.magpie_wingman.data.model.UserRole;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for viewing and managing user profiles.
+ */
+
 // 1. Implement the adapter's interface
 public class AdminProfilesFragment extends Fragment implements ProfileAdapter.OnProfileRemoveListener {
 
@@ -52,7 +56,9 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
 
         refreshProfiles(null);
     }
-
+    /**
+     * Loads profiles from Firestore and refreshes the list.
+     */
     private void refreshProfiles(@Nullable UserRole filter) {
         DbManager.getInstance().fetchProfiles(filter)
                 .addOnSuccessListener(list -> {

@@ -11,9 +11,14 @@ import androidx.preference.PreferenceFragmentCompat;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
-
+/**
+ * Settings screen for entrant users.
+ *
+ */
 public class EntrantSettingsFragment extends PreferenceFragmentCompat {
-
+    /**
+     * Inflates preferences and attaches the delete-account handler.
+     */
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
@@ -26,7 +31,10 @@ public class EntrantSettingsFragment extends PreferenceFragmentCompat {
             });
         }
     }
-
+    /**
+     * Shows a confirmation dialog before deleting the user's profile.
+     * No-op if the user cancels.
+     */
     private void confirmAndDeleteProfile() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete your profile?")
