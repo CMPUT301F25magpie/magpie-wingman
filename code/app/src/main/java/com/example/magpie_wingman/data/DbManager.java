@@ -159,9 +159,32 @@ public class DbManager {
                 .set(event, SetOptions.merge());
     }
     public Task<Void> deleteUser(String userId) {
-        return db.collection("users")
-                .document(userId)
-                .delete();
+        TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // Find all places this user exists in event subcollections
+                QuerySnapshot wl = Tasks.await(db.collectionGroup("waitlist")
+                        .whereEqualTo("userId", userId).get());
+                QuerySnapshot rg = Tasks.await(db.collectionGroup("registrable")
+                        .whereEqualTo("userId", userId).get());
+                QuerySnapshot rd = Tasks.await(db.collectionGroup("registered")
+                        .whereEqualTo("userId", userId).get());
+
+
+                WriteBatch batch = db.batch();
+
+                for (DocumentSnapshot d : wl.getDocuments()) batch.delete(d.getReference());
+                for (DocumentSnapshot d : rg.getDocuments()) batch.delete(d.getReference());
+                for (DocumentSnapshot d : rd.getDocuments()) batch.delete(d.getReference());
+                batch.delete(db.collection("users").document(userId));
+
+                Tasks.await(batch.commit());
+                tcs.setResult(null);
+            } catch (Exception e) {
+                tcs.setException(e);
+            }
+        });
+        return tcs.getTask();
     }
 
     /**
