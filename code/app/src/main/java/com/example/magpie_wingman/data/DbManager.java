@@ -5,6 +5,7 @@ import android.provider.Settings;
 
 import androidx.annotation.Nullable;
 
+import com.example.magpie_wingman.data.model.User;
 import com.example.magpie_wingman.data.model.UserProfile;
 import com.example.magpie_wingman.data.model.UserRole;
 import com.google.android.gms.tasks.Task;
@@ -71,7 +72,7 @@ public class DbManager {
      * @param name - the inputted name for the user.
      * @return userID the document ID for the user's firebase document
      */
-    private String generateUserId(String name) {
+    public String generateUserId(String name) {
         String cleanName = name.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
 
         while (true) {
@@ -263,7 +264,7 @@ public class DbManager {
                             : UserRole.ENTRANT;
 
                     if (roleFilter == null || role == roleFilter) {out.add(new UserProfile(userId,
-                            (name != null && !name.isEmpty()) ? name : userId, role));
+                            name, role));
                     }
                 }
 
@@ -273,6 +274,17 @@ public class DbManager {
             }
         });
         return tcs.getTask();
+    }
+
+    public Task<Void> deleteProfile(String userId, com.example.magpie_wingman.data.model.UserRole role) {
+        if (role == com.example.magpie_wingman.data.model.UserRole.ORGANIZER) {
+            return deleteOrganizer(userId);
+        }
+        return deleteEntrant(userId);
+    }
+
+    public Task<Void> deleteProfile(com.example.magpie_wingman.data.model.UserProfile profile) {
+        return deleteProfile(profile.getUserId(), profile.getRole());
     }
 
     /**
