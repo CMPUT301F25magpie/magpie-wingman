@@ -12,12 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Entrant; // Make sure this import is correct
+import com.example.magpie_wingman.data.model.Entrant; // Your team's file
 
 import java.util.ArrayList;
 import java.util.List;
 
-// 1. Implement the adapter's interface
 public class SelectedEntrantsListFragment extends Fragment implements SelectedEntrantsAdapter.OnEntrantRemoveListener {
 
     private RecyclerView recyclerView;
@@ -31,7 +30,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_selected_entrants_list, container, false);
     }
 
@@ -43,52 +41,31 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         loadMockEntrants();
 
-        // 2. Pass 'this' (the fragment) as the listener to the adapter
         adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
         recyclerView.setAdapter(adapter);
     }
 
     /**
-     * Creates mock data to display in the list.
+     * Creates mock data using the correct Entrant constructor.
      */
     private void loadMockEntrants() {
         selectedEntrantsList = new ArrayList<>();
-        // 3. Update mock data to match the "Person X" format from the mockup
-        selectedEntrantsList.add(new Entrant("Person 5", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 6", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 7", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 8", "Invited"));
+
+
+
+
+        selectedEntrantsList.add(new Entrant("p5", "Person 5", "p5@email.com", "555-0005", "dev5"));
+        selectedEntrantsList.add(new Entrant("p6", "Person 6", "p6@email.com", "555-0006", "dev6"));
+        selectedEntrantsList.add(new Entrant("p7", "Person 7", "p7@email.com", "555-0007", "dev7"));
+        selectedEntrantsList.add(new Entrant("p8", "Person 8", "p8@email.com", "555-0008", "dev8"));
     }
 
-    // 4. This is the new method from the interface
+    // This is the new method from the interface
     // It runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
-        // Remove the item from our data list
         selectedEntrantsList.remove(position);
-
-        // Tell the adapter that the item was removed so it can update the screen
         adapter.notifyItemRemoved(position);
-
-        // This makes sure all other positions are updated correctly
         adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
     }
 }
-
-
-
-    /*
-    in fire base change to
-    private void loadMockEntrants() {
-    // Get the real data from Firebase
-    // This will call your DatabaseManager
-    firebaseDb.collection("events")
-              .document("myEventId")
-              .collection("selectedEntrants")
-              .get()
-              .addOnCompleteListener(task -> {
-                  // ... loop over the results and add them to the list ...
-                  // ... then notify the adapter ...
-              });
-}
-     */

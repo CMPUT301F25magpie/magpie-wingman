@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Parent style -->
+    <style name="ShapeAppearance.App" parent="ShapeAppearance.MaterialComponents">
+        <!-- Base shape appearance settings -->
+    </style>
+
+    <!-- Child style -->
     <style name="ShapeAppearance.App.Small">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
