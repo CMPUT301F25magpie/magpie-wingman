@@ -20,6 +20,12 @@ public class User implements Serializable {
         this.userRole = role;
     }
 
+    public User (String userId, String userName, UserRole role) { // bare bones constructor for waitlists (will add location for part 4)
+         this.userId = userId;
+         this.userName = userName;
+         this.userRole = role;
+     }
+
     public String getUserId() {
         return userId;
     }

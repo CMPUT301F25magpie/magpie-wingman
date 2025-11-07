@@ -14,6 +14,10 @@ import android.widget.Toast; // Import Toast
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.model.Event; // Import our new model
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,10 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     private RecyclerView recyclerView;
     private EventAdapter adapter;
     private List<Event> eventList;
+
+    // Firestore
+    private FirebaseFirestore db;
+    private CollectionReference eventsRef;
 
     public EntrantEventsFragment() {
         // Required empty public constructor
@@ -46,8 +54,8 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
         // 2. Set its layout manager
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // 3. Load the mock data
-        loadMockEvents();
+        // 3. Load the data (now from Firebase instead of mock)
+        loadEventsFromDatabase();
 
         // 4. Create and set the adapter (pass 'this' as the listener)
         adapter = new EventAdapter(eventList, this);
@@ -55,15 +63,38 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     }
 
     /**
-     * Creates mock data for the event list.
-     * Later, this will come from Firebase.
+     * Creates data for the event list.
+     * Now this comes from Firebase.
      */
-    private void loadMockEvents() {
+    private void loadEventsFromDatabase() {
         eventList = new ArrayList<>();
-        // UPDATED to include description
-        eventList.add(new Event("e1", "Tech Summit", "Nov 15", "Convention Centre", "The biggest tech summit..."));
-        eventList.add(new Event("e2", "Music Fest", "Nov 22", "Hawrelak Park", "Live bands and food trucks..."));
-        eventList.add(new Event("e3", "Pitch Night", "Nov 28", "Startup Edmonton", "See the latest local startups..."));
+
+        db = FirebaseFirestore.getInstance();
+        eventsRef = db.collection("events");
+
+        Timestamp now = Timestamp.now(); //get current timestamp
+
+        eventsRef
+                .whereGreaterThanOrEqualTo("registrationEnd", now) //filter out events that have registration dates that have already passed
+                .orderBy("registrationEnd")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(getContext(), "Failed to load events", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    eventList.clear();
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            Event event = doc.toObject(Event.class);
+                            eventList.add(event);
+                        }
+                    }
+
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
     }
 
     /**

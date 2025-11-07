@@ -16,6 +16,7 @@ import com.google.firebase.firestore.WriteBatch;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -93,15 +94,16 @@ public class DbManager {
      * Creates a new user document.
      * The userId will be generated using generateUserID and will also act as the document ID
      */
-    public Task<Void> createUser(String name, String email, String phone) {
+    public Task<Void> createUser(String name, String email, String password) {
         String userId = generateUserId(name);
 
         Map<String, Object> user = new HashMap<>();
         user.put("userId", userId);
         user.put("name", name);
         user.put("email", email);
-        user.put("phone", phone);
+        user.put("password", password);
         user.put("isOrganizer", true);
+        user.put("rememberMe",false);
         user.put("deviceId", Settings.Secure.getString(
                 appContext.getContentResolver(),
                 Settings.Secure.ANDROID_ID
@@ -126,8 +128,8 @@ public class DbManager {
     public Task<Void> createEvent(String eventName,
                                   String description,
                                   String organizerId,
-                                  Object regStart,
-                                  Object regEnd) {
+                                  Date regStart,
+                                  Date regEnd) {
 
         String eventId;
         DocumentSnapshot doc;
@@ -441,6 +443,20 @@ public class DbManager {
     }
 
     /**
+     * Adds/Updates user's date of birth.
+     *
+     * @param userId     ID of the user document to update.
+     * @param newDOB   New phone number to set.
+     * @return Task that completes when the update finishes.
+     */
+
+    public Task<Void> updateDOB(String userId, Date newDOB) {
+        return db.collection("users")
+                .document(userId)
+                .update("dateOfBirth", newDOB);
+    }
+
+    /**
      * Updates the user's phone number.
      *
      * @param userId     ID of the user document to update.
@@ -453,6 +469,21 @@ public class DbManager {
                 .update("phone", newPhone);
     }
 
+
+    /**
+     * Updates the user's password.
+     *
+     * @param userId     ID of the user document to update.
+     * @param newPassword   New password.
+     * @return Task that completes when the update finishes.
+     */
+    public Task <Void> updatePassword(String userId, String newPassword) {
+        return db.collection("users")
+                .document(userId)
+                .update("password", newPassword);
+    }
+
+
     /**
      * Changes a user's organizer permissions.
      *
@@ -464,6 +495,19 @@ public class DbManager {
         return db.collection("users")
                 .document(userId)
                 .update("isOrganizer", isOrganizer);
+    }
+
+    /**
+     * Changes a user's organizer permissions.
+     *
+     * @param userId      The ID of the user to update.
+     * @param rememberMe True to grant organizer permissions; false to revoke them.
+     * @return A Task that completes when the update finishes.
+     */
+    public Task<Void> setRememberMe(String userId, boolean rememberMe) {
+        return db.collection("users")
+                .document(userId)
+                .update("rememberMe", rememberMe);
     }
 
     /**

@@ -17,6 +17,12 @@ public class Entrant extends User{
         super(userId, userName, userEmail, userPhone, userDeviceId, UserRole.ENTRANT);
     }
 
+    public Entrant(String userId, String userName){
+        super(userId, userName, UserRole.ENTRANT);
+    }
+
+
+
 
     public List<String> getWaitlistedEvents() {
         return waitlistedEvents;

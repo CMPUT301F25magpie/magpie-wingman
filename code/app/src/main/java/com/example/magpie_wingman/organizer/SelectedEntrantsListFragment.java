@@ -10,9 +10,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.model.Entrant; // Make sure this import is correct
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,8 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         // Required empty public constructor
     }
 
+    private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -41,7 +46,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadMockEntrants();
+        loadSelectedEntrants();
 
         // 2. Pass 'this' (the fragment) as the listener to the adapter
         adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
@@ -51,14 +56,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     /**
      * Creates mock data to display in the list.
      */
-    private void loadMockEntrants() {
-        selectedEntrantsList = new ArrayList<>();
-        // 3. Update mock data to match the "Person X" format from the mockup
-        selectedEntrantsList.add(new Entrant("Person 5", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 6", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 7", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 8", "Invited"));
-    }
 
     // 4. This is the new method from the interface
     // It runs when the "X" is clicked
@@ -73,22 +70,44 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         // This makes sure all other positions are updated correctly
         adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
     }
+
+    private void loadSelectedEntrants() {
+        selectedEntrantsList = new ArrayList<>();
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("events")
+                .document(eventId)
+                .collection("registrable")
+                .get()
+                .addOnSuccessListener(snap -> {
+                    selectedEntrantsList.clear();
+
+                    for (QueryDocumentSnapshot doc : snap) {
+                        String userId = doc.getId();
+
+                        // Fetch user profile to get their display name
+                        db.collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(userSnap -> {
+                                    String userName = userSnap.getString("name");
+
+                                    // Fallback if name is missing:
+                                    if (userName == null || userName.isEmpty()) {
+                                        userName = userId;
+                                    }
+
+                                    selectedEntrantsList.add(new Entrant(userId, userName));
+                                    adapter.notifyDataSetChanged(); // update UI incrementally
+                                });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(),
+                                "Failed to load registrable users.",
+                                Toast.LENGTH_SHORT).show()
+                );
+    }
+
 }
-
-
-
-    /*
-    in fire base change to
-    private void loadMockEntrants() {
-    // Get the real data from Firebase
-    // This will call your DatabaseManager
-    firebaseDb.collection("events")
-              .document("myEventId")
-              .collection("selectedEntrants")
-              .get()
-              .addOnCompleteListener(task -> {
-                  // ... loop over the results and add them to the list ...
-                  // ... then notify the adapter ...
-              });
-}
-     */

@@ -9,6 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.model.Entrant;
+
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -25,7 +28,8 @@ public class WaitingListFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-
+    private String eventID = "sampling#1213"; //TEMPORARY until Nav is figured out
+    private List<Entrant> waitlistEntrantsList;
     public WaitingListFragment() {
         // Required empty public constructor
     }
