@@ -7,12 +7,21 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Entrant; // Your team's file
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Entrant;
+import com.example.magpie_wingman.data.model.User;
+import com.example.magpie_wingman.data.model.UserRole;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +32,20 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private SelectedEntrantsAdapter adapter;
     private List<Entrant> selectedEntrantsList;
 
+    private DbManager dbManager;
+    private String eventId;
+
     public SelectedEntrantsListFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (getArguments() != null) {
+            this.eventId = getArguments().getString("eventId");
+        }
     }
 
     @Override
@@ -37,35 +58,106 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        try {
+            dbManager = DbManager.getInstance();
+        } catch (IllegalStateException e) {
+            if (getContext() != null) {
+                DbManager.init(getContext().getApplicationContext());
+                dbManager = DbManager.getInstance();
+            }
+        }
+
+        selectedEntrantsList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadMockEntrants();
 
         adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
         recyclerView.setAdapter(adapter);
+
+        if (eventId != null) {
+            loadSelectedEntrants(eventId);
+        } else {
+            Toast.makeText(getContext(), "Error: No Event ID provided", Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
-     * Creates mock data using the correct Entrant constructor.
+     * Fetches the list of "registrable" user IDs, then fetches
+     * each User object for that list.
      */
-    private void loadMockEntrants() {
-        selectedEntrantsList = new ArrayList<>();
+    private void loadSelectedEntrants(String eventId) {
+        FirebaseFirestore db = dbManager.getDb();
 
+        dbManager.getEventRegistrable(eventId)
+                .addOnSuccessListener(userIds -> {
+                    if (userIds == null || userIds.isEmpty()) {
+                        Log.d("SelectedEntrants", "No entrants in registrable list.");
+                        return;
+                    }
 
+                    List<Task<DocumentSnapshot>> userTasks = new ArrayList<>();
+                    for (String userId : userIds) {
+                        userTasks.add(db.collection("users").document(userId).get());
+                    }
 
+                    Tasks.whenAllSuccess(userTasks)
+                            .addOnSuccessListener(results -> {
+                                selectedEntrantsList.clear();
 
-        selectedEntrantsList.add(new Entrant("p5", "Person 5", "p5@email.com", "555-0005", "dev5"));
-        selectedEntrantsList.add(new Entrant("p6", "Person 6", "p6@email.com", "555-0006", "dev6"));
-        selectedEntrantsList.add(new Entrant("p7", "Person 7", "p7@email.com", "555-0007", "dev7"));
-        selectedEntrantsList.add(new Entrant("p8", "Person 8", "p8@email.com", "555-0008", "dev8"));
+                                for (Object docObj : results) {
+                                    DocumentSnapshot doc = (DocumentSnapshot) docObj;
+
+                                    // --- THIS IS THE FIX ---
+                                    // Manually read fields to match your User.java
+                                    String userId = doc.getId();
+                                    String userName = doc.getString("name"); // Firebase uses "name"
+                                    String userEmail = doc.getString("email");
+                                    String userPhone = doc.getString("phone");
+                                    String userDeviceId = doc.getString("deviceId");
+
+                                    // Check their role. We only want to add Entrants.
+                                    Boolean isOrganizer = doc.getBoolean("isOrganizer");
+                                    if (isOrganizer == null || isOrganizer == false) {
+                                        // This is an Entrant. Use your Entrant constructor.
+                                        Entrant entrant = new Entrant(
+                                                userId,
+                                                userName,
+                                                userEmail,
+                                                userPhone,
+                                                userDeviceId
+                                        );
+                                        selectedEntrantsList.add(entrant);
+                                    }
+                                    // --- END OF FIX ---
+                                }
+
+                                adapter.notifyDataSetChanged();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("SelectedEntrants", "Failed to fetch user profiles", e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("SelectedEntrants", "Failed to get registrable list", e);
+                });
     }
 
-    // This is the new method from the interface
-    // It runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
-        selectedEntrantsList.remove(position);
-        adapter.notifyItemRemoved(position);
-        adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+        Entrant entrantToRemove = selectedEntrantsList.get(position);
+        String userId = entrantToRemove.getUserId();
+        String userName = entrantToRemove.getUserName();
+
+        dbManager.cancelRegistrable(eventId, userId)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Removed " + userName, Toast.LENGTH_SHORT).show();
+                    selectedEntrantsList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to remove " + userName, Toast.LENGTH_SHORT).show();
+                    Log.e("SelectedEntrants", "Failed to remove user", e);
+                });
     }
 }

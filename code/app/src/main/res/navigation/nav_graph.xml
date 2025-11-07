@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/entrantEventsFragment">
+    app:startDestination="@id/selectedEntrantsListFragment">
 
 
 
@@ -450,9 +450,14 @@
         android:name="com.example.magpie_wingman.organizer.SelectedEntrantsListFragment"
         android:label="Selected Entrants List"
         tools:layout="@layout/fragment_selected_entrants_list">
+
         <action
             android:id="@+id/action_selectedEntrantsListFragment_to_organizerEventDetailsFragment"
             app:destination="@id/organizerEventDetailsFragment" />
+
+        <argument
+            android:name="eventId"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/acceptedListFragment"

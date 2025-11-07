@@ -46,19 +46,15 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Get the DbManager instance
         dbManager = DbManager.getInstance();
 
-        // Prepare the list and RecyclerView
         eventList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Create the adapter with the empty list
         adapter = new EventAdapter(eventList, this);
         recyclerView.setAdapter(adapter);
 
-        // Load real data
         loadEventsFromFirebase();
     }
 
@@ -74,15 +70,12 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
                     if (!queryDocumentSnapshots.isEmpty()) {
                         eventList.clear();
 
-                        // Convert each document into an Event object
                         for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                             Event event = doc.toObject(Event.class);
                             if (event != null) {
                                 eventList.add(event);
                             }
                         }
-
-                        // Tell the adapter to refresh the screen
                         adapter.notifyDataSetChanged();
                     } else {
                         Log.d("EntrantEventsFragment", "No events found.");
@@ -101,12 +94,24 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     public void onEventClick(int position) {
         Event clickedEvent = eventList.get(position);
 
+        // Get description and check for null to prevent crash
+        String eventDesc = clickedEvent.getEventDescription();
+        if (eventDesc == null) {
+            eventDesc = ""; // Pass an empty string instead of null
+        }
+
+        // Get location and check for null to prevent crash
+        String eventLoc = clickedEvent.getEventLocation();
+        if (eventLoc == null) {
+            eventLoc = ""; // Pass an empty string instead of null
+        }
+
         // Create a bundle to pass data to the details screen
         Bundle args = new Bundle();
         args.putString("eventId", clickedEvent.getEventId());
         args.putString("eventName", clickedEvent.getEventName());
-        args.putString("eventDescription", clickedEvent.getEventDescription());
-        args.putString("eventLocation", clickedEvent.getEventLocation());
+        args.putString("eventDescription", eventDesc); // Use the safe variable
+        args.putString("eventLocation", eventLoc); // Use the safe variable
 
         // Navigate using the action from nav_graph.xml
         NavHostFragment.findNavController(this)

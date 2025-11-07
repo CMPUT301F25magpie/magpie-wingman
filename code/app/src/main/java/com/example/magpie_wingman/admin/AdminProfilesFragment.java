@@ -7,22 +7,28 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.UserProfile; // Make sure this import is correct
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.User;
+import com.example.magpie_wingman.data.model.UserRole; // Make sure this is imported
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// 1. Implement the adapter's interface
 public class AdminProfilesFragment extends Fragment implements ProfileAdapter.OnProfileRemoveListener {
 
     private RecyclerView recyclerView;
     private ProfileAdapter adapter;
-    private List<UserProfile> userProfileList;
+    private List<User> userList;
+    private DbManager dbManager;
 
     public AdminProfilesFragment() {
         // Required empty public constructor
@@ -38,45 +44,89 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        try {
+            dbManager = DbManager.getInstance();
+        } catch (IllegalStateException e) {
+            if (getContext() != null) {
+                DbManager.init(getContext().getApplicationContext());
+                dbManager = DbManager.getInstance();
+            }
+        }
+
+        userList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_admin_profiles);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadMockProfiles();
-
-        // 2. Pass 'this' (the fragment) as the listener
-        adapter = new ProfileAdapter(userProfileList, this);
+        adapter = new ProfileAdapter(userList, this);
         recyclerView.setAdapter(adapter);
+
+        loadProfilesFromFirebase();
     }
 
     /**
-     * Creates mock data based on the new mockup.
+     * Fetches all users from the "users" collection in Firestore.
      */
-    private void loadMockProfiles() {
-        userProfileList = new ArrayList<>();
-        userProfileList.add(new UserProfile("Person 1", "Entrant"));
-        userProfileList.add(new UserProfile("Person 2", "Entrant"));
-        userProfileList.add(new UserProfile("Person 3", "Entrant"));
-        userProfileList.add(new UserProfile("Person 4", "Entrant"));
-        userProfileList.add(new UserProfile("Person 5", "Entrant"));
-        userProfileList.add(new UserProfile("Person 6", "Entrant"));
-        userProfileList.add(new UserProfile("Person 7", "Entrant"));
-        userProfileList.add(new UserProfile("Person 8", "Entrant"));
-        userProfileList.add(new UserProfile("Jane Doe", "Entrant"));
-        userProfileList.add(new UserProfile("John Doe", "Entrant"));
-        userProfileList.add(new UserProfile("Stuart Little", "Entrant"));
-        userProfileList.add(new UserProfile("Satoru Gojo", "Entrant"));
-        userProfileList.add(new UserProfile("Spike Spiegel", "Organizer"));
+    private void loadProfilesFromFirebase() {
+        FirebaseFirestore db = dbManager.getDb();
+
+        db.collection("users")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        userList.clear();
+
+                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+
+                            // --- THIS IS THE FIX ---
+                            // We manually read the fields from Firebase
+                            // to match your User.java constructor
+
+                            String userId = doc.getId();
+                            String userName = doc.getString("name"); // This part is working
+                            String userEmail = doc.getString("email");
+                            String userPhone = doc.getString("phone");
+                            String userDeviceId = doc.getString("deviceId");
+
+                            // Read the "isOrganizer" boolean field
+                            Boolean isOrganizer = doc.getBoolean("isOrganizer");
+
+                            // Convert the boolean to the UserRole enum
+                            UserRole role = UserRole.ENTRANT; // Default to Entrant
+                            if (isOrganizer != null && isOrganizer == true) {
+                                role = UserRole.ORGANIZER;
+                            }
+                            // --- END OF FIX ---
+
+                            // Use the 6-argument constructor from your User.java
+                            User user = new User(userId, userName, userEmail, userPhone, userDeviceId, role);
+                            userList.add(user);
+                        }
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        Log.d("AdminProfilesFragment", "No users found.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("AdminProfilesFragment", "Error loading users", e);
+                    Toast.makeText(getContext(), "Error loading users", Toast.LENGTH_SHORT).show();
+                });
     }
 
-    // 3. This method runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
-        // Remove the item from our data list
-        userProfileList.remove(position);
+        User userToRemove = userList.get(position);
+        String userId = userToRemove.getUserId();
+        String userName = userToRemove.getUserName();
 
-        // Tell the adapter that the item was removed
-        adapter.notifyItemRemoved(position);
-
-        // Update all the other items' positions
-        adapter.notifyItemRangeChanged(position, userProfileList.size());
+        dbManager.deleteUser(userId)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Deleted " + userName, Toast.LENGTH_SHORT).show();
+                    userList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    adapter.notifyItemRangeChanged(position, userList.size());
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to delete " + userName, Toast.LENGTH_SHORT).show();
+                    Log.e("AdminProfilesFragment", "Failed to delete user", e);
+                });
     }
 }

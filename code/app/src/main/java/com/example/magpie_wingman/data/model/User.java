@@ -59,4 +59,8 @@ public class User implements Serializable {
     public void setUserDeviceId(String userDeviceId) {
         this.userDeviceId = userDeviceId;
     }
+
+    public UserRole getUserRole() {
+        return userRole;
+    }
 }
