@@ -19,7 +19,7 @@ import com.example.magpie_wingman.data.NotificationFunction;
 import com.example.magpie_wingman.data.LotteryFunction;
 
 /**
- * US 02.05.02 andUS 02.05.01
+ * US 02.05.02 and US 02.05.01
  */
 public class OrganizerLotteryFragment extends Fragment {
 

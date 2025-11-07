@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * US 02.02.01
- * organizer can view the list of entrants currently on the event’s waiting list
  */
 public class WaitingListFragment extends Fragment {
 
@@ -83,11 +82,8 @@ public class WaitingListFragment extends Fragment {
 
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
-        db.collection("events")
-                .document(eventId)
-                .collection("waitlist")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+        db.collection("events").document(eventId).collection("waitlist")
+                .get().addOnSuccessListener(querySnapshot -> {
                     progressBar.setVisibility(View.GONE);
 
                     List<String> entrants = new ArrayList<>();

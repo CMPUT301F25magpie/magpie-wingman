@@ -7,7 +7,6 @@
     android:background="#0B0B1A"
     tools:context=".organizer.OrganizerNotifyFragment">
 
-    <!-- Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -23,7 +22,6 @@
             android:background="#0B0B1A" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Content -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -44,7 +42,6 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
-            <!-- Title Input -->
             <EditText
                 android:id="@+id/notify_title_input"
                 android:layout_width="match_parent"
@@ -57,7 +54,6 @@
                 android:autofillHints="none"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Message Label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -66,7 +62,6 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp" />
 
-            <!-- Message Input -->
             <EditText
                 android:id="@+id/notify_message_input"
                 android:layout_width="match_parent"
@@ -80,7 +75,6 @@
                 android:textColorHint="#999999"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Checkboxes -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

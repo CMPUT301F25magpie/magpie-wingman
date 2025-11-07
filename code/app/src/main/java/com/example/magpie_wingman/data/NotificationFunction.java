@@ -15,10 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class NotificationFunction {
-
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
     /**
      * sends a notification to all users in a given event subcollection e.g. waitlist / registrable / cancelled (not done yet)
      *
@@ -38,7 +36,6 @@ public class NotificationFunction {
                                 .collection(subcollectionName)
                                 .get()
                 );
-
                 List<DocumentSnapshot> docs = query.getDocuments();
                 WriteBatch batch = db.batch();
                 long now = System.currentTimeMillis();
@@ -60,15 +57,12 @@ public class NotificationFunction {
                             notif
                     );
                 }
-
-                Tasks.await(batch.commit()); // Wait for batch commit to finish
+                Tasks.await(batch.commit());
                 tcs.setResult(null);
-
             } catch (Exception e) {
                 tcs.setException(e);
             }
         });
-
         return tcs.getTask();
     }
 }
