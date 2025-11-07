@@ -1,0 +1,45 @@
+[33m694d585[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misabella[m[33m)[m HEAD@{0}: checkout: moving from development to isabella
+[33ma2fdc2c[m[33m ([m[1;32mdevelopment[m[33m)[m HEAD@{1}: checkout: moving from isabella to development
+[33m694d585[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misabella[m[33m)[m HEAD@{2}: checkout: moving from development to isabella
+[33ma2fdc2c[m[33m ([m[1;32mdevelopment[m[33m)[m HEAD@{3}: commit: Fixed classes and added indent testing for lotteryFunction and notifyFunction
+[33md760109[m HEAD@{4}: commit (merge): Merge branch 'development' of https://github.com/CMPUT301F25magpie/magpie-wingman into development
+[33mfecb2d7[m HEAD@{5}: checkout: moving from development to development
+[33mfecb2d7[m HEAD@{6}: commit: update indent tests
+[33m6d01f12[m HEAD@{7}: pull origin development: Fast-forward
+[33m160f841[m HEAD@{8}: pull origin development: Fast-forward
+[33m56c9160[m HEAD@{9}: checkout: moving from isabella to development
+[33m694d585[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32misabella[m[33m)[m HEAD@{10}: commit: update waitlistfragmenttest
+[33m044109a[m HEAD@{11}: checkout: moving from development to isabella
+[33m56c9160[m HEAD@{12}: commit (merge): Merged isabella branch into development
+[33m094e19e[m HEAD@{13}: checkout: moving from development to development
+[33m094e19e[m HEAD@{14}: reset: moving to HEAD
+[33m094e19e[m HEAD@{15}: reset: moving to HEAD
+[33m094e19e[m HEAD@{16}: checkout: moving from isabella to development
+[33m044109a[m HEAD@{17}: checkout: moving from development to isabella
+[33m094e19e[m HEAD@{18}: pull origin development: Fast-forward
+[33m6d38e06[m HEAD@{19}: checkout: moving from isabella to development
+[33m044109a[m HEAD@{20}: commit: push to dev
+[33m3b107db[m[33m ([m[1;31morigin/isabella[m[33m)[m HEAD@{21}: merge development: Merge made by the 'ort' strategy.
+[33m83170de[m HEAD@{22}: reset: moving to HEAD
+[33m83170de[m HEAD@{23}: checkout: moving from development to isabella
+[33m6d38e06[m HEAD@{24}: pull origin development: Fast-forward
+[33ma1374b6[m HEAD@{25}: checkout: moving from isabella to development
+[33m83170de[m HEAD@{26}: commit: fixes and implemented all uss
+[33m84f15d7[m HEAD@{27}: checkout: moving from isabella to isabella
+[33m84f15d7[m HEAD@{28}: merge development: Merge made by the 'ort' strategy.
+[33m8eac175[m HEAD@{29}: checkout: moving from development to isabella
+[33ma1374b6[m HEAD@{30}: pull origin development: Fast-forward
+[33m43046f0[m HEAD@{31}: checkout: moving from isabella to development
+[33m8eac175[m HEAD@{32}: commit: implemented user stories, wip
+[33m2e91798[m HEAD@{33}: merge development: Merge made by the 'ort' strategy.
+[33mdbe04fa[m HEAD@{34}: checkout: moving from development to isabella
+[33m43046f0[m HEAD@{35}: pull origin development: Fast-forward
+[33m055577d[m HEAD@{36}: checkout: moving from isabella to development
+[33mdbe04fa[m HEAD@{37}: commit: wip: merge new event class
+[33meec4c7a[m HEAD@{38}: merge development: Merge made by the 'ort' strategy.
+[33mc3802e6[m HEAD@{39}: checkout: moving from development to isabella
+[33m055577d[m HEAD@{40}: pull origin development: Fast-forward
+[33md9df32f[m HEAD@{41}: checkout: moving from isabella to development
+[33mc3802e6[m HEAD@{42}: commit: lottery function initial commit
+[33mbb05c69[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/Jerry[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{43}: checkout: moving from main to isabella
+[33mbb05c69[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/Jerry[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{44}: clone: from https://github.com/CMPUT301F25magpie/magpie-wingman.git

@@ -4,6 +4,7 @@ import com.example.magpie_wingman.data.DbManager;
 import com.google.android.gms.tasks.Task;
 
 public class LotteryFunction {
+
     /**
      * calls existing DbManager method that randomly samples entrants and moves them from waitlist → registrable
      * @param eventId ID of the event
