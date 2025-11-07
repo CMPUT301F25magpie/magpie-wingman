@@ -5,13 +5,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Event; // This is your team's file
+import com.example.magpie_wingman.data.model.Event;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,12 +18,10 @@ import java.util.Locale;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.CANADA); //text formatter
+    // Using a single date format, as agreed
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
     private List<Event> eventList;
     private OnEventListener eventListener;
-
-    // Formatter to turn the timestamp (long) into a "Nov 15" string
-    // private SimpleDateFormat dateFormat_MMMdd = new SimpleDateFormat("MMM d", Locale.getDefault());
 
     public interface OnEventListener {
         void onEventClick(int position);
@@ -49,21 +45,23 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
 
         holder.eventName.setText(event.getEventName());
-        if (event.getEventDate() != null) {
-            holder.eventDate.setText(dateFormat.format(event.getEventDate()));
-        } else {
-            holder.eventDate.setText("Date TBD");
-        }
         holder.eventLocation.setText(event.getEventLocation());
 
-        // Use the correct getter from your team's file: getEventDescription()
+        // Use the correct getter: getEventDescription()
         holder.eventDescription.setText(event.getEventDescription());
 
-        if (event.getEventDate().getTime() > 0) {
-            String dateString = dateFormat.format(new Date(event.getEventDate().getTime()));
+        // FIX: Use the existing Date object, prioritize eventDate if present
+        Date dateToDisplay = event.getEventDate();
+        if (dateToDisplay == null) {
+            // If eventDate is null, use registrationStart (or just show TBD)
+            dateToDisplay = event.getRegistrationStart();
+        }
+
+        if (dateToDisplay != null) {
+            String dateString = dateFormat.format(dateToDisplay);
             holder.eventDate.setText(dateString);
         } else {
-            holder.eventDate.setText("TBD"); 
+            holder.eventDate.setText("Date TBD");
         }
     }
 
@@ -72,9 +70,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         return eventList.size();
     }
 
-    /**
-     * The ViewHolder class
-     */
     public static class EventViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         ImageView eventPoster;

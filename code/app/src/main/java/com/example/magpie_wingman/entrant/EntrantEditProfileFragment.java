@@ -2,6 +2,7 @@ package com.example.magpie_wingman.entrant;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +11,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
@@ -77,19 +77,18 @@ public class EntrantEditProfileFragment extends Fragment {
             dobEt.setOnClickListener(_v -> showDatePicker());
         }
 
-        // Load current user data (Pls pass userID when navigating)
-        // E.g:
-        // Bundle args = new Bundle();
-        // args.putString("userId", currentUserId);
-        // NavHostFragment.findNavController(this)
-        //      .navigate(R.id.action_to_entrantInvitationsFragment, args);
-        String userId = getArguments() != null ? getArguments().getString("userId") : null;
-        if (TextUtils.isEmpty(userId)) {
-            Toast.makeText(requireContext(), "Missing userId for profile edit.", Toast.LENGTH_SHORT).show();
-            btnUpdate.setEnabled(false);
-            return;
-        }
+        // Retrieve deviceId
+        String deviceId = Settings.Secure.getString(
+                requireContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
 
+        DbManager.getInstance().findUserByDeviceId(deviceId)
+                .addOnSuccessListener(this::loadUser);
+    }
+
+    // Loads profile data
+    private void loadUser(String userId) {
         DbManager dbm = DbManager.getInstance();
 
         dbm.getUserName(userId).addOnSuccessListener(name -> {
@@ -114,7 +113,7 @@ public class EntrantEditProfileFragment extends Fragment {
         });
 
         // Load DOB
-        DbManager.getInstance().getDb()
+        dbm.getDb()
                 .collection("users").document(userId)
                 .get()
                 .addOnSuccessListener((DocumentSnapshot doc) -> {

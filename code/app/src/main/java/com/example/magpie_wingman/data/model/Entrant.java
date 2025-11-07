@@ -36,5 +36,5 @@ for running in android studios
 @id/organizerNewEventFragment
 @id/entrantEventsFragment
 @id/adminProfilesFragment
-@id/FirstFragment
+@id/adminEventsFragment
  */

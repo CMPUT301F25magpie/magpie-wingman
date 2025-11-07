@@ -4,7 +4,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import android.provider.Settings; // Import this
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +15,9 @@ import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Event; // Import Event model
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class DetailedEventDescriptionFragment extends Fragment {
 
@@ -26,9 +29,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
     // Data
     private String eventId;
-    private String eventName;
-    private String eventDescription;
-    private String eventLocation;
+    private Event currentEvent;
 
     // Firebase
     private DbManager dbManager;
@@ -41,21 +42,24 @@ public class DetailedEventDescriptionFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Get the DbManager instance
-        dbManager = DbManager.getInstance();
+        try {
+            dbManager = DbManager.getInstance();
+        } catch (IllegalStateException e) {
+            if (getContext() != null) {
+                DbManager.init(getContext().getApplicationContext());
+                dbManager = DbManager.getInstance();
+            }
+        }
 
-        // Get the event data passed from the list
+        // We only pass eventId in the navigation now
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
-            eventName = getArguments().getString("eventName");
-            eventDescription = getArguments().getString("eventDescription");
-            eventLocation = getArguments().getString("eventLocation");
         }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_detailed_event_description, container, false);
     }
 
@@ -69,51 +73,71 @@ public class DetailedEventDescriptionFragment extends Fragment {
         descriptionTextView = view.findViewById(R.id.text_view_event_description_detail);
         signUpButton = view.findViewById(R.id.button_sign_up);
 
-        // Set the event data to the views
-        titleTextView.setText(eventName);
-        locationTextView.setText(eventLocation);
-        descriptionTextView.setText(eventDescription);
+        signUpButton.setEnabled(false);
+        signUpButton.setText("Loading...");
 
-        // Set the click listener for the "Sign Up" button
+        // Load the event details from Firebase using the eventId
+        if (eventId != null) {
+            loadEventDetails();
+        } else {
+            Toast.makeText(getContext(), "Error: No Event ID", Toast.LENGTH_SHORT).show();
+        }
+
         signUpButton.setOnClickListener(v -> {
             signUpForEvent();
         });
     }
 
     /**
-     * Signs the user up for the current event.
+     * Fetches the full event object from Firebase and updates UI
+     */
+    private void loadEventDetails() {
+        FirebaseFirestore db = dbManager.getDb();
+
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        currentEvent = doc.toObject(Event.class); // Auto-convert
+                        if (currentEvent != null) {
+                            // Set the data to the views using the final getters
+                            titleTextView.setText(currentEvent.getEventName());
+                            locationTextView.setText(currentEvent.getEventLocation());
+                            descriptionTextView.setText(currentEvent.getEventDescription());
+
+                            signUpButton.setEnabled(true);
+                            signUpButton.setText("Sign Up for Event");
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Error: Event not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to load event details", Toast.LENGTH_SHORT).show();
+                    Log.e("DetailFragment", "Failed to load event", e);
+                });
+    }
+
+    /**
+     * Signs the user up for the current event
      */
     private void signUpForEvent() {
-        if (eventId == null) {
-            Toast.makeText(getContext(), "Error: Event ID is null", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Get the device ID as a mock/stand-in for the userId
+        // Use the device ID as a stand-in for the real user ID
         String mockUserId = Settings.Secure.getString(
-                getContext().getContentResolver(),
+                requireContext().getContentResolver(),
                 Settings.Secure.ANDROID_ID
         );
 
-        if (mockUserId == null) {
-            Toast.makeText(getContext(), "Error: Could not get user ID", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Disable the button to prevent multiple clicks
         signUpButton.setEnabled(false);
         signUpButton.setText("Signing up...");
 
         // Call your team's DbManager function
         dbManager.addUserToWaitlist(eventId, mockUserId)
                 .addOnSuccessListener(aVoid -> {
-                    // Success!
                     signUpButton.setText("Signed Up!");
-                    Toast.makeText(getContext(), "Successfully signed up for " + eventName, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Successfully joined waitlist for " + currentEvent.getEventName(), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    // Failure
-                    Log.e("DetailedEventDesc", "Failed to sign up", e);
+                    Log.e("DetailFragment", "Failed to sign up", e);
                     Toast.makeText(getContext(), "Failed to sign up. Please try again.", Toast.LENGTH_LONG).show();
                     signUpButton.setEnabled(true);
                     signUpButton.setText("Sign Up for Event");

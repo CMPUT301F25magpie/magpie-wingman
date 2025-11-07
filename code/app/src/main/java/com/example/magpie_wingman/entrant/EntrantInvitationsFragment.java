@@ -1,6 +1,7 @@
 package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -52,18 +53,23 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
         adapter = new InvitationAdapter(this);
         recycler.setAdapter(adapter);
 
-        // Load current user data (Pls pass userID when navigating)
-        userId = getArguments() != null ? getArguments().getString("userId") : null;
-        if (TextUtils.isEmpty(userId)) {
-            Toast.makeText(requireContext(), "Missing userId.", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // Retrieve deviceId
+        String deviceId = Settings.Secure.getString(
+                requireContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
 
-        loadInvitations();
+        DbManager.getInstance().findUserByDeviceId(deviceId)
+                .addOnSuccessListener(uid -> {
+                    userId = uid;
+                    loadInvitations();
+                });
     }
 
     // Load all events where this user is present in events/{eventId}/registrable/{userId}
     private void loadInvitations() {
+        if (TextUtils.isEmpty(userId)) return;
+
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
         db.collectionGroup("registrable")
@@ -91,13 +97,12 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
                             String location = getStringSafe(ev, "eventLocation");
                             String datetime = formatRange(ev.get("registrationStart"), ev.get("registrationEnd"));
 
-                            long invitedAt = 0L;
-                            Timestamp ts = registrableDoc.getTimestamp("invitedAt");
-                            if (ts != null) invitedAt = ts.toDate().getTime();
+                            long invitedAt = readInvitedAt(registrableDoc);
 
                             out.add(new Invitation(eventId, name, datetime, location, desc, invitedAt));
 
                             if (--pending[0] == 0) {
+                                // Sort by newest invitation
                                 out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
                                 adapter.setItems(out);
                             }
@@ -114,6 +119,8 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
     // Adapter actions
     @Override
     public void onAccept(Invitation inv, int position) {
+        if (TextUtils.isEmpty(userId)) return;
+
         DbManager.getInstance()
                 .addUserToRegistered(inv.getEventId(), userId)
                 .addOnSuccessListener(_v -> {
@@ -127,6 +134,8 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
 
     @Override
     public void onDecline(Invitation inv, int position) {
+        if (TextUtils.isEmpty(userId)) return;
+
         DbManager.getInstance()
                 .cancelRegistrable(inv.getEventId(), userId)
                 .addOnSuccessListener(_v -> {
@@ -144,13 +153,23 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
         return v == null ? "" : String.valueOf(v);
     }
 
-    private static final SimpleDateFormat SDF = new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault());
+    private static final SimpleDateFormat SDF =
+            new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault());
 
     private static String formatRange(Object start, Object end) {
         Date s = (start instanceof Timestamp) ? ((Timestamp) start).toDate() : null;
-        Date e = (end   instanceof Timestamp) ? ((Timestamp) end).toDate() : null;
+        Date e = (end instanceof Timestamp) ? ((Timestamp) end).toDate() : null;
         if (s == null && e == null) return "";
         if (s != null && e != null) return SDF.format(s) + " – " + SDF.format(e);
         return s != null ? SDF.format(s) : SDF.format(e);
+    }
+
+    private static long readInvitedAt(DocumentSnapshot doc) {
+        Object v = doc.get("invitedAt");
+        if (v == null) return 0L;
+        if (v instanceof Timestamp) return ((Timestamp) v).toDate().getTime();
+        if (v instanceof Long) return (Long) v;
+        if (v instanceof Double) return ((Double) v).longValue();
+        return 0L;
     }
 }
