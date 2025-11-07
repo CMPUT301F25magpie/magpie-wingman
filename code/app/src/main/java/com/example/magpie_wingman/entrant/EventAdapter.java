@@ -23,8 +23,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.CANADA); //text formatter
     private List<Event> eventList;
     private OnEventListener eventListener;
+
     // Formatter to turn the timestamp (long) into a "Nov 15" string
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
+    // private SimpleDateFormat dateFormat_MMMdd = new SimpleDateFormat("MMM d", Locale.getDefault());
 
     public interface OnEventListener {
         void onEventClick(int position);
@@ -58,8 +59,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         // Use the correct getter from your team's file: getEventDescription()
         holder.eventDescription.setText(event.getEventDescription());
 
-        if (event.getEventStartTime() > 0) {
-            String dateString = dateFormat.format(new Date(event.getEventStartTime()));
+        if (event.getEventDate().getTime() > 0) {
+            String dateString = dateFormat.format(new Date(event.getEventDate().getTime()));
             holder.eventDate.setText(dateString);
         } else {
             holder.eventDate.setText("TBD"); 

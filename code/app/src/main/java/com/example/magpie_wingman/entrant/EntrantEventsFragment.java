@@ -65,7 +65,7 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
         adapter = new EventAdapter(eventList, this);
         recyclerView.setAdapter(adapter);
 
-        loadEventsFromFirebase();
+        loadEventsFromDatabase();
     }
 
     /**
