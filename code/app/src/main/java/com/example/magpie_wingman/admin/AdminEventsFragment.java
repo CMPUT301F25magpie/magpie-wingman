@@ -1,66 +1,109 @@
 package com.example.magpie_wingman.admin;
 
 import android.os.Bundle;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Event;
+import com.example.magpie_wingman.entrant.EventAdapter;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link AdminEventsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class AdminEventsFragment extends Fragment {
+import java.util.ArrayList;
+import java.util.List;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class AdminEventsFragment extends Fragment implements EventAdapter.OnEventListener {
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView recyclerView;
+    private EventAdapter adapter;
+    private List<Event> eventList;
+
+    private DbManager dbManager;
 
     public AdminEventsFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AdminEventsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static AdminEventsFragment newInstance(String param1, String param2) {
-        AdminEventsFragment fragment = new AdminEventsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_admin_events, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // 1. Get the instance of your team's DbManager
+        // This assumes DbManager.init(context) was called in your "MyApp" or "MainActivity"
+        dbManager = DbManager.getInstance();
+
+        // 2. Prepare the list and RecyclerView
+        eventList = new ArrayList<>();
+        recyclerView = view.findViewById(R.id.recycler_view_admin_events);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // 3. Create the adapter with the *empty* list (it will be filled)
+        adapter = new EventAdapter(eventList, this);
+        recyclerView.setAdapter(adapter);
+
+        // 4. Load the real data from Firebase
+        loadEventsFromFirebase();
+    }
+
+    /**
+     * Replaces loadMockEvents().
+     * Fetches all events from the "events" collection in Firestore.
+     */
+    private void loadEventsFromFirebase() {
+        // Get the raw db instance from your manager
+        FirebaseFirestore db = dbManager.getDb();
+
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+
+                        // Clear the list just in case
+                        eventList.clear();
+
+                        // Loop through all documents in the "events" collection
+                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                            // Use Firestore's built-in converter to create an Event object
+                            // This works because your Event.java has an empty constructor
+                            Event event = doc.toObject(Event.class);
+                            if (event != null) {
+                                eventList.add(event);
+                            }
+                        }
+
+                        // Tell the adapter that the data has changed!
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        Log.d("AdminEventsFragment", "No events found.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Tell the user something went wrong
+                    Log.e("AdminEventsFragment", "Error loading events", e);
+                    Toast.makeText(getContext(), "Error loading events", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    @Override
+    public void onEventClick(int position) {
+        Event clickedEvent = eventList.get(position);
+        Toast.makeText(getContext(), "Admin clicked on: " + clickedEvent.getEventName(), Toast.LENGTH_SHORT).show();
     }
 }

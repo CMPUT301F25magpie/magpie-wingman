@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +47,16 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        try {
+            dbManager = DbManager.getInstance();
+        } catch (IllegalStateException e) {
+            if (getContext() != null) {
+                DbManager.init(getContext().getApplicationContext());
+                dbManager = DbManager.getInstance();
+            }
+        }
+
+        userList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_admin_profiles);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         // loadMockProfiles();
@@ -71,27 +82,8 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                                 e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
-    /**
-     * Creates mock data based on the new mockup.
-     */
-//    private void loadMockProfiles() {
-//        userProfileList = new ArrayList<>();
-//        userProfileList.add(new UserProfile("Person 1", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 2", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 3", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 4", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 5", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 6", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 7", "Entrant"));
-//        userProfileList.add(new UserProfile("Person 8", "Entrant"));
-//        userProfileList.add(new UserProfile("Jane Doe", "Entrant"));
-//        userProfileList.add(new UserProfile("John Doe", "Entrant"));
-//        userProfileList.add(new UserProfile("Stuart Little", "Entrant"));
-//        userProfileList.add(new UserProfile("Satoru Gojo", "Entrant"));
-//        userProfileList.add(new UserProfile("Spike Spiegel", "Organizer"));
-//    }
 
-    // 3. This method runs when the "X" is clicked
+
     @Override
     public void onRemoveClicked(int position) {
         UserProfile target = userProfileList.get(position);
