@@ -35,7 +35,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         // Required empty public constructor
     }
 
-    private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
+    // private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
