@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Entrant; // Make sure this import is correct
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -34,7 +35,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         // Required empty public constructor
     }
 
-    private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
+    // private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
