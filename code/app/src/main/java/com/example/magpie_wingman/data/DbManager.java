@@ -47,8 +47,14 @@ public class DbManager {
     private final SecureRandom random = new SecureRandom();
 
     private DbManager(Context context) {
-        this.appContext = context.getApplicationContext();
-        this.db = FirebaseFirestore.getInstance();
+        // prevent crash when running in unit tests
+        if (context != null) {
+            this.appContext = context.getApplicationContext();
+            this.db = FirebaseFirestore.getInstance();
+        } else {
+            this.appContext = null;
+            this.db = null; // no Firestore in local tests
+        }
     }
 
     public static synchronized void init(Context context) {
@@ -62,6 +68,13 @@ public class DbManager {
             throw new IllegalStateException("DbManager not initialized. Call DbManager.init(context) first.");
         }
         return instance;
+    }
+
+    // helper function to allow initialization for testing
+    public static void initForTesting() {
+        if (instance == null) {
+            instance = new DbManager(null);
+        }
     }
 
     public FirebaseFirestore getDb() {

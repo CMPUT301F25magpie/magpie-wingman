@@ -5,8 +5,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,7 +22,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private List<Event> eventList;
     private OnEventListener eventListener;
     // Formatter to turn the timestamp (long) into a "Nov 15" string
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
+    //private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
 
     public interface OnEventListener {
         void onEventClick(int position);
@@ -48,8 +46,12 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
 
         holder.eventName.setText(event.getEventName());
-        if (event.getEventDate() != null) {
-            holder.eventDate.setText(dateFormat.format(event.getEventDate()));
+
+        Date date = event.getEventDate();
+        if (date != null) {
+            holder.eventDate.setText(dateFormat.format(date));
+        } else if (event.getRegistrationStart() != null) {
+            holder.eventDate.setText(dateFormat.format(event.getRegistrationStart()));
         } else {
             holder.eventDate.setText("Date TBD");
         }
@@ -58,12 +60,12 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         // Use the correct getter from your team's file: getEventDescription()
         holder.eventDescription.setText(event.getEventDescription());
 
-        if (event.getEventStartTime() > 0) {
+        /** if (event.getEventStartTime() > 0) {
             String dateString = dateFormat.format(new Date(event.getEventStartTime()));
             holder.eventDate.setText(dateString);
         } else {
             holder.eventDate.setText("TBD"); 
-        }
+        } */
     }
 
     @Override

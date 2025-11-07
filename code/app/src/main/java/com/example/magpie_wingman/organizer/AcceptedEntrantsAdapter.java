@@ -43,7 +43,7 @@ public class AcceptedEntrantsAdapter extends RecyclerView.Adapter<AcceptedEntran
     @Override
     public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
         Entrant entrant = entrantList.get(position);
-        holder.nameTextView.setText(entrant.getUserName());
+        holder.nameTextView.setText(entrant.getName());
         // We removed the status text view, so no code is needed here for it
     }
 

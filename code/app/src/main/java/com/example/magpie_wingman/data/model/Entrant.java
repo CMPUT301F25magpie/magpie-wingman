@@ -19,6 +19,10 @@ public class Entrant extends User{
         super(userId, name, /*isOrganizer*/ false, profileImageUrl, email, phone, deviceId);
     }
 
+    public Entrant(String userId, String name) {
+        super(userId, name, false, null, null, null, null);
+    }
+
     public List<String> getWaitlistedEvents() { return waitlistedEvents; }
     public List<String> getEnrolledEvents()   { return enrolledEvents; }
 

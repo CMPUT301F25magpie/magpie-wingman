@@ -11,6 +11,12 @@ public class LotteryFunction {
      * @return Task<Void> to monitor completion
      */
     public static Task<Void> sampleEntrantsForEvent(String eventId, int sampleCount) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Event ID cannot be null or empty");
+        }
+        if (sampleCount < 0) {
+            throw new IllegalArgumentException("Sample count must be non-negative");
+        }
         DbManager dbManager = DbManager.getInstance();
         return dbManager.addUsersToRegistrable(eventId, sampleCount);
     }

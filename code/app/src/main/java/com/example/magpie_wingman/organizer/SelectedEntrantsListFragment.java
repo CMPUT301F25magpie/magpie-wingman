@@ -14,7 +14,9 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Entrant; // Make sure this import is correct
+import com.example.magpie_wingman.data.DbManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -28,7 +30,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private List<Entrant> selectedEntrantsList;
 
     private DbManager dbManager;
-    private String eventId;
 
     public SelectedEntrantsListFragment() {
         // Required empty public constructor
