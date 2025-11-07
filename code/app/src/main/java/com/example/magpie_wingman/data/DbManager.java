@@ -169,37 +169,44 @@ public class DbManager {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                // Find all places this user exists in event subcollections
-                QuerySnapshot wl = Tasks.await(
-                        db.collectionGroup("waitlist")
-                                .whereEqualTo("userId", userId)
-                                .get()
-                );
-                QuerySnapshot rg = Tasks.await(
-                        db.collectionGroup("registrable")
-                                .whereEqualTo("userId", userId)
-                                .get()
-                );
-                QuerySnapshot rd = Tasks.await(
-                        db.collectionGroup("registered")
-                                .whereEqualTo("userId", userId)
-                                .get()
-                );
+                // Get all events
+                QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
 
+                // Single batch (no chunking)
                 WriteBatch batch = db.batch();
 
-                for (DocumentSnapshot d : wl.getDocuments()) {
-                    batch.delete(d.getReference());
-                }
-                for (DocumentSnapshot d : rg.getDocuments()) {
-                    batch.delete(d.getReference());
-                }
-                for (DocumentSnapshot d : rd.getDocuments()) {
-                    batch.delete(d.getReference());
+                for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
+                    com.google.firebase.firestore.DocumentReference evRef = ev.getReference();
+
+                    // waitlist
+                    QuerySnapshot wl = Tasks.await(
+                            evRef.collection("waitlist").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : wl.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+
+                    // registrable
+                    QuerySnapshot rg = Tasks.await(
+                            evRef.collection("registrable").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : rg.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+
+                    // registered
+                    QuerySnapshot rd = Tasks.await(
+                            evRef.collection("registered").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : rd.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
                 }
 
+                // Finally delete the user doc
                 batch.delete(db.collection("users").document(userId));
 
+                // Commit once
                 Tasks.await(batch.commit());
                 tcs.setResult(null);
             } catch (Exception e) {
