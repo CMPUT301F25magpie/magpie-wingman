@@ -46,16 +46,15 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadSelectedEntrants();
 
-        // 2. Pass 'this' (the fragment) as the listener to the adapter
+        // init list + adapter BEFORE loading data
+        selectedEntrantsList = new ArrayList<>();
         adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
         recyclerView.setAdapter(adapter);
+
+        loadSelectedEntrants();
     }
 
-    /**
-     * Creates mock data to display in the list.
-     */
 
     // 4. This is the new method from the interface
     // It runs when the "X" is clicked
@@ -72,8 +71,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     }
 
     private void loadSelectedEntrants() {
-        selectedEntrantsList = new ArrayList<>();
-
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("events")
@@ -86,20 +83,21 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                     for (QueryDocumentSnapshot doc : snap) {
                         String userId = doc.getId();
 
-                        // Fetch user profile to get their display name
                         db.collection("users")
                                 .document(userId)
                                 .get()
                                 .addOnSuccessListener(userSnap -> {
                                     String userName = userSnap.getString("name");
-
-                                    // Fallback if name is missing:
                                     if (userName == null || userName.isEmpty()) {
                                         userName = userId;
                                     }
-
                                     selectedEntrantsList.add(new Entrant(userId, userName));
-                                    adapter.notifyDataSetChanged(); // update UI incrementally
+                                    adapter.notifyDataSetChanged(); //
+                                })
+                                .addOnFailureListener(e -> {
+
+                                    selectedEntrantsList.add(new Entrant(userId, userId));
+                                    adapter.notifyDataSetChanged();
                                 });
                     }
                 })
