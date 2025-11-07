@@ -720,6 +720,17 @@ public class DbManager {
                     return users;
                 });
     }
-
+    public Task<String> findUserByDeviceId(String deviceId) {
+        return db.collection("users")
+                .whereEqualTo("deviceId", deviceId)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
+                        return null; // No match found
+                    }
+                    return task.getResult().getDocuments().get(0).getId(); // Return userId
+                });
+    }
 }
 
