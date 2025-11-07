@@ -81,6 +81,30 @@
                 android:ellipsize="end"
                 android:textColor="?android:attr/textColorSecondary"/>
 
+            <!-- Join / Leave button -->
+            <Button
+                android:id="@+id/btnJoinLeave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="@string/list_item_event_join_button"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:text="Join waitlist" />
+
+            <!-- Small spinner shown while writing (adapter can toggle visibility) -->
+            <ProgressBar
+                android:id="@+id/progressJoin"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="@id/btnJoinLeave"
+                app:layout_constraintTop_toBottomOf="@id/btnJoinLeave" />
+
         </LinearLayout>
     </RelativeLayout>
 </androidx.cardview.widget.CardView>
