@@ -4,6 +4,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import android.provider.Settings; // Import this
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
 
 public class DetailedEventDescriptionFragment extends Fragment {
 
@@ -27,6 +30,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private String eventDescription;
     private String eventLocation;
 
+    // Firebase
+    private DbManager dbManager;
+
     public DetailedEventDescriptionFragment() {
         // Required empty public constructor
     }
@@ -35,7 +41,10 @@ public class DetailedEventDescriptionFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. Get the arguments passed from the list fragment
+        // Get the DbManager instance
+        dbManager = DbManager.getInstance();
+
+        // Get the event data passed from the list
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
             eventName = getArguments().getString("eventName");
@@ -47,7 +56,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_detailed_event_description, container, false);
     }
 
@@ -55,31 +63,60 @@ public class DetailedEventDescriptionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 2. Find all the views from the layout
+        // Find views
         titleTextView = view.findViewById(R.id.text_view_event_title_detail);
         locationTextView = view.findViewById(R.id.text_view_event_location_detail);
         descriptionTextView = view.findViewById(R.id.text_view_event_description_detail);
         signUpButton = view.findViewById(R.id.button_sign_up);
 
-        // 3. Set the data to the views
+        // Set the event data to the views
         titleTextView.setText(eventName);
         locationTextView.setText(eventLocation);
         descriptionTextView.setText(eventDescription);
 
-        // (In a real app, you might check if the user is *already* signed up
-        // and change the button text, e.g., "View QR Code")
-
-        // 4. Set the click listener for the "Sign Up" button
+        // Set the click listener for the "Sign Up" button
         signUpButton.setOnClickListener(v -> {
-            // This is where you would call your DatabaseManager
-            // to sign the user up for this 'eventId'.
-
-            // For now, just show a Toast.
-            Toast.makeText(getContext(), "Signing up for " + eventName, Toast.LENGTH_SHORT).show();
-
-            // You might also disable the button after click
-            signUpButton.setEnabled(false);
-            signUpButton.setText("Signed Up!");
+            signUpForEvent();
         });
+    }
+
+    /**
+     * Signs the user up for the current event.
+     */
+    private void signUpForEvent() {
+        if (eventId == null) {
+            Toast.makeText(getContext(), "Error: Event ID is null", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Get the device ID as a mock/stand-in for the userId
+        String mockUserId = Settings.Secure.getString(
+                getContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+
+        if (mockUserId == null) {
+            Toast.makeText(getContext(), "Error: Could not get user ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Disable the button to prevent multiple clicks
+        signUpButton.setEnabled(false);
+        signUpButton.setText("Signing up...");
+
+        // Call your team's DbManager function
+        dbManager.addUserToWaitlist(eventId, mockUserId)
+                .addOnSuccessListener(aVoid -> {
+                    // Success!
+                    signUpButton.setText("Signed Up!");
+                    Toast.makeText(getContext(), "Successfully signed up for " + eventName, Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    // Failure
+                    Log.e("DetailedEventDesc", "Failed to sign up", e);
+                    Toast.makeText(getContext(), "Failed to sign up. Please try again.", Toast.LENGTH_LONG).show();
+                    signUpButton.setEnabled(true);
+                    signUpButton.setText("Sign Up for Event");
+                });
     }
 }
