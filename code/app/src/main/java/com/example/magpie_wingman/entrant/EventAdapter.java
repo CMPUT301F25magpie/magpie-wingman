@@ -10,16 +10,20 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Event; // Import our new model
+import com.example.magpie_wingman.data.model.Event; // This is your team's file
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
     private List<Event> eventList;
     private OnEventListener eventListener;
+    // Formatter to turn the timestamp (long) into a "Nov 15" string
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
 
-    // Interface for click events
     public interface OnEventListener {
         void onEventClick(int position);
     }
@@ -42,9 +46,20 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
 
         holder.eventName.setText(event.getEventName());
-        // holder.eventDate.setText(event.getEventDate());
+        // holder.eventDate.setText(event.getEventDate());              <<<<<<< DATATYPE INCORRECT
         holder.eventLocation.setText(event.getEventLocation());
-        holder.eventDescription.setText(event.getDescription()); // <-- UPDATED
+
+        // Use the correct getter from your team's file: getEventDescription()
+        holder.eventDescription.setText(event.getEventDescription());
+
+        // Use the correct getter: getEventStartTime()
+        // Convert the 'long' timestamp to a formatted date string
+        if (event.getEventStartTime() > 0) {
+            String dateString = dateFormat.format(new Date(event.getEventStartTime()));
+            holder.eventDate.setText(dateString);
+        } else {
+            holder.eventDate.setText("TBD");                       // <<<<<<<<<<<< DATATYPE INCORRECT
+        }
     }
 
     @Override
@@ -61,7 +76,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         TextView eventName;
         TextView eventDate;
         TextView eventLocation;
-        TextView eventDescription; // <-- UPDATED
+        TextView eventDescription;
         OnEventListener eventListener;
 
         public EventViewHolder(@NonNull View itemView, OnEventListener eventListener) {
@@ -70,10 +85,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             eventName = itemView.findViewById(R.id.text_view_event_name);
             eventDate = itemView.findViewById(R.id.text_view_event_date);
             eventLocation = itemView.findViewById(R.id.text_view_event_location);
-            eventDescription = itemView.findViewById(R.id.text_view_event_description); // <-- UPDATED
+            eventDescription = itemView.findViewById(R.id.text_view_event_description);
             this.eventListener = eventListener;
 
-            // Set the click listener on the entire item
             itemView.setOnClickListener(this);
         }
 

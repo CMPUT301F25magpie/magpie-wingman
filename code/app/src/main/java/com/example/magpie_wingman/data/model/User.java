@@ -91,7 +91,10 @@ public class User {
 
     public String getUserId() { return userId; }
 
+    public UserRole getUserRole() { return userRole; }
+
     public String getName() { return name; }
+
     public void setName(String name) { this.name = (name != null && !name.isEmpty()) ? name : userId; }
 
     public boolean isOrganizer() { return isOrganizer; }
