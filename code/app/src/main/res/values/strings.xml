@@ -61,6 +61,7 @@
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
     <string name="sync_header">Sync</string>
+    <string name="delete_header">Delete Account</string>
 
     <!-- Messages Preferences -->
     <string name="signature_title">Your signature</string>
@@ -121,4 +122,5 @@
     <string name="waitlist_default_name">Entrant</string>
     <string name="toast_failed_waitlist">Failed to load waitlist: %1$s</string>
 
+    <string name="list_item_event_join_button">Join waitlist</string>
 </resources>

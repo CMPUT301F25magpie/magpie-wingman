@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,12 +21,14 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-// 1. Implement the adapter's interface
 public class SelectedEntrantsListFragment extends Fragment implements SelectedEntrantsAdapter.OnEntrantRemoveListener {
 
     private RecyclerView recyclerView;
     private SelectedEntrantsAdapter adapter;
     private List<Entrant> selectedEntrantsList;
+
+    private DbManager dbManager;
+    private String eventId;
 
     public SelectedEntrantsListFragment() {
         // Required empty public constructor
@@ -34,9 +37,17 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (getArguments() != null) {
+            this.eventId = getArguments().getString("eventId");
+        }
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_selected_entrants_list, container, false);
     }
 
@@ -44,6 +55,16 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        try {
+            dbManager = DbManager.getInstance();
+        } catch (IllegalStateException e) {
+            if (getContext() != null) {
+                DbManager.init(getContext().getApplicationContext());
+                dbManager = DbManager.getInstance();
+            }
+        }
+
+        selectedEntrantsList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -60,14 +81,21 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     // It runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
-        // Remove the item from our data list
-        selectedEntrantsList.remove(position);
+        Entrant entrantToRemove = selectedEntrantsList.get(position);
+        String userId = entrantToRemove.getUserId();
+        String userName = entrantToRemove.getName();
 
-        // Tell the adapter that the item was removed so it can update the screen
-        adapter.notifyItemRemoved(position);
-
-        // This makes sure all other positions are updated correctly
-        adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+        dbManager.cancelRegistrable(eventId, userId)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Removed " + userName, Toast.LENGTH_SHORT).show();
+                    selectedEntrantsList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                    adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to remove " + userName, Toast.LENGTH_SHORT).show();
+                    Log.e("SelectedEntrants", "Failed to remove user", e);
+                });
     }
 
     private void loadSelectedEntrants() {
