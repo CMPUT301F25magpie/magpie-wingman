@@ -1,5 +1,7 @@
 package com.example.magpie_wingman.data;
 
+import androidx.annotation.Nullable;
+
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
@@ -15,8 +17,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class NotificationFunction {
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseFirestore db;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    public NotificationFunction() {
+        this(FirebaseFirestore.getInstance());
+    }
+    public NotificationFunction(@Nullable FirebaseFirestore firestore) {
+        this.db = firestore;
+    }
     /**
      * sends a notification to all users in a given event subcollection e.g. waitlist / registrable / cancelled (not done yet)
      *
@@ -28,6 +37,11 @@ public class NotificationFunction {
     public Task<Void> notifyEntrants(String eventId, String subcollectionName, String message) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
 
+        if (db == null) {
+            System.out.println("Skipping Firestore in test mode");
+            tcs.setResult(null);
+            return tcs.getTask();
+        }
         executor.execute(() -> {
             try {
                 QuerySnapshot query = Tasks.await(

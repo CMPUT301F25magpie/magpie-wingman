@@ -5,21 +5,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Event; // Import our new model
+import com.example.magpie_wingman.data.model.Event;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
+    // Using a single date format, as agreed
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
     private List<Event> eventList;
     private OnEventListener eventListener;
 
-    // Interface for click events
     public interface OnEventListener {
         void onEventClick(int position);
     }
@@ -41,10 +44,25 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = eventList.get(position);
 
-        /**holder.eventName.setText(event.getEventName());
-        holder.eventDate.setText(event.getEventDate());
+        holder.eventName.setText(event.getEventName());
         holder.eventLocation.setText(event.getEventLocation());
-        holder.eventDescription.setText(event.getDescription());*/ // <-- UPDATED
+
+        // Use the correct getter: getEventDescription()
+        holder.eventDescription.setText(event.getEventDescription());
+
+        // FIX: Use the existing Date object, prioritize eventDate if present
+        Date dateToDisplay = event.getEventDate();
+        if (dateToDisplay == null) {
+            // If eventDate is null, use registrationStart (or just show TBD)
+            dateToDisplay = event.getRegistrationStart();
+        }
+
+        if (dateToDisplay != null) {
+            String dateString = dateFormat.format(dateToDisplay);
+            holder.eventDate.setText(dateString);
+        } else {
+            holder.eventDate.setText("Date TBD");
+        }
     }
 
     @Override
@@ -52,16 +70,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         return eventList.size();
     }
 
-    /**
-     * The ViewHolder class
-     */
     public static class EventViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         ImageView eventPoster;
         TextView eventName;
         TextView eventDate;
         TextView eventLocation;
-        TextView eventDescription; // <-- UPDATED
+        TextView eventDescription;
         OnEventListener eventListener;
 
         public EventViewHolder(@NonNull View itemView, OnEventListener eventListener) {
@@ -70,10 +85,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             eventName = itemView.findViewById(R.id.text_view_event_name);
             eventDate = itemView.findViewById(R.id.text_view_event_date);
             eventLocation = itemView.findViewById(R.id.text_view_event_location);
-            eventDescription = itemView.findViewById(R.id.text_view_event_description); // <-- UPDATED
+            eventDescription = itemView.findViewById(R.id.text_view_event_description);
             this.eventListener = eventListener;
 
-            // Set the click listener on the entire item
             itemView.setOnClickListener(this);
         }
 

@@ -1,11 +1,18 @@
 package com.example.magpie_wingman.data.model;
 
+import androidx.annotation.Nullable;
+
+import java.util.Date;
+
 public class Organizer extends User {
-    public Organizer() {
-        super();
-        this.userRole = UserRole.ORGANIZER;
-    }
-    public Organizer(String userId, String userName, String userEmail, String userPhone, String userDeviceId) {
-        super(userId, userName, userEmail, userPhone, userDeviceId, UserRole.ORGANIZER);
+
+    public Organizer(String userId,
+                     String name,
+                     @Nullable String profileImageUrl,
+                     @Nullable String email,
+                     @Nullable String phone,
+                     @Nullable String deviceId,
+                     @Nullable Date birthday) {
+        super(userId, name, /*isOrganizer*/ true, profileImageUrl, email, phone, deviceId, birthday);
     }
 }
