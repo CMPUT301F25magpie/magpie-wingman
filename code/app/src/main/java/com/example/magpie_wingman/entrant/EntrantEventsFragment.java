@@ -15,6 +15,11 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Event;
+import com.example.magpie_wingman.entrant.EventAdapter;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.example.magpie_wingman.data.model.Event; // Import our new model
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
@@ -58,6 +63,39 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
         recyclerView = view.findViewById(R.id.recycler_view_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Create and set the adapter (pass 'this' as the listener)
+        adapter = new EventAdapter(eventList, this);
+        recyclerView.setAdapter(adapter);
+
+        loadEventsFromFirebase();
+    }
+
+    /**
+     * Fetches all events from the "events" collection in Firestore.
+     */
+    private void loadEventsFromFirebase() {
+        FirebaseFirestore db = dbManager.getDb();
+
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        eventList.clear();
+
+                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                            Event event = doc.toObject(Event.class);
+                            if (event != null) {
+                                eventList.add(event);
+                            }
+                        }
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        Log.d("EntrantEventsFragment", "No events found.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EntrantEventsFragment", "Error loading events", e);
+                    Toast.makeText(getContext(), "Error loading events", Toast.LENGTH_SHORT).show();
         // 3. Load the data (now from Firebase instead of mock)
         loadEventsFromDatabase();
 

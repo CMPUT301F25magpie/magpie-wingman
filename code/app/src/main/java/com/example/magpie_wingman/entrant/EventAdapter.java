@@ -23,6 +23,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.CANADA); //text formatter
     private List<Event> eventList;
     private OnEventListener eventListener;
+    // Formatter to turn the timestamp (long) into a "Nov 15" string
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
 
     // Formatter to turn the timestamp (long) into a "Nov 15" string
     // private SimpleDateFormat dateFormat_MMMdd = new SimpleDateFormat("MMM d", Locale.getDefault());
@@ -49,6 +51,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
 
         holder.eventName.setText(event.getEventName());
+        // holder.eventDate.setText(event.getEventDate());              <<<<<<< DATATYPE INCORRECT
         if (event.getEventDate() != null) {
             holder.eventDate.setText(dateFormat.format(event.getEventDate()));
         } else {
@@ -59,6 +62,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         // Use the correct getter from your team's file: getEventDescription()
         holder.eventDescription.setText(event.getEventDescription());
 
+        // Use the correct getter: getEventStartTime()
+        // Convert the 'long' timestamp to a formatted date string
+        if (event.getEventStartTime() > 0) {
+            String dateString = dateFormat.format(new Date(event.getEventStartTime()));
+            holder.eventDate.setText(dateString);
+        } else {
+            holder.eventDate.setText("TBD");                       // <<<<<<<<<<<< DATATYPE INCORRECT
         if (event.getEventDate().getTime() > 0) {
             String dateString = dateFormat.format(new Date(event.getEventDate().getTime()));
             holder.eventDate.setText(dateString);
