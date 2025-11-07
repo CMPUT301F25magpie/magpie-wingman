@@ -41,9 +41,6 @@
         <action
             android:id="@+id/action_loginFragment_to_adminLandingFragment22"
             app:destination="@id/adminLandingFragment2" />
-        <action
-            android:id="@+id/action_loginFragment_to_signUpFragment"
-            app:destination="@id/signUpFragment" />
     </fragment>
     <fragment
         android:id="@+id/entrantLandingFragment3"
@@ -56,6 +53,9 @@
         <action
             android:id="@+id/action_entrantLandingFragment3_to_entrantNotificationsFragment"
             app:destination="@id/entrantNotificationsFragment" />
+        <action
+            android:id="@+id/action_entrantLandingFragment3_to_entrantSettingsFragment"
+            app:destination="@id/entrantSettingsFragment" />
         <action
             android:id="@+id/action_entrantLandingFragment3_to_entrantInvitationsFragment"
             app:destination="@id/entrantInvitationsFragment" />
@@ -71,9 +71,6 @@
         <action
             android:id="@+id/action_entrantLandingFragment3_to_scanQRFragment"
             app:destination="@id/scanQRFragment" />
-        <action
-            android:id="@+id/action_entrantLandingFragment3_to_entrantSettingsFragment"
-            app:destination="@id/entrantSettingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/organizerLandingFragment2"
@@ -113,6 +110,20 @@
         <action
             android:id="@+id/action_adminLandingFragment2_to_adminSettingsFragment"
             app:destination="@id/adminSettingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/entrantSettingsFragment"
+        android:name="com.example.magpie_wingman.entrant.EntrantSettingsFragment"
+        android:label="EntrantSettingsFragment" >
+        <action
+            android:id="@+id/action_entrantSettingsFragment_to_entrantAboutUsFragment"
+            app:destination="@id/entrantAboutUsFragment" />
+        <action
+            android:id="@+id/action_entrantSettingsFragment_to_entrantEditProfileFragment"
+            app:destination="@id/entrantEditProfileFragment" />
+        <action
+            android:id="@+id/action_entrantSettingsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/entrantEventSearchFilterFragment"
@@ -174,6 +185,14 @@
             app:destination="@id/entrantSettingsFragment" />
     </fragment>
     <fragment
+        android:id="@+id/entrantEditProfileFragment"
+        android:name="com.example.magpie_wingman.entrant.EntrantEditProfileFragment"
+        android:label="EntrantEditProfileFragment" >
+        <action
+            android:id="@+id/action_entrantEditProfileFragment_to_entrantSettingsFragment"
+            app:destination="@id/entrantSettingsFragment" />
+    </fragment>
+    <fragment
         android:id="@+id/organizerNewEventFragment"
         android:name="com.example.magpie_wingman.organizer.OrganizerNewEventFragment"
         android:label="fragment_organizer_new_event"
@@ -208,6 +227,23 @@
         <action
             android:id="@+id/action_organizerEditNewEventInfoFragment_to_organizerEditEventFragment"
             app:destination="@id/organizerEditEventFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/organizerSettingsFragment"
+        android:name="com.example.magpie_wingman.organizer.OrganizerSettingsFragment"
+        android:label="OrganizerSettingsFragment" >
+        <action
+            android:id="@+id/action_organizerSettingsFragment_to_organizerLandingFragment2"
+            app:destination="@id/organizerLandingFragment2" />
+        <action
+            android:id="@+id/action_organizerSettingsFragment_to_organizerAboutUsFragment"
+            app:destination="@id/organizerAboutUsFragment" />
+        <action
+            android:id="@+id/action_organizerSettingsFragment_to_organizerEditProfileFragment"
+            app:destination="@id/organizerEditProfileFragment" />
+        <action
+            android:id="@+id/action_organizerSettingsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/organizerEventDetailsFragment"
@@ -285,6 +321,14 @@
             app:destination="@id/organizerSettingsFragment" />
     </fragment>
     <fragment
+        android:id="@+id/organizerEditProfileFragment"
+        android:name="com.example.magpie_wingman.organizer.OrganizerEditProfileFragment"
+        android:label="OrganizerEditProfileFragment" >
+        <action
+            android:id="@+id/action_organizerEditProfileFragment_to_organizerSettingsFragment"
+            app:destination="@id/organizerSettingsFragment" />
+    </fragment>
+    <fragment
         android:id="@+id/adminImagesFragment"
         android:name="com.example.magpie_wingman.admin.AdminImagesFragment"
         android:label="fragment_admin_images"
@@ -331,6 +375,28 @@
         <action
             android:id="@+id/action_adminFilterEventSearchFragment_to_adminEventsFragment"
             app:destination="@id/adminEventsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/adminSettingsFragment"
+        android:name="com.example.magpie_wingman.admin.AdminSettingsFragment"
+        android:label="AdminSettingsFragment" >
+        <action
+            android:id="@+id/action_adminSettingsFragment_to_adminLandingFragment2"
+            app:destination="@id/adminLandingFragment2" />
+        <action
+            android:id="@+id/action_adminSettingsFragment_to_adminEditProfileFragment"
+            app:destination="@id/adminEditProfileFragment" />
+        <action
+            android:id="@+id/action_adminSettingsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/adminEditProfileFragment"
+        android:name="com.example.magpie_wingman.admin.AdminEditProfileFragment"
+        android:label="AdminEditProfileFragment" >
+        <action
+            android:id="@+id/action_adminEditProfileFragment_to_adminSettingsFragment"
+            app:destination="@id/adminSettingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/detailedEventDescriptionFragment"
@@ -410,92 +476,5 @@
         <action
             android:id="@+id/action_cancelledListFragment_to_organizerEventDetailsFragment"
             app:destination="@id/organizerEventDetailsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/signUpFragment"
-        android:name="com.example.magpie_wingman.SignUpFragment"
-        android:label="fragment_sign_up"
-        tools:layout="@layout/fragment_sign_up" >
-        <action
-            android:id="@+id/action_signUpFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/entrantSettingsFragment"
-        android:name="com.example.magpie_wingman.EntrantSettingsFragment"
-        android:label="fragment_entrant_settings"
-        tools:layout="@layout/fragment_entrant_settings" >
-        <action
-            android:id="@+id/action_entrantSettingsFragment_to_entrantLandingFragment3"
-            app:destination="@id/entrantLandingFragment3" />
-        <action
-            android:id="@+id/action_entrantSettingsFragment_to_entrantAboutUsFragment"
-            app:destination="@id/entrantAboutUsFragment" />
-        <action
-            android:id="@+id/action_entrantSettingsFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/action_entrantSettingsFragment_to_entrantEditProfileFragment"
-            app:destination="@id/entrantEditProfileFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/entrantEditProfileFragment"
-        android:name="com.example.magpie_wingman.EntrantEditProfileFragment"
-        android:label="fragment_entrant_edit_profile2"
-        tools:layout="@layout/fragment_entrant_edit_profile" >
-        <action
-            android:id="@+id/action_entrantEditProfileFragment_to_entrantSettingsFragment"
-            app:destination="@id/entrantSettingsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/organizerSettingsFragment"
-        android:name="com.example.magpie_wingman.OrganizerSettingsFragment"
-        android:label="fragment_organizer_settings"
-        tools:layout="@layout/fragment_organizer_settings" >
-        <action
-            android:id="@+id/action_organizerSettingsFragment_to_organizerLandingFragment2"
-            app:destination="@id/organizerLandingFragment2" />
-        <action
-            android:id="@+id/action_organizerSettingsFragment_to_organizerAboutUsFragment"
-            app:destination="@id/organizerAboutUsFragment" />
-        <action
-            android:id="@+id/action_organizerSettingsFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/action_organizerSettingsFragment_to_organizerEditProfileFragment2"
-            app:destination="@id/organizerEditProfileFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/organizerEditProfileFragment"
-        android:name="com.example.magpie_wingman.OrganizerEditProfileFragment"
-        android:label="fragment_organizer_edit_profile"
-        tools:layout="@layout/fragment_organizer_edit_profile" >
-        <action
-            android:id="@+id/action_organizerEditProfileFragment_to_organizerSettingsFragment2"
-            app:destination="@id/organizerSettingsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/adminSettingsFragment"
-        android:name="com.example.magpie_wingman.AdminSettingsFragment"
-        android:label="fragment_admin_settings"
-        tools:layout="@layout/fragment_admin_settings" >
-        <action
-            android:id="@+id/action_adminSettingsFragment_to_adminLandingFragment2"
-            app:destination="@id/adminLandingFragment2" />
-        <action
-            android:id="@+id/action_adminSettingsFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/action_adminSettingsFragment_to_adminEditProfileFragment"
-            app:destination="@id/adminEditProfileFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/adminEditProfileFragment"
-        android:name="com.example.magpie_wingman.AdminEditProfileFragment"
-        android:label="fragment_admin_edit_profile"
-        tools:layout="@layout/fragment_admin_edit_profile" >
-        <action
-            android:id="@+id/action_adminEditProfileFragment_to_adminSettingsFragment"
-            app:destination="@id/adminSettingsFragment" />
     </fragment>
 </navigation>

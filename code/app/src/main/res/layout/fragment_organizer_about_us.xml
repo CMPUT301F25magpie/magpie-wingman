@@ -1,89 +1,14 @@
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0B0B18"
     tools:context=".organizer.OrganizerAboutUsFragment">
 
-    <LinearLayout
+    <!-- TODO: Update blank fragment layout -->
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:text="@string/hello_blank_fragment" />
 
-        <!-- HEADER BAR -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@android:color/white"
-            android:paddingHorizontal="12dp">
-
-            <ImageButton
-                android:id="@+id/button_back"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="@android:color/transparent"
-                android:src="@drawable/ic_arrow_back"
-                android:tint="#000000"
-                android:contentDescription="Back" />
-
-            <ImageView
-                android:id="@+id/image_logo"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@drawable/wingman_logo"
-                android:contentDescription="Logo"
-                android:layout_marginStart="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="About Us"
-                android:textColor="#000000"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
-
-        <!-- LOGO AND APP NAME -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:layout_marginTop="48dp">
-
-            <ImageView
-                android:id="@+id/image_about_logo"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:src="@drawable/wingman_logo"
-                android:contentDescription="Wingman Logo"
-                android:adjustViewBounds="true" />
-
-            <TextView
-                android:id="@+id/text_app_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="wingman"
-                android:textColor="#FFFFFF"
-                android:textSize="42sp"
-                android:layout_marginTop="8dp"
-                android:fontFamily="sans-serif-light"/>
-        </LinearLayout>
-
-        <!-- DESCRIPTION -->
-        <TextView
-            android:id="@+id/text_about_description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:lineSpacingExtra="4dp"
-            android:paddingHorizontal="12dp"
-            android:text="Lorem ipsum dolor sit amet consectetur adipiscing elit. Consequat adipiscing elit quisque faucibus ex sapien vitae. Ex sapien vitae pellentesque sem placerat in id. Placerat in id cursus mi pretium tellus duis. Pretium tellus duis convallis tempus leo eu aenean." />
-    </LinearLayout>
-</ScrollView>
+</FrameLayout>

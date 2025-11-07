@@ -15,13 +15,6 @@ import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
-import com.example.magpie_wingman.data.model.Entrant;
-import com.example.magpie_wingman.data.model.User;
-import com.example.magpie_wingman.data.model.UserRole;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.example.magpie_wingman.data.model.Entrant; // Make sure this import is correct
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -43,15 +36,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     }
 
     // private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        if (getArguments() != null) {
-            this.eventId = getArguments().getString("eventId");
-        }
-    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -85,78 +69,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
-        recyclerView.setAdapter(adapter);
-
-        if (eventId != null) {
-            loadSelectedEntrants(eventId);
-        } else {
-            Toast.makeText(getContext(), "Error: No Event ID provided", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    /**
-     * Fetches the list of "registrable" user IDs, then fetches
-     * each User object for that list.
-     */
-    private void loadSelectedEntrants(String eventId) {
-        FirebaseFirestore db = dbManager.getDb();
-
-        dbManager.getEventRegistrable(eventId)
-                .addOnSuccessListener(userIds -> {
-                    if (userIds == null || userIds.isEmpty()) {
-                        Log.d("SelectedEntrants", "No entrants in registrable list.");
-                        return;
-                    }
-
-                    List<Task<DocumentSnapshot>> userTasks = new ArrayList<>();
-                    for (String userId : userIds) {
-                        userTasks.add(db.collection("users").document(userId).get());
-                    }
-
-                    Tasks.whenAllSuccess(userTasks)
-                            .addOnSuccessListener(results -> {
-                                selectedEntrantsList.clear();
-
-                                for (Object docObj : results) {
-                                    DocumentSnapshot doc = (DocumentSnapshot) docObj;
-
-                                    // Manually read fields to match your User.java
-                                    String userId = doc.getId();
-                                    String userName = doc.getString("name"); // Firebase uses "name"
-                                    String userEmail = doc.getString("email");
-                                    String userPhone = doc.getString("phone");
-                                    String profileImageUrl = doc.getString("profileImageUrl");
-                                    String userDeviceId = doc.getString("deviceId");
-
-                                    // Check their role. We only want to add Entrants.
-                                    Boolean isOrganizer = doc.getBoolean("isOrganizer");
-                                    if (isOrganizer == null || isOrganizer == false) {
-                                        // This is an Entrant. Use your Entrant constructor.
-                                        Entrant entrant = new Entrant(
-                                                userId,
-                                                userName,
-                                                profileImageUrl,
-                                                userEmail,
-                                                userPhone,
-                                                userDeviceId
-                                        );
-                                        selectedEntrantsList.add(entrant);
-                                    }
-                                    // --- END OF FIX ---
-                                }
-
-                                adapter.notifyDataSetChanged();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e("SelectedEntrants", "Failed to fetch user profiles", e);
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("SelectedEntrants", "Failed to get registrable list", e);
-                });
-    }
-
         // init list + adapter BEFORE loading data
         selectedEntrantsList = new ArrayList<>();
         adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
@@ -185,7 +97,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                     Toast.makeText(getContext(), "Failed to remove " + userName, Toast.LENGTH_SHORT).show();
                     Log.e("SelectedEntrants", "Failed to remove user", e);
                 });
-    }
     }
 
     private void loadSelectedEntrants() {
