@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="inv_green_outline">#2ECC71</color>
+    <color name="inv_green_fill">#E8F8F0</color>
+    <color name="inv_red_outline">#E74C3C</color>
+    <color name="inv_red_fill">#FDECEC</color>
+    <color name="inv_green_ripple">#A0CDEBD1</color>
+    <color name="inv_red_ripple">#A0F5C9C5</color>
+</resources>

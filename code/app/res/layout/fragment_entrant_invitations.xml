@@ -1,0 +1,150 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0B0B18"
+    android:orientation="vertical"
+    tools:context=".entrant.EntrantInvitationsFragment">
+
+    <!-- HEADER BAR -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/white"
+        android:paddingHorizontal="12dp">
+
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:tint="#000000"
+            android:contentDescription="Back" />
+
+        <ImageView
+            android:id="@+id/image_logo"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/wingman_logo"
+            android:contentDescription="Logo"
+            android:layout_marginStart="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My Invitations"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- MAIN CONTENT -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:id="@+id/invitations_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Example Invitation Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/rounded_white"
+                android:padding="8dp"
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical">
+
+                <!-- Event Image -->
+                <ImageView
+                    android:id="@+id/image_event_poster"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_music"
+                    android:layout_marginEnd="12dp"
+                    android:clipToOutline="true"
+                    android:background="@drawable/rounded_image"/>
+
+                <!-- Event Info Column -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/text_event_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Title"
+                        android:textStyle="bold"
+                        android:textColor="#000000"
+                        android:textSize="14sp"/>
+
+                    <TextView
+                        android:id="@+id/text_event_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Date - Time"
+                        android:textColor="#444444"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/text_event_location"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Location"
+                        android:textColor="#444444"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/text_event_description"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Description"
+                        android:textColor="#444444"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <!-- Accept/Decline Buttons -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <ImageButton
+                        android:id="@+id/button_accept"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_green"
+                        android:src="@drawable/ic_check"
+                        android:tint="#FFFFFF"
+                        android:layout_marginBottom="8dp"
+                        android:contentDescription="Accept Invitation"/>
+
+                    <ImageButton
+                        android:id="@+id/button_decline"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/circle_red"
+                        android:src="@drawable/ic_close"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Decline Invitation"/>
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

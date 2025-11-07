@@ -65,13 +65,6 @@ public class OrganizerEditEventFragment extends Fragment {
 
         saveButton = view.findViewById(R.id.button_save);
 
-        // **NOTE:** This is where you would load existing event data.
-        // For example:
-        // Event myEvent = ... (load from Firebase) ...
-        // eventTitleField.setText(myEvent.getName());
-        // regStartCalendar.setTimeInMillis(myEvent.getRegStart());
-        // regEndCalendar.setTimeInMillis(myEvent.getRegEnd());
-        // updateDateFields(); // A helper to set the text
 
         // Set click listeners for the registration fields
         regStartDateField.setOnClickListener(v ->

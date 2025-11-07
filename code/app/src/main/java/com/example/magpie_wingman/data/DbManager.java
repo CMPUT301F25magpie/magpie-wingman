@@ -22,6 +22,7 @@ import com.google.firebase.firestore.WriteBatch;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -235,6 +236,37 @@ public class DbManager {
 
                 Tasks.await(Tasks.whenAll(deletes));
                 Tasks.await(deleteEntrant(organizerId));
+
+                tcs.setResult(null);
+            } catch (Exception e) {
+                tcs.setException(e);
+            }
+        });
+
+        return tcs.getTask();
+    }
+
+    public Task<Void> revokeOrganizerAndDeleteEvents(String organizerId) {
+        TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // 1) Revoke organizer role
+                Tasks.await(changeOrgPerms(organizerId, false));
+
+                // 2) Find all events they own (your schema uses "organizerId")
+                QuerySnapshot organizerEvents = Tasks.await(
+                        db.collection("events")
+                                .whereEqualTo("organizerId", organizerId)
+                                .get()
+                );
+
+                // 3) Delete each event (deep) using your existing helper
+                List<Task<Void>> deletes = new ArrayList<>();
+                for (DocumentSnapshot d : organizerEvents.getDocuments()) {
+                    deletes.add(deleteEvent(d.getId()));
+                }
+                Tasks.await(Tasks.whenAll(deletes));
 
                 tcs.setResult(null);
             } catch (Exception e) {
@@ -802,6 +834,46 @@ public class DbManager {
                         users.add(doc.getId());
                     }
                     return users;
+                });
+    }
+
+    /**
+     * Updates the user's password.
+     *
+     * @param userId     ID of the user document to update.
+     * @param newPassword   New password.
+     * @return Task that completes when the update finishes.
+     */
+    public Task <Void> updatePassword(String userId, String newPassword) {
+        return db.collection("users")
+                .document(userId)
+                .update("password", newPassword);
+    }
+
+    /**
+     * Adds/Updates user's date of birth.
+     *
+     * @param userId     ID of the user document to update.
+     * @param newDOB   New phone number to set.
+     * @return Task that completes when the update finishes.
+     */
+
+    public Task<Void> updateDOB(String userId, Date newDOB) {
+        return db.collection("users")
+                .document(userId)
+                .update("dateOfBirth", newDOB);
+    }
+
+    public Task<String> findUserByDeviceId(String deviceId) {
+        return db.collection("users")
+                .whereEqualTo("deviceId", deviceId)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
+                        return null; // No match found
+                    }
+                    return task.getResult().getDocuments().get(0).getId(); // Return userId
                 });
     }
 
