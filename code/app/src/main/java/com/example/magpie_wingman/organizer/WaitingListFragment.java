@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Entrant;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -28,6 +29,7 @@ import java.util.List;
 
 /**
  * US 02.02.01
+ * organizer can view the list of entrants currently on the event’s waiting list
  */
 public class WaitingListFragment extends Fragment {
 
@@ -35,8 +37,8 @@ public class WaitingListFragment extends Fragment {
     private ProgressBar progressBar;
     private TextView emptyText;
     private WaitlistAdapter adapter;
-
-    private String eventId;
+    private List<Entrant> waitlist;
+    private String eventId = "sampling#1213"; //TEMPORARY UNTIL NAVIGATION IS WIRED
 
     public WaitingListFragment() {
     }
@@ -66,7 +68,7 @@ public class WaitingListFragment extends Fragment {
         }
 
         if (eventId != null) {
-            loadWaitlist(eventId);
+            loadWaitlist();
         } else {
             Toast.makeText(requireContext(),
                     getString(R.string.toast_failed_waitlist, "Invalid event ID"),
@@ -76,37 +78,67 @@ public class WaitingListFragment extends Fragment {
         return view;
     }
 
-    private void loadWaitlist(String eventId) {
+    private void loadWaitlist() {
+        waitlist = new ArrayList<>();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
         progressBar.setVisibility(View.VISIBLE);
         emptyText.setVisibility(View.GONE);
 
-        FirebaseFirestore db = DbManager.getInstance().getDb();
+        db.collection("events")
+                .document(eventId)
+                .collection("waitlist")
+                .get()
+                .addOnSuccessListener(snap -> {
+                    waitlist.clear();
 
-        db.collection("events").document(eventId).collection("waitlist")
-                .get().addOnSuccessListener(querySnapshot -> {
-                    progressBar.setVisibility(View.GONE);
-
-                    List<String> entrants = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : querySnapshot) {
-                        String name = doc.getString("name");
-                        if (name == null || name.isEmpty()) {
-                            name = getString(R.string.waitlist_default_name);
-                        }
-                        entrants.add(name);
+                    final int total = snap.size();
+                    if (total == 0) {
+                        progressBar.setVisibility(View.GONE);
+                        adapter.setData(new ArrayList<>()); // clear UI
+                        emptyText.setVisibility(View.VISIBLE);
+                        return;
                     }
 
-                    if (entrants.isEmpty()) {
-                        emptyText.setVisibility(View.VISIBLE);
-                    } else {
-                        adapter.setData(entrants);
-                        recyclerView.setVisibility(View.VISIBLE);
+                    List<String> names = new ArrayList<>();
+                    final int[] done = {0};
+
+                    for (QueryDocumentSnapshot doc : snap) {
+                        String userId = doc.getId();
+
+                        db.collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(userSnap -> {
+                                    String userName = userSnap.getString("name");
+                                    if (userName == null || userName.isEmpty()) userName = userId;
+
+                                    // keep your Entrant list if you want it for later
+                                    waitlist.add(new Entrant(userId, userName));
+                                    names.add(userName);
+                                })
+                                .addOnFailureListener(e -> {
+                                    // fallback: show ID if name fetch fails
+                                    waitlist.add(new Entrant(userId, userId));
+                                    names.add(userId);
+                                })
+                                .addOnCompleteListener(t -> {
+                                    done[0]++;
+                                    if (done[0] == total) {
+                                        progressBar.setVisibility(View.GONE);
+                                        if (names.isEmpty()) {
+                                            emptyText.setVisibility(View.VISIBLE);
+                                        } else {
+                                            adapter.setData(names); // <- finally update the adapter
+                                            recyclerView.setVisibility(View.VISIBLE);
+                                        }
+                                    }
+                                });
                     }
                 })
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(requireContext(),
-                            getString(R.string.toast_failed_waitlist, e.getMessage()),
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Failed to load waitlist.", Toast.LENGTH_SHORT).show();
                 });
     }
 

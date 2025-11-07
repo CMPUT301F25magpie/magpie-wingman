@@ -1,6 +1,6 @@
 package com.example.magpie_wingman.data.model;
 
-import com.google.firebase.Timestamp;
+import java.util.Date;
 
 /**
  * Event an organizer creates/
@@ -10,8 +10,10 @@ public class Event {
     private String eventId;
     private String organizerId;
     private String eventName;
-    private long eventStartTime;
-    private long eventEndTime;
+
+    private Date eventDate;
+    private Date registrationStart;
+    private Date registrationEnd;
     private String eventLocation;
     private String eventDescription;
     private String eventPosterURL;
@@ -22,14 +24,14 @@ public class Event {
     // required empty constructor for Firestore / deserialization
     public Event() {}
 
-    public Event(String eventId, String organizerId, String eventName, long eventStartTime,
-                 long eventEndTime, String eventLocation, String eventDescription,
+    public Event(String eventId, String organizerId, String eventName, Date registrationStart,
+                 Date registrationEnd, String eventLocation, String eventDescription,
                  String eventPosterURL, int eventCapacity) {
         this.eventId = eventId;
         this.organizerId = organizerId;
         this.eventName = eventName;
-        this.eventStartTime = eventStartTime;
-        this.eventEndTime = eventEndTime;
+        this.registrationStart = registrationStart;
+        this.registrationEnd = registrationEnd;
         this.eventLocation = eventLocation;
         this.eventDescription = eventDescription;
         this.eventPosterURL = null;
@@ -45,10 +47,12 @@ public class Event {
     public String getEventName() {
         return eventName;
     }
-    public long getEventStartTime() {
-        return eventStartTime;
+
+    public Date getEventDate() {return eventDate;}
+    public Date getRegistrationStart() {
+        return registrationStart;
     }
-    public long getEventEndTime() { return eventEndTime;  }
+    public Date getRegistrationEnd() { return registrationEnd;  }
     public String getEventLocation() {
         return eventLocation;
     }
@@ -77,8 +81,8 @@ public class Event {
 
     public void setEventName(String eventName) { this.eventName = eventName; }
 
-    public void setEventStartTime(long eventStartTime) { this.eventStartTime = eventStartTime; }
-    public void setEventEndTime(long eventEndTime) { this.eventEndTime = eventEndTime; }
+    public void setRegistrationStart(Date registrationStart) { this.registrationStart = registrationStart; }
+    public void setRegistrationEnd(Date registrationEnd) { this.registrationEnd = registrationEnd; }
 
     public void setEventLocation(String eventLocation) { this.eventLocation = eventLocation; }
 

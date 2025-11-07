@@ -5,7 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,6 +20,7 @@ import java.util.Locale;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.CANADA); //text formatter
     private List<Event> eventList;
     private OnEventListener eventListener;
     // Formatter to turn the timestamp (long) into a "Nov 15" string
@@ -46,6 +48,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
 
         holder.eventName.setText(event.getEventName());
+        if (event.getEventDate() != null) {
+            holder.eventDate.setText(dateFormat.format(event.getEventDate()));
+        } else {
+            holder.eventDate.setText("Date TBD");
+        }
         holder.eventLocation.setText(event.getEventLocation());
 
         // Use the correct getter from your team's file: getEventDescription()

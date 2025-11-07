@@ -15,11 +15,14 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.model.Event; // Import our new model
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.example.magpie_wingman.data.DbManager;
-import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.entrant.EventAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +33,9 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     private EventAdapter adapter;
     private List<Event> eventList;
 
+    // Firestore
+    private FirebaseFirestore db;
+    private CollectionReference eventsRef;
     private DbManager dbManager;
 
     public EntrantEventsFragment() {
@@ -52,6 +58,10 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
         recyclerView = view.findViewById(R.id.recycler_view_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // 3. Load the data (now from Firebase instead of mock)
+        loadEventsFromDatabase();
+
+        // 4. Create and set the adapter (pass 'this' as the listener)
         adapter = new EventAdapter(eventList, this);
         recyclerView.setAdapter(adapter);
 
@@ -59,31 +69,37 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     }
 
     /**
-     * Fetches all events from the "events" collection in Firestore.
+     * Creates data for the event list.
+     * Now this comes from Firebase.
      */
-    private void loadEventsFromFirebase() {
-        FirebaseFirestore db = dbManager.getDb();
+    private void loadEventsFromDatabase() {
+        eventList = new ArrayList<>();
 
-        db.collection("events")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        eventList.clear();
+        db = FirebaseFirestore.getInstance();
+        eventsRef = db.collection("events");
 
-                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
-                            Event event = doc.toObject(Event.class);
-                            if (event != null) {
-                                eventList.add(event);
-                            }
-                        }
-                        adapter.notifyDataSetChanged();
-                    } else {
-                        Log.d("EntrantEventsFragment", "No events found.");
+        Timestamp now = Timestamp.now(); //get current timestamp
+
+        eventsRef
+                .whereGreaterThanOrEqualTo("registrationEnd", now) //filter out events that have registration dates that have already passed
+                .orderBy("registrationEnd")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(getContext(), "Failed to load events", Toast.LENGTH_SHORT).show();
+                        return;
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("EntrantEventsFragment", "Error loading events", e);
-                    Toast.makeText(getContext(), "Error loading events", Toast.LENGTH_SHORT).show();
+
+                    eventList.clear();
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            Event event = doc.toObject(Event.class);
+                            eventList.add(event);
+                        }
+                    }
+
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
                 });
     }
 
