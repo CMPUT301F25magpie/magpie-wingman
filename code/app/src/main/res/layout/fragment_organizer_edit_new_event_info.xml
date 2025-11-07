@@ -1,104 +1,14 @@
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0B0B18"
     tools:context=".organizer.OrganizerEditNewEventInfoFragment">
 
-    <LinearLayout
+    <!-- TODO: Update blank fragment layout -->
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:text="@string/hello_blank_fragment" />
 
-        <!-- HEADER BAR -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@android:color/white"
-            android:paddingHorizontal="12dp">
-
-            <ImageButton
-                android:id="@+id/button_back"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="@android:color/transparent"
-                android:src="@drawable/ic_arrow_back"
-                android:tint="#000000"
-                android:contentDescription="Back" />
-
-            <ImageView
-                android:id="@+id/image_info"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@drawable/ic_info"
-                android:contentDescription="Logo"
-                android:layout_marginStart="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="New/Edit Event Info"
-                android:textColor="#000000"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:layout_marginStart="8dp"/>
-
-        </LinearLayout>
-
-        <!-- INFO SECTIONS -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Limit:"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Limits number of entrants that can be on the waiting list.\nNo limit if nothing entered."
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="GEO:"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Enable or disable geolocation.\nSee where entrants join your Waiting List from."
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="QR:"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="16sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Generate unique promotional QR code."
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"/>
-    </LinearLayout>
-</ScrollView>
+</FrameLayout>

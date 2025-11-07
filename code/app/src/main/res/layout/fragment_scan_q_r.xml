@@ -1,77 +1,14 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#0B0B18"
     tools:context=".entrant.ScanQRFragment">
 
-    <!-- HEADER BAR -->
-    <LinearLayout
+    <!-- TODO: Update blank fragment layout -->
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@android:color/white"
-        android:paddingHorizontal="12dp">
+        android:layout_height="match_parent"
+        android:text="@string/hello_blank_fragment" />
 
-        <ImageButton
-            android:id="@+id/button_back"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/ic_arrow_back"
-            android:tint="#000000"
-            android:contentDescription="Back" />
-
-        <ImageView
-            android:id="@+id/image_logo"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@drawable/wingman_logo"
-            android:contentDescription="Logo"
-            android:layout_marginStart="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Scan QR"
-            android:textColor="#000000"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:layout_marginStart="8dp"/>
-    </LinearLayout>
-
-    <!-- CAMERA PREVIEW AREA -->
-    <FrameLayout
-        android:id="@+id/camera_preview"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#000000"
-        android:foregroundGravity="center">
-
-        <!-- QR Overlay Frame -->
-        <ImageView
-            android:id="@+id/qr_frame"
-            android:layout_width="250dp"
-            android:layout_height="250dp"
-            android:layout_gravity="center"
-            android:src="@drawable/qr_overlay"
-            android:contentDescription="QR Frame" />
-    </FrameLayout>
-
-    <!-- SCAN BUTTON -->
-    <Button
-        android:id="@+id/button_scan_qr"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:text="Scan QR Code"
-        android:textColor="@android:color/white"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:background="@drawable/blue_button_bg"
-        android:backgroundTint="@null"
-        android:layout_margin="16dp" />
-</LinearLayout>
+</FrameLayout>

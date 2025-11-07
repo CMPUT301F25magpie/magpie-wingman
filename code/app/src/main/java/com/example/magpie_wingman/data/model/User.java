@@ -8,7 +8,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * Domain model stored at Firestore: users/{userId}.
+ * Source of truth for name/role/avatar/contact fields.
+ *
+ * Doc ID is the canonical userId; we don't duplicate it as a field in Firestore.
+ */
 public class User {
 
     // Firestore document id
@@ -73,6 +78,7 @@ public class User {
 
     /** Role as an enum  */
     public UserRole getRole() {
+        // if (isAdmin) return UserRole.ADMIN;
         return isOrganizer ? UserRole.ORGANIZER : UserRole.ENTRANT;
     }
 
@@ -90,9 +96,7 @@ public class User {
 
     public String getUserId() { return userId; }
 
-
     public String getName() { return name; }
-
     public void setName(String name) { this.name = (name != null && !name.isEmpty()) ? name : userId; }
 
     public boolean isOrganizer() { return isOrganizer; }
