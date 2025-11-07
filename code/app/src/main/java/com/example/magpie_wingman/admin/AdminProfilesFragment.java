@@ -95,11 +95,11 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
 
                             // Convert the boolean to the UserRole enum
                             UserRole role = UserRole.ENTRANT; // Default to Entrant
-                            if (isOrganizer != null && isOrganizer == true) {
+                            if (isOrganizer != null && isOrganizer) {
                                 role = UserRole.ORGANIZER;
                             }
 
-                            User user = new User(userId, userName, userEmail, userPhone, userDeviceId, role);
+                            User user = new User(userId, userName, isOrganizer, null, userEmail, userPhone, userDeviceId);
                             userList.add(user);
                         }
                         adapter.notifyDataSetChanged();
@@ -117,9 +117,9 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     public void onRemoveClicked(int position) {
         User userToRemove = userList.get(position);
         String userId = userToRemove.getUserId();
-        String userName = userToRemove.getUserName();
+        String userName = userToRemove.getName();
 
-        dbManager.deleteUser(userId)
+        dbManager.deleteEntrant(userId)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(getContext(), "Deleted " + userName, Toast.LENGTH_SHORT).show();
                     userList.remove(position);

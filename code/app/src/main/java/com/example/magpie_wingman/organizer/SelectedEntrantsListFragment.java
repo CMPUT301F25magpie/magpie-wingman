@@ -107,12 +107,12 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                                 for (Object docObj : results) {
                                     DocumentSnapshot doc = (DocumentSnapshot) docObj;
 
-                                    // --- THIS IS THE FIX ---
                                     // Manually read fields to match your User.java
                                     String userId = doc.getId();
                                     String userName = doc.getString("name"); // Firebase uses "name"
                                     String userEmail = doc.getString("email");
                                     String userPhone = doc.getString("phone");
+                                    String profileImageUrl = doc.getString("profileImageUrl");
                                     String userDeviceId = doc.getString("deviceId");
 
                                     // Check their role. We only want to add Entrants.
@@ -122,6 +122,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                                         Entrant entrant = new Entrant(
                                                 userId,
                                                 userName,
+                                                profileImageUrl,
                                                 userEmail,
                                                 userPhone,
                                                 userDeviceId
@@ -146,7 +147,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     public void onRemoveClicked(int position) {
         Entrant entrantToRemove = selectedEntrantsList.get(position);
         String userId = entrantToRemove.getUserId();
-        String userName = entrantToRemove.getUserName();
+        String userName = entrantToRemove.getName();
 
         dbManager.cancelRegistrable(eventId, userId)
                 .addOnSuccessListener(aVoid -> {

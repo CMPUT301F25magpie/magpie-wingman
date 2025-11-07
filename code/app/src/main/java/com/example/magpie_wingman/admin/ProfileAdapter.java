@@ -44,14 +44,14 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         String role = "Entrant"; // Default role
 
         // This now matches YOUR User.java file
-        UserRole userRole = user.getUserRole();
+        UserRole userRole = user.getRole();
         if (userRole == UserRole.ORGANIZER) {
             role = "Organizer";
         } else if (userRole == UserRole.ADMIN) {
             role = "Admin";
         }
 
-        String profileInfo = user.getUserName() + " - " + role; // Use getUserName()
+        String profileInfo = user.getName() + " - " + role; // Use getUserName()
         holder.profileInfoTextView.setText(profileInfo);
     }
 
