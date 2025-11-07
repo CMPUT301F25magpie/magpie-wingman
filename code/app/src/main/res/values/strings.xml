@@ -61,6 +61,7 @@
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
     <string name="sync_header">Sync</string>
+    <string name="delete_header">Delete Account</string>
 
     <!-- Messages Preferences -->
     <string name="signature_title">Your signature</string>
@@ -89,4 +90,37 @@
     <string name="content_desc_event_poster">Event poster</string>
     <string name="content_desc_accept_invitation">Accept invitation</string>
     <string name="content_desc_decline_invitation">Decline invitation</string>
+
+    <!-- Strings related to lottery items -->
+    <string name="error_empty_number">Please enter a number.</string>
+    <string name="error_invalid_number">Invalid number.</string>
+    <string name="error_non_positive_number">Please enter a positive number.</string>
+    <string name="msg_sample_success">Successfully sampled %1$d entrants!</string>
+    <string name="msg_selected_notification">Congratulations! You’ve been selected to register for the event.</string>
+    <string name="msg_notify_success">Notified all selected entrants.</string>
+    <string name="error_notify_failed">Error sending notifications: %1$s</string>
+    <string name="error_lottery_failed">Error running lottery: %1$s</string>
+
+    <!-- Strings related to notification items -->
+    <string name="notify_title">Notify</string>
+    <string name="enter_notification_title">Enter Notification Title:</string>
+    <string name="notification_title_hint">Title</string>
+    <string name="enter_notification">Enter Notification:</string>
+    <string name="notification_message_hint">Message</string>
+    <string name="waiting_list">Waiting\nList</string>
+    <string name="selected_entrants">Selected\nEntrants</string>
+    <string name="cancelled_entrants">Cancelled\nEntrants</string>
+    <string name="send_notification">Send Notification</string>
+    <string name="error_empty_title_or_message">Please enter a title and message.</string>
+    <string name="error_no_group_selected">Please select at least one recipient group.</string>
+    <string name="msg_notification_sent">Notification sent to %1$s entrants.</string>
+    <string name="error_notification_failed">Error sending to %1$s: %2$s</string>
+
+    <!-- Strings related to waitlist items -->
+    <string name="waitlist_title">Waiting List</string>
+    <string name="waitlist_empty_message">No entrants on the waiting list.</string>
+    <string name="waitlist_default_name">Entrant</string>
+    <string name="toast_failed_waitlist">Failed to load waitlist: %1$s</string>
+
+    <string name="list_item_event_join_button">Join waitlist</string>
 </resources>

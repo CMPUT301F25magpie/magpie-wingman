@@ -1,66 +1,107 @@
 package com.example.magpie_wingman.organizer;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.NotificationFunction;
+import com.example.magpie_wingman.data.LotteryFunction;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link OrganizerLotteryFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * US 02.05.02 and US 02.05.01
  */
 public class OrganizerLotteryFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private EditText sampleInput;
+    private Button selectButton;
+    private String eventId;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public OrganizerLotteryFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment OrganizerLotteryFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static OrganizerLotteryFragment newInstance(String param1, String param2) {
-        OrganizerLotteryFragment fragment = new OrganizerLotteryFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+
+        View view = inflater.inflate(R.layout.fragment_organizer_lottery, container, false);
+
+        sampleInput = view.findViewById(R.id.lottery_sample_input);
+        selectButton = view.findViewById(R.id.lottery_select_button);
+
+        // Toolbar back navigation
+        NavController navController = NavHostFragment.findNavController(this);
+        View toolbar = view.findViewById(R.id.toolbar_lottery);
+        if (toolbar != null) toolbar.setOnClickListener(v -> navController.navigateUp());
+
+        // Get eventId from navigation args
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            eventId = getArguments().getString("eventId");
         }
+
+        selectButton.setOnClickListener(v -> runLottery());
+
+        return view;
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_organizer_lottery, container, false);
+    private void runLottery() {
+        String input = sampleInput.getText().toString().trim();
+
+        if (input.isEmpty()) {
+            Toast.makeText(getContext(), R.string.error_empty_number, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        int sampleCount;
+        try {
+            sampleCount = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            Toast.makeText(getContext(), R.string.error_invalid_number, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (sampleCount <= 0) {
+            Toast.makeText(getContext(), R.string.error_non_positive_number, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Step 1 – Run the random selection (US 02.05.02)
+        LotteryFunction.sampleEntrantsForEvent(eventId, sampleCount)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(
+                            getContext(),
+                            getString(R.string.msg_sample_success, sampleCount),
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    // Step 2 – Notify winners (US 02.05.01)
+                    NotificationFunction notifier = new NotificationFunction();
+                    String message = getString(R.string.msg_selected_notification);
+                    notifier.notifyEntrants(eventId, "registrable", message)
+                            .addOnSuccessListener(unused -> Toast.makeText(
+                                    getContext(),
+                                    R.string.msg_notify_success,
+                                    Toast.LENGTH_SHORT
+                            ).show())
+                            .addOnFailureListener(e -> Toast.makeText(
+                                    getContext(),
+                                    getString(R.string.error_notify_failed, e.getMessage()),
+                                    Toast.LENGTH_LONG
+                            ).show());
+                })
+                .addOnFailureListener(e -> Toast.makeText(
+                        getContext(),
+                        getString(R.string.error_lottery_failed, e.getMessage()),
+                        Toast.LENGTH_LONG
+                ).show());
     }
 }

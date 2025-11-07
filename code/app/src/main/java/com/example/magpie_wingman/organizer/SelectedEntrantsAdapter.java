@@ -42,9 +42,7 @@ public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntran
     public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
         Entrant entrant = entrantList.get(position);
 
-        // THIS IS THE FIX:
-        // The Entrant class extends User, which has a 'userName' field
-        // The getter is almost certainly getUserName()
+
         holder.nameTextView.setText(entrant.getUserName());
     }
 

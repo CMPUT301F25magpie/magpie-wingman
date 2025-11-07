@@ -107,18 +107,15 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                                 for (Object docObj : results) {
                                     DocumentSnapshot doc = (DocumentSnapshot) docObj;
 
-                                    // --- THIS IS THE FIX ---
-                                    // Manually read fields to match your User.java
                                     String userId = doc.getId();
-                                    String userName = doc.getString("name"); // Firebase uses "name"
+                                    String userName = doc.getString("name"); 
                                     String userEmail = doc.getString("email");
                                     String userPhone = doc.getString("phone");
                                     String userDeviceId = doc.getString("deviceId");
 
-                                    // Check their role. We only want to add Entrants.
                                     Boolean isOrganizer = doc.getBoolean("isOrganizer");
                                     if (isOrganizer == null || isOrganizer == false) {
-                                        // This is an Entrant. Use your Entrant constructor.
+                                        // Use Entrant constructor.
                                         Entrant entrant = new Entrant(
                                                 userId,
                                                 userName,
