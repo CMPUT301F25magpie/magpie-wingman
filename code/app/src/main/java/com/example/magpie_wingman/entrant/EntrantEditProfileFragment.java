@@ -20,16 +20,23 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class EntrantEditProfileFragment extends Fragment {
 
     private TextInputEditText firstNameEt, lastNameEt, emailEt, dobEt, phoneEt, passwordEt;
     private MaterialButtonToggleGroup roleToggle;
     private MaterialButton btnEntrant, btnOrganizer, btnUpdate;
+
+    private final SimpleDateFormat dobFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
     @Nullable
     @Override
@@ -106,6 +113,22 @@ public class EntrantEditProfileFragment extends Fragment {
             roleToggle.check(organizer ? R.id.btn_role_organizer : R.id.btn_role_entrant);
         });
 
+        // Load DOB
+        DbManager.getInstance().getDb()
+                .collection("users").document(userId)
+                .get()
+                .addOnSuccessListener((DocumentSnapshot doc) -> {
+                    if (doc != null && doc.exists()) {
+                        Date dob = doc.getDate("dateOfBirth");
+                        if (dob != null) {
+                            dobEt.setText(dobFmt.format(dob));
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(), "Failed to load DOB: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
+
         // Save updates
         btnUpdate.setOnClickListener(_v -> {
             String first = text(firstNameEt);
@@ -114,6 +137,7 @@ public class EntrantEditProfileFragment extends Fragment {
 
             String email = text(emailEt);
             String phone = text(phoneEt);
+            String newPassword = text(passwordEt);
             boolean isOrganizer = roleToggle.getCheckedButtonId() == R.id.btn_role_organizer;
 
             if (TextUtils.isEmpty(first)) {
@@ -125,6 +149,18 @@ public class EntrantEditProfileFragment extends Fragment {
                 return;
             }
 
+            String dobStr = text(dobEt);
+            Date dobDate = null;
+            if (!TextUtils.isEmpty(dobStr)) {
+                try {
+                    dobFmt.setLenient(false);
+                    dobDate = dobFmt.parse(dobStr);
+                } catch (ParseException e) {
+                    dobEt.setError("Use format dd/MM/yyyy");
+                    return;
+                }
+            }
+
             btnUpdate.setEnabled(false);
 
             List<Task<?>> ops = new ArrayList<>();
@@ -132,6 +168,14 @@ public class EntrantEditProfileFragment extends Fragment {
             ops.add(dbm.updateEmail(userId, email));
             ops.add(dbm.updatePhoneNumber(userId, phone));
             ops.add(dbm.changeOrgPerms(userId, isOrganizer));
+
+            if (dobDate != null) {
+                ops.add(dbm.updateDOB(userId, dobDate));
+            }
+
+            if (!TextUtils.isEmpty(newPassword)) {
+                ops.add(dbm.updatePassword(userId, newPassword));
+            }
 
             Tasks.whenAllComplete(ops).addOnCompleteListener(t -> {
                 btnUpdate.setEnabled(true);
@@ -147,6 +191,7 @@ public class EntrantEditProfileFragment extends Fragment {
                     }
                 }
 
+                passwordEt.setText("");     // Clear password field after successful update
                 Toast.makeText(requireContext(), "Profile updated.", Toast.LENGTH_SHORT).show();
                 requireActivity().getOnBackPressedDispatcher().onBackPressed();
             });
@@ -155,12 +200,23 @@ public class EntrantEditProfileFragment extends Fragment {
 
     private void showDatePicker() {
         Calendar c = Calendar.getInstance();
+
+        // If birthdate existed, open picker on that date
+        String existing = text(dobEt);
+        if (!TextUtils.isEmpty(existing)) {
+            try {
+                dobFmt.setLenient(false);
+                Date parsed = dobFmt.parse(existing);
+                if (parsed != null) c.setTime(parsed);
+            } catch (ParseException ignored) {}
+        }
+
         DatePickerDialog dlg = new DatePickerDialog(
                 requireContext(),
                 (view, year, month, dayOfMonth) -> {
-                    String mm = String.format("%02d", month + 1);
-                    String dd = String.format("%02d", dayOfMonth);
-                    dobEt.setText(year + "-" + mm + "-" + dd);
+                    String dd = String.format(Locale.getDefault(), "%02d", dayOfMonth);
+                    String mm = String.format(Locale.getDefault(), "%02d", month + 1);
+                    dobEt.setText(dd + "/" + mm + "/" + year); // dd/MM/yyyy
                 },
                 c.get(Calendar.YEAR),
                 c.get(Calendar.MONTH),
