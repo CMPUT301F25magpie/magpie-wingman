@@ -3,12 +3,18 @@ package com.example.magpie_wingman.data;
 import android.content.Context;
 import android.provider.Settings;
 
+import androidx.annotation.Nullable;
+
+import com.example.magpie_wingman.data.model.User;
+import com.example.magpie_wingman.data.model.UserProfile;
+import com.example.magpie_wingman.data.model.UserRole;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
@@ -66,7 +72,7 @@ public class DbManager {
      * @param name - the inputted name for the user.
      * @return userID the document ID for the user's firebase document
      */
-    private String generateUserId(String name) {
+    public String generateUserId(String name) {
         String cleanName = name.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
 
         while (true) {
@@ -158,33 +164,136 @@ public class DbManager {
                 .document(eventId)
                 .set(event, SetOptions.merge());
     }
-    public Task<Void> deleteUser(String userId) {
+    public Task<Void> deleteEntrant(String userId) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                // Find all places this user exists in event subcollections
-                QuerySnapshot wl = Tasks.await(db.collectionGroup("waitlist")
-                        .whereEqualTo("userId", userId).get());
-                QuerySnapshot rg = Tasks.await(db.collectionGroup("registrable")
-                        .whereEqualTo("userId", userId).get());
-                QuerySnapshot rd = Tasks.await(db.collectionGroup("registered")
-                        .whereEqualTo("userId", userId).get());
+                // Get all events
+                QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
 
-
+                // Single batch (no chunking)
                 WriteBatch batch = db.batch();
 
-                for (DocumentSnapshot d : wl.getDocuments()) batch.delete(d.getReference());
-                for (DocumentSnapshot d : rg.getDocuments()) batch.delete(d.getReference());
-                for (DocumentSnapshot d : rd.getDocuments()) batch.delete(d.getReference());
+                for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
+                    com.google.firebase.firestore.DocumentReference evRef = ev.getReference();
+
+                    // waitlist
+                    QuerySnapshot wl = Tasks.await(
+                            evRef.collection("waitlist").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : wl.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+
+                    // registrable
+                    QuerySnapshot rg = Tasks.await(
+                            evRef.collection("registrable").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : rg.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+
+                    // registered
+                    QuerySnapshot rd = Tasks.await(
+                            evRef.collection("registered").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : rd.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+                }
+
+                // Finally delete the user doc
                 batch.delete(db.collection("users").document(userId));
 
+                // Commit once
                 Tasks.await(batch.commit());
                 tcs.setResult(null);
             } catch (Exception e) {
                 tcs.setException(e);
             }
         });
+
         return tcs.getTask();
+    }
+
+    public Task<Void> deleteOrganizer(String organizerId) {
+        TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                QuerySnapshot organizerEvents = Tasks.await(
+                        db.collection("events")
+                                .whereEqualTo("organizerId", organizerId)
+                                .get()
+                );
+
+                List<Task<Void>> deletes = new ArrayList<>();
+                for (DocumentSnapshot d : organizerEvents.getDocuments()) {
+                    deletes.add(deleteEvent(d.getId()));
+                }
+
+                Tasks.await(Tasks.whenAll(deletes));
+                Tasks.await(deleteEntrant(organizerId));
+
+                tcs.setResult(null);
+            } catch (Exception e) {
+                tcs.setException(e);
+            }
+        });
+
+        return tcs.getTask();
+    }
+
+    public Task<List<UserProfile>> fetchProfiles(@Nullable UserRole roleFilter) {
+        TaskCompletionSource<List<UserProfile>> tcs = new TaskCompletionSource<>();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                Query q = db.collection("users");
+                if (roleFilter == UserRole.ORGANIZER) {
+                    q = q.whereEqualTo("isOrganizer", true);
+                } else if (roleFilter == UserRole.ENTRANT) {
+                    q = q.whereEqualTo("isOrganizer", false);
+                }
+
+                QuerySnapshot snap = Tasks.await(q.get());
+
+                List<UserProfile> out = new ArrayList<>();
+                for (DocumentSnapshot d : snap.getDocuments()) {
+                    String userId = d.getId();
+                    String name = d.getString("name");
+                    String image = d.getString("profileImageUrl");
+                    Boolean isOrg = d.getBoolean("isOrganizer");
+
+                    UserRole role = (isOrg != null && isOrg)
+                            ? UserRole.ORGANIZER
+                            : UserRole.ENTRANT;
+
+                    if (roleFilter == null || role == roleFilter) {out.add(new UserProfile(userId,
+                            name, role));
+                    }
+                }
+
+                tcs.setResult(out);
+            } catch (Exception e) {
+                tcs.setException(e);
+            }
+        });
+        return tcs.getTask();
+    }
+    /**
+     * Deletes a user profile based on their role.
+     *
+     * @param userId the Firestore document id of the user
+     * @param role   the user's current role
+     * @return a Task that completes when all writes are finished or fails with the underlying exception
+     */
+    public Task<Void> deleteProfile(String userId, com.example.magpie_wingman.data.model.UserRole role) {
+        if (role == com.example.magpie_wingman.data.model.UserRole.ORGANIZER) {
+            return deleteOrganizer(userId);
+        }
+        return deleteEntrant(userId);
     }
 
     /**

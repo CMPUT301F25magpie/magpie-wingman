@@ -46,19 +46,19 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
 
         holder.eventName.setText(event.getEventName());
+        // holder.eventDate.setText(event.getEventDate());              <<<<<<< DATATYPE INCORRECT
         holder.eventLocation.setText(event.getEventLocation());
 
         // Use the correct getter from your team's file: getEventDescription()
         holder.eventDescription.setText(event.getEventDescription());
 
-        // THIS IS THE FIX:
-        // 1. Use the correct getter: getEventStartTime()
-        // 2. Convert the 'long' timestamp to a formatted date string
+        // Use the correct getter: getEventStartTime()
+        // Convert the 'long' timestamp to a formatted date string
         if (event.getEventStartTime() > 0) {
             String dateString = dateFormat.format(new Date(event.getEventStartTime()));
             holder.eventDate.setText(dateString);
         } else {
-            holder.eventDate.setText("TBD"); // TBD = To Be Determined
+            holder.eventDate.setText("TBD");                       // <<<<<<<<<<<< DATATYPE INCORRECT
         }
     }
 

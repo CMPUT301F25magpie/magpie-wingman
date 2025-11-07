@@ -1,5 +1,6 @@
 package com.example.magpie_wingman.admin;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,12 +17,18 @@ import android.widget.Toast;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.User;
-import com.example.magpie_wingman.data.model.UserRole; // Make sure this is imported
+import com.example.magpie_wingman.data.model.UserRole;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.magpie_wingman.data.model.UserProfile;
+import com.example.magpie_wingman.data.model.UserRole;
 
 import java.util.ArrayList;
 import java.util.List;
+
+/**
+ * Admin screen for viewing and managing user profiles.
+ */
 
 public class AdminProfilesFragment extends Fragment implements ProfileAdapter.OnProfileRemoveListener {
 
@@ -31,7 +38,6 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     private DbManager dbManager;
 
     public AdminProfilesFragment() {
-        // Required empty public constructor
     }
 
     @Override
@@ -76,12 +82,10 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
 
                         for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
 
-                            // --- THIS IS THE FIX ---
-                            // We manually read the fields from Firebase
-                            // to match your User.java constructor
+                  
 
                             String userId = doc.getId();
-                            String userName = doc.getString("name"); // This part is working
+                            String userName = doc.getString("name");
                             String userEmail = doc.getString("email");
                             String userPhone = doc.getString("phone");
                             String userDeviceId = doc.getString("deviceId");
@@ -94,9 +98,7 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                             if (isOrganizer != null && isOrganizer == true) {
                                 role = UserRole.ORGANIZER;
                             }
-                            // --- END OF FIX ---
 
-                            // Use the 6-argument constructor from your User.java
                             User user = new User(userId, userName, userEmail, userPhone, userDeviceId, role);
                             userList.add(user);
                         }

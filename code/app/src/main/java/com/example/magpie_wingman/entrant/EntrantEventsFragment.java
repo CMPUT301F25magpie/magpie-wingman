@@ -52,6 +52,7 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
         recyclerView = view.findViewById(R.id.recycler_view_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Create and set the adapter (pass 'this' as the listener)
         adapter = new EventAdapter(eventList, this);
         recyclerView.setAdapter(adapter);
 
