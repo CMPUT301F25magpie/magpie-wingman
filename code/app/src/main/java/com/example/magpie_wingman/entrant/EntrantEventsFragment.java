@@ -61,9 +61,9 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     private void loadMockEvents() {
         eventList = new ArrayList<>();
         // UPDATED to include description
-        eventList.add(new Event("e1", "Tech Summit", "Nov 15", "Convention Centre", "The biggest tech summit..."));
-        eventList.add(new Event("e2", "Music Fest", "Nov 22", "Hawrelak Park", "Live bands and food trucks..."));
-        eventList.add(new Event("e3", "Pitch Night", "Nov 28", "Startup Edmonton", "See the latest local startups..."));
+        // eventList.add(new Event("e1", "Tech Summit", "Nov 15", "Convention Centre", "The biggest tech summit..."));
+        // eventList.add(new Event("e2", "Music Fest", "Nov 22", "Hawrelak Park", "Live bands and food trucks..."));
+        // eventList.add(new Event("e3", "Pitch Night", "Nov 28", "Startup Edmonton", "See the latest local startups..."));
     }
 
     /**

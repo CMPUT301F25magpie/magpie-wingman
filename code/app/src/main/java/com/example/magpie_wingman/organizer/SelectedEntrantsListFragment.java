@@ -54,10 +54,10 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private void loadMockEntrants() {
         selectedEntrantsList = new ArrayList<>();
         // 3. Update mock data to match the "Person X" format from the mockup
-        selectedEntrantsList.add(new Entrant("Person 5", "Invited"));
+        /**selectedEntrantsList.add(new Entrant("Person 5", "Invited"));
         selectedEntrantsList.add(new Entrant("Person 6", "Invited"));
         selectedEntrantsList.add(new Entrant("Person 7", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 8", "Invited"));
+        selectedEntrantsList.add(new Entrant("Person 8", "Invited"));*/
     }
 
     // 4. This is the new method from the interface
