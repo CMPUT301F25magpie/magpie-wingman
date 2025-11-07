@@ -297,6 +297,25 @@ public class DbManager {
     }
 
     /**
+     * Helper function that checks if user is in a waitlist
+     * @param eventId eventId of the event waitlist to check
+     * @param userId userId of the user to check
+     * @return
+     */
+    public Task<Boolean> isUserInWaitlist(String eventId, String userId) {
+        return db.collection("events")
+                .document(eventId)
+                .collection("waitlist")
+                .document(userId)
+                .get()
+                .continueWith(task ->
+                        task.isSuccessful() && task.getResult() != null && task.getResult().exists());
+    }
+
+
+
+
+    /**
      * Deletes an event document and its subcollections
      * ("waitlist", "registrable", "registered") from Firestore.
      *
