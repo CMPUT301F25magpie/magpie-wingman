@@ -15,14 +15,13 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Event; // Import our new model
-import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.entrant.EventAdapter;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +31,6 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     private RecyclerView recyclerView;
     private EventAdapter adapter;
     private List<Event> eventList;
-
-    // Firestore
-    private FirebaseFirestore db;
-    private CollectionReference eventsRef;
     private DbManager dbManager;
 
     public EntrantEventsFragment() {
@@ -43,8 +38,8 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_entrant_events, container, false);
     }
 
@@ -52,48 +47,48 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        dbManager = DbManager.getInstance();
+        // Ensure DbManager is initialized before use
+        try {
+            dbManager = DbManager.getInstance();
+        } catch (IllegalStateException e) {
+            if (getContext() != null) {
+                DbManager.init(getContext().getApplicationContext());
+                dbManager = DbManager.getInstance();
+            }
+        }
 
         eventList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // 3. Load the data (now from Firebase instead of mock)
-        loadEventsFromDatabase();
-
-        // 4. Create and set the adapter (pass 'this' as the listener)
         adapter = new EventAdapter(eventList, this);
         recyclerView.setAdapter(adapter);
 
+        // Only call the loading function once
         loadEventsFromDatabase();
     }
 
-    /**
-     * Creates data for the event list.
-     * Now this comes from Firebase.
-     */
     private void loadEventsFromDatabase() {
-        eventList = new ArrayList<>();
+        FirebaseFirestore db = dbManager.getDb();
+        Timestamp now = Timestamp.now();
 
-        db = FirebaseFirestore.getInstance();
-        eventsRef = db.collection("events");
-
-        Timestamp now = Timestamp.now(); //get current timestamp
-
-        eventsRef
-                .whereGreaterThanOrEqualTo("registrationEnd", now) //filter out events that have registration dates that have already passed
-                .orderBy("registrationEnd")
-                .addSnapshotListener((snapshot, error) -> {
+        db.collection("events")
+                .whereGreaterThanOrEqualTo("registrationEnd", now) // Filter for upcoming registration
+                .orderBy("registrationEnd", Query.Direction.ASCENDING)
+                .addSnapshotListener((snapshot, error) -> { // Use listener for real-time updates
                     if (error != null) {
                         Toast.makeText(getContext(), "Failed to load events", Toast.LENGTH_SHORT).show();
+                        Log.e("EntrantEvents", "Snapshot listener error", error);
                         return;
                     }
 
                     eventList.clear();
                     if (snapshot != null) {
-                        for (QueryDocumentSnapshot doc : snapshot) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
                             Event event = doc.toObject(Event.class);
-                            eventList.add(event);
+                            if (event != null) {
+                                eventList.add(event);
+                            }
                         }
                     }
 
@@ -103,33 +98,28 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
                 });
     }
 
-    /**
-     * This method runs when an event card is clicked.
-     */
     @Override
     public void onEventClick(int position) {
         Event clickedEvent = eventList.get(position);
 
-        // Get description and check for null to prevent crash
         String eventDesc = clickedEvent.getEventDescription();
         if (eventDesc == null) {
-            eventDesc = ""; // Pass an empty string instead of null
+            eventDesc = "";
         }
 
-        // Get location and check for null to prevent crash
         String eventLoc = clickedEvent.getEventLocation();
         if (eventLoc == null) {
-            eventLoc = ""; // Pass an empty string instead of null
+            eventLoc = "";
         }
 
-        // Create a bundle to pass data to the details screen
         Bundle args = new Bundle();
         args.putString("eventId", clickedEvent.getEventId());
-        args.putString("eventName", clickedEvent.getEventName());
-        args.putString("eventDescription", eventDesc); // Use the safe variable
-        args.putString("eventLocation", eventLoc); // Use the safe variable
 
-        // Navigate using the action from nav_graph.xml
+        // Pass the event ID and other details
+        args.putString("eventName", clickedEvent.getEventName());
+        args.putString("eventDescription", eventDesc);
+        args.putString("eventLocation", eventLoc);
+
         NavHostFragment.findNavController(this)
                 .navigate(R.id.action_entrantEventsFragment_to_detailedEventDescriptionFragment, args);
     }
