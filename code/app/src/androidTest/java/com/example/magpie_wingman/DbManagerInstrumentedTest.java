@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,7 +128,7 @@ public class DbManagerInstrumentedTest {
         String eventName = "Magpie Meetup " + System.currentTimeMillis();
         String description = "Test description for magpie meetup";
         String organizerId = "stuart#1234";  // can be any existing/placeholder user id
-        String regStart = "2025-11-01";
+        Date regStart = "2025-11-01";
         String regEnd = "2025-11-05";
 
         Tasks.await(
@@ -992,9 +993,9 @@ public class DbManagerInstrumentedTest {
         ).getDocuments().get(0);
         String organizerId = orgDoc.getString("userId");
 
-        Timestamp start = Timestamp.now();
+        Date start = Timestamp.now();
         // arbitrary end a minute later
-        Timestamp end = new Timestamp(start.getSeconds() + 60, 0);
+        Date end = new Timestamp(start.getSeconds() + 60, 0);
 
         String eventName = "Dates Event " + System.currentTimeMillis();
         Tasks.await(
