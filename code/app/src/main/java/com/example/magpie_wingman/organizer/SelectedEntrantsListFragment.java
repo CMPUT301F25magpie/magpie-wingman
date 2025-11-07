@@ -41,7 +41,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        loadMockEntrants();
+        // loadMockEntrants();
 
         // 2. Pass 'this' (the fragment) as the listener to the adapter
         adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
@@ -51,14 +51,14 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     /**
      * Creates mock data to display in the list.
      */
-    private void loadMockEntrants() {
-        selectedEntrantsList = new ArrayList<>();
-        // 3. Update mock data to match the "Person X" format from the mockup
-        selectedEntrantsList.add(new Entrant("Person 5", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 6", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 7", "Invited"));
-        selectedEntrantsList.add(new Entrant("Person 8", "Invited"));
-    }
+//    private void loadMockEntrants() {
+//        selectedEntrantsList = new ArrayList<>();
+//        // 3. Update mock data to match the "Person X" format from the mockup
+//        selectedEntrantsList.add(new Entrant("Person 5", "Invited"));
+//        selectedEntrantsList.add(new Entrant("Person 6", "Invited"));
+//        selectedEntrantsList.add(new Entrant("Person 7", "Invited"));
+//        selectedEntrantsList.add(new Entrant("Person 8", "Invited"));
+//    }
 
     // 4. This is the new method from the interface
     // It runs when the "X" is clicked

@@ -1,11 +1,21 @@
 package com.example.magpie_wingman.data.model;
 
+import androidx.annotation.Nullable;
+
 public class Administrator extends User {
-    public Administrator() {
-        super();
-        this.userRole = UserRole.ADMIN;
+
+    public Administrator(String userId,
+                         String name,
+                         @Nullable String profileImageUrl,
+                         @Nullable String email,
+                         @Nullable String phone,
+                         @Nullable String deviceId) {
+        // Admins are not organizers; pass false
+        super(userId, name, /*isOrganizer*/ false, profileImageUrl, email, phone, deviceId);
     }
-    public Administrator(String userId, String userName, String userEmail, String userPhone, String userDeviceId) {
-        super(userId, userName, userEmail, userPhone, userDeviceId, UserRole.ADMIN);
+
+    @Override
+    public UserRole getRole() {
+        return UserRole.ADMIN;
     }
 }

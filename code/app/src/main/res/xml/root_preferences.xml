@@ -181,5 +181,11 @@
             app:title="@string/attachment_title" />
 
     </PreferenceCategory>
+    <PreferenceCategory app:title="@string/delete_header">
+    <Preference
+        app:key="pref_delete_account"
+        app:title="Delete my profile"
+        app:summary="Remove your account and event participation. This cannot be undone." />
+    </PreferenceCategory>
 
 </PreferenceScreen>

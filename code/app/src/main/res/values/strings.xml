@@ -61,6 +61,7 @@
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>
     <string name="sync_header">Sync</string>
+    <string name="delete_header">Delete Account</string>
 
     <!-- Messages Preferences -->
     <string name="signature_title">Your signature</string>
@@ -89,4 +90,5 @@
     <string name="content_desc_event_poster">Event poster</string>
     <string name="content_desc_accept_invitation">Accept invitation</string>
     <string name="content_desc_decline_invitation">Decline invitation</string>
+    <string name="list_item_event_join_button">Join waitlist</string>
 </resources>

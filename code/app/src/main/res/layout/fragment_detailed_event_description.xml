@@ -11,4 +11,13 @@
         android:layout_height="match_parent"
         android:text="@string/hello_blank_fragment" />
 
+
+    <!-- fragment_detailed_event_description.xml -->
+    <Button
+        android:id="@+id/btnJoinLeave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Join waitlist"
+        android:enabled="true"/>
+
 </FrameLayout>

@@ -47,7 +47,7 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // 3. Load the mock data
-        loadMockEvents();
+        // loadMockEvents();
 
         // 4. Create and set the adapter (pass 'this' as the listener)
         adapter = new EventAdapter(eventList, this);
@@ -58,13 +58,13 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
      * Creates mock data for the event list.
      * Later, this will come from Firebase.
      */
-    private void loadMockEvents() {
-        eventList = new ArrayList<>();
-        // UPDATED to include description
-        eventList.add(new Event("e1", "Tech Summit", "Nov 15", "Convention Centre", "The biggest tech summit..."));
-        eventList.add(new Event("e2", "Music Fest", "Nov 22", "Hawrelak Park", "Live bands and food trucks..."));
-        eventList.add(new Event("e3", "Pitch Night", "Nov 28", "Startup Edmonton", "See the latest local startups..."));
-    }
+//    private void loadMockEvents() {
+//        eventList = new ArrayList<>();
+//        // UPDATED to include description
+//        eventList.add(new Event("e1", "o1", "Tech Summit", "Nov 15", "Convention Centre", "The biggest tech summit..."));
+//        eventList.add(new Event("e2", "o2", "Music Fest", "Nov 22", "Hawrelak Park", "Live bands and food trucks..."));
+//        eventList.add(new Event("e3", "o3". "Pitch Night", "Nov 28", "Startup Edmonton", "See the latest local startups..."));
+//    }
 
     /**
      * This method runs when an event card is clicked.
