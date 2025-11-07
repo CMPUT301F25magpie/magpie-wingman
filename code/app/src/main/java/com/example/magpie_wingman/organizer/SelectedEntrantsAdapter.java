@@ -43,7 +43,7 @@ public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntran
         Entrant entrant = entrantList.get(position);
 
 
-        holder.nameTextView.setText(entrant.getUserName());
+        holder.nameTextView.setText(entrant.getName());
     }
 
     @Override

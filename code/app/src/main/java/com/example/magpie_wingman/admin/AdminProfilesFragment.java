@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,16 +46,6 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        try {
-            dbManager = DbManager.getInstance();
-        } catch (IllegalStateException e) {
-            if (getContext() != null) {
-                DbManager.init(getContext().getApplicationContext());
-                dbManager = DbManager.getInstance();
-            }
-        }
-
-        userList = new ArrayList<>();
         recyclerView = view.findViewById(R.id.recycler_view_admin_profiles);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         // loadMockProfiles();
@@ -83,7 +72,7 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     }
 
 
-
+    // 3. This method runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
         UserProfile target = userProfileList.get(position);

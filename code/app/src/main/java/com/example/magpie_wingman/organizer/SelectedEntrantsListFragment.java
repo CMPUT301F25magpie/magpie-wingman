@@ -111,14 +111,16 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                                     String userName = doc.getString("name"); 
                                     String userEmail = doc.getString("email");
                                     String userPhone = doc.getString("phone");
+                                    String userProfileImage = doc.getString("ProfileImageUrl");
                                     String userDeviceId = doc.getString("deviceId");
 
                                     Boolean isOrganizer = doc.getBoolean("isOrganizer");
-                                    if (isOrganizer == null || isOrganizer == false) {
+                                    if (isOrganizer == null || !isOrganizer) {
                                         // Use Entrant constructor.
                                         Entrant entrant = new Entrant(
                                                 userId,
                                                 userName,
+                                                userProfileImage,
                                                 userEmail,
                                                 userPhone,
                                                 userDeviceId
@@ -143,7 +145,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     public void onRemoveClicked(int position) {
         Entrant entrantToRemove = selectedEntrantsList.get(position);
         String userId = entrantToRemove.getUserId();
-        String userName = entrantToRemove.getUserName();
+        String userName = entrantToRemove.getName();
 
         dbManager.cancelRegistrable(eventId, userId)
                 .addOnSuccessListener(aVoid -> {
