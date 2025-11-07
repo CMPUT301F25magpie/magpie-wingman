@@ -113,6 +113,8 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                 });
     }
 
+
+    // 3. This method runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
         User userToRemove = userList.get(position);

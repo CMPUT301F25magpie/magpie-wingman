@@ -22,6 +22,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.magpie_wingman.data.model.Entrant; // Make sure this import is correct
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +40,17 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
     public SelectedEntrantsListFragment() {
         // Required empty public constructor
+    }
+
+    // private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (getArguments() != null) {
+            this.eventId = getArguments().getString("eventId");
+        }
     }
 
     @Override
@@ -143,6 +157,17 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                 });
     }
 
+        // init list + adapter BEFORE loading data
+        selectedEntrantsList = new ArrayList<>();
+        adapter = new SelectedEntrantsAdapter(selectedEntrantsList, this);
+        recyclerView.setAdapter(adapter);
+
+        loadSelectedEntrants();
+    }
+
+
+    // 4. This is the new method from the interface
+    // It runs when the "X" is clicked
     @Override
     public void onRemoveClicked(int position) {
         Entrant entrantToRemove = selectedEntrantsList.get(position);
@@ -161,4 +186,44 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                     Log.e("SelectedEntrants", "Failed to remove user", e);
                 });
     }
+    }
+
+    private void loadSelectedEntrants() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("events")
+                .document(eventId)
+                .collection("registrable")
+                .get()
+                .addOnSuccessListener(snap -> {
+                    selectedEntrantsList.clear();
+
+                    for (QueryDocumentSnapshot doc : snap) {
+                        String userId = doc.getId();
+
+                        db.collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(userSnap -> {
+                                    String userName = userSnap.getString("name");
+                                    if (userName == null || userName.isEmpty()) {
+                                        userName = userId;
+                                    }
+                                    selectedEntrantsList.add(new Entrant(userId, userName));
+                                    adapter.notifyDataSetChanged(); //
+                                })
+                                .addOnFailureListener(e -> {
+
+                                    selectedEntrantsList.add(new Entrant(userId, userId));
+                                    adapter.notifyDataSetChanged();
+                                });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(),
+                                "Failed to load registrable users.",
+                                Toast.LENGTH_SHORT).show()
+                );
+    }
+
 }

@@ -5,7 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,10 +20,14 @@ import java.util.Locale;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.CANADA); //text formatter
     private List<Event> eventList;
     private OnEventListener eventListener;
     // Formatter to turn the timestamp (long) into a "Nov 15" string
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
+
+    // Formatter to turn the timestamp (long) into a "Nov 15" string
+    // private SimpleDateFormat dateFormat_MMMdd = new SimpleDateFormat("MMM d", Locale.getDefault());
 
     public interface OnEventListener {
         void onEventClick(int position);
@@ -47,6 +52,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         holder.eventName.setText(event.getEventName());
         // holder.eventDate.setText(event.getEventDate());              <<<<<<< DATATYPE INCORRECT
+        if (event.getEventDate() != null) {
+            holder.eventDate.setText(dateFormat.format(event.getEventDate()));
+        } else {
+            holder.eventDate.setText("Date TBD");
+        }
         holder.eventLocation.setText(event.getEventLocation());
 
         // Use the correct getter from your team's file: getEventDescription()
@@ -59,6 +69,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.eventDate.setText(dateString);
         } else {
             holder.eventDate.setText("TBD");                       // <<<<<<<<<<<< DATATYPE INCORRECT
+        if (event.getEventDate().getTime() > 0) {
+            String dateString = dateFormat.format(new Date(event.getEventDate().getTime()));
+            holder.eventDate.setText(dateString);
+        } else {
+            holder.eventDate.setText("TBD"); 
         }
     }
 

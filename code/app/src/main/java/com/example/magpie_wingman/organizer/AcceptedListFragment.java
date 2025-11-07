@@ -1,66 +1,99 @@
 package com.example.magpie_wingman.organizer;
 
 import android.os.Bundle;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.model.Entrant;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link AcceptedListFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class AcceptedListFragment extends Fragment {
+import java.util.ArrayList;
+import java.util.List;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class AcceptedListFragment extends Fragment implements AcceptedEntrantsAdapter.OnEntrantRemoveListener {
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView recyclerView;
+    private AcceptedEntrantsAdapter adapter;
+    private List<Entrant> registeredEntrantsList;
 
-    public AcceptedListFragment() {
-        // Required empty public constructor
-    }
+    public AcceptedListFragment() {}
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AcceptedListFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static AcceptedListFragment newInstance(String param1, String param2) {
-        AcceptedListFragment fragment = new AcceptedListFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+    private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_accepted_list, container, false);
+        return inflater.inflate(R.layout.fragment_selected_entrants_list, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+
+        registeredEntrantsList = new ArrayList<>();
+        adapter = new AcceptedEntrantsAdapter(registeredEntrantsList, this);
+        recyclerView.setAdapter(adapter);
+
+        loadRegisteredEntrants();
+    }
+
+    @Override
+    public void onRemoveClicked(int position) {
+        registeredEntrantsList.remove(position);
+        adapter.notifyItemRemoved(position);
+        adapter.notifyItemRangeChanged(position, registeredEntrantsList.size());
+    }
+
+    private void loadRegisteredEntrants() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("events")
+                .document(eventId)
+                .collection("registered")
+                .get()
+                .addOnSuccessListener(snap -> {
+                    registeredEntrantsList.clear();
+
+                    for (QueryDocumentSnapshot doc : snap) {
+                        String userId = doc.getId();
+
+                        db.collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(userSnap -> {
+                                    String userName = userSnap.getString("name");
+                                    if (userName == null || userName.isEmpty()) {
+                                        userName = userId;
+                                    }
+
+                                    registeredEntrantsList.add(new Entrant(userId, userName));
+                                    adapter.notifyDataSetChanged();
+                                })
+                                .addOnFailureListener(e -> {
+
+                                    registeredEntrantsList.add(new Entrant(userId, userId));
+                                    adapter.notifyDataSetChanged();
+                                });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(),
+                                "Failed to load registered users.",
+                                Toast.LENGTH_SHORT).show()
+                );
     }
 }

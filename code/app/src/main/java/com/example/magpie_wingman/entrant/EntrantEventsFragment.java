@@ -20,6 +20,14 @@ import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.entrant.EventAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.magpie_wingman.data.model.Event; // Import our new model
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.entrant.EventAdapter;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +38,9 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
     private EventAdapter adapter;
     private List<Event> eventList;
 
+    // Firestore
+    private FirebaseFirestore db;
+    private CollectionReference eventsRef;
     private DbManager dbManager;
 
     public EntrantEventsFragment() {
@@ -85,6 +96,48 @@ public class EntrantEventsFragment extends Fragment implements EventAdapter.OnEv
                 .addOnFailureListener(e -> {
                     Log.e("EntrantEventsFragment", "Error loading events", e);
                     Toast.makeText(getContext(), "Error loading events", Toast.LENGTH_SHORT).show();
+        // 3. Load the data (now from Firebase instead of mock)
+        loadEventsFromDatabase();
+
+        // 4. Create and set the adapter (pass 'this' as the listener)
+        adapter = new EventAdapter(eventList, this);
+        recyclerView.setAdapter(adapter);
+
+        loadEventsFromDatabase();
+    }
+
+    /**
+     * Creates data for the event list.
+     * Now this comes from Firebase.
+     */
+    private void loadEventsFromDatabase() {
+        eventList = new ArrayList<>();
+
+        db = FirebaseFirestore.getInstance();
+        eventsRef = db.collection("events");
+
+        Timestamp now = Timestamp.now(); //get current timestamp
+
+        eventsRef
+                .whereGreaterThanOrEqualTo("registrationEnd", now) //filter out events that have registration dates that have already passed
+                .orderBy("registrationEnd")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(getContext(), "Failed to load events", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    eventList.clear();
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            Event event = doc.toObject(Event.class);
+                            eventList.add(event);
+                        }
+                    }
+
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
                 });
     }
 
