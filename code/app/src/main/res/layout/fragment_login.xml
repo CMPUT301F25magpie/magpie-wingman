@@ -132,60 +132,6 @@
         app:layout_constraintTop_toBottomOf="@id/login"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-    <!-- Bottom Test Buttons -->
-    <LinearLayout
-        android:id="@+id/testButtonsContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:weightSum="3"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
 
-        <Button
-            android:id="@+id/btn_test_entrant"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:text="Entrant"
-            android:backgroundTint="#1C1C30"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"
-            android:layout_marginEnd="8dp"/>
-
-        <Button
-            android:id="@+id/btn_test_organizer"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:text="Organizer"
-            android:backgroundTint="#2E5BFF"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"
-            android:layout_marginEnd="8dp"/>
-
-        <Button
-            android:id="@+id/btn_test_admin"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:text="Admin"
-            android:backgroundTint="#1C1C30"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"/>
-
-        <ProgressBar
-            android:id="@+id/loading"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:indeterminate="true"
-            android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/login"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp"/>
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
+
