@@ -91,42 +91,42 @@ public class EntrantLandingFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(v, savedInstanceState);
-
-        // --- Bind views to XML IDs ---
-        searchBar        = v.findViewById(R.id.search_bar);
-        btnFilter        = v.findViewById(R.id.btn_filter);
-        btnInfo          = v.findViewById(R.id.btn_info);
-        btnSettings      = v.findViewById(R.id.btn_settings);
-        eventsRecycler   = v.findViewById(R.id.recycler_view_events);
-        btnInvitations   = v.findViewById(R.id.btn_invitations);
-        btnScanQr        = v.findViewById(R.id.btn_scan_qr);
-        btnEventsPrimary = v.findViewById(R.id.btn_events); // <-- will act as Join/Leave if eventId present
-
-        // --- Wire top-bar actions ---
-        btnFilter.setOnClickListener(x -> Toast.makeText(requireContext(), "Filter tapped", Toast.LENGTH_SHORT).show());
-        btnInfo.setOnClickListener(x -> Toast.makeText(requireContext(), "Info tapped", Toast.LENGTH_SHORT).show());
-        btnSettings.setOnClickListener(x -> Toast.makeText(requireContext(), "Settings tapped", Toast.LENGTH_SHORT).show());
-
-        // --- Bottom bar actions ---
-        btnInvitations.setOnClickListener(x -> Toast.makeText(requireContext(), "Invitations", Toast.LENGTH_SHORT).show());
-        btnScanQr.setOnClickListener(x -> Toast.makeText(requireContext(), "Scan QR", Toast.LENGTH_SHORT).show());
-
-        // --- List mode and Event mode wiring ---
-        if (isEmpty(eventId)) {
-            // LIST MODE: keep "Events" label and normal behavior
-            btnEventsPrimary.setText(R.string.events);
-            btnEventsPrimary.setEnabled(true);
-            btnEventsPrimary.setOnClickListener(x ->
-                    Toast.makeText(requireContext(), "Events tapped", Toast.LENGTH_SHORT).show());
-
-            // TODO: set up RecyclerView adapter & data source here.
-            // eventsRecycler.setLayoutManager(...); eventsRecycler.setAdapter(...);
-            // loadEventsAndSubmitToAdapter();
-        } else {
-            // EVENT MODE: reuse this button as Join/Leave for the given eventId
-            setupJoinLeaveForEvent();
-        }
+//        super.onViewCreated(v, savedInstanceState);
+//
+//        // --- Bind views to XML IDs ---
+//        searchBar        = v.findViewById(R.id.search_bar);
+//        btnFilter        = v.findViewById(R.id.btn_filter);
+//        btnInfo          = v.findViewById(R.id.btn_info);
+//        btnSettings      = v.findViewById(R.id.btn_settings);
+//        eventsRecycler   = v.findViewById(R.id.recycler_view_events);
+//        btnInvitations   = v.findViewById(R.id.btn_invitations);
+//        btnScanQr        = v.findViewById(R.id.btn_scan_qr);
+//        btnEventsPrimary = v.findViewById(R.id.btn_events); // <-- will act as Join/Leave if eventId present
+//
+//        // --- Wire top-bar actions ---
+//        btnFilter.setOnClickListener(x -> Toast.makeText(requireContext(), "Filter tapped", Toast.LENGTH_SHORT).show());
+//        btnInfo.setOnClickListener(x -> Toast.makeText(requireContext(), "Info tapped", Toast.LENGTH_SHORT).show());
+//        btnSettings.setOnClickListener(x -> Toast.makeText(requireContext(), "Settings tapped", Toast.LENGTH_SHORT).show());
+//
+//        // --- Bottom bar actions ---
+//        btnInvitations.setOnClickListener(x -> Toast.makeText(requireContext(), "Invitations", Toast.LENGTH_SHORT).show());
+//        btnScanQr.setOnClickListener(x -> Toast.makeText(requireContext(), "Scan QR", Toast.LENGTH_SHORT).show());
+//
+//        // --- List mode and Event mode wiring ---
+//        if (isEmpty(eventId)) {
+//            // LIST MODE: keep "Events" label and normal behavior
+////            btnEventsPrimary.setText(R.string.events);
+//            btnEventsPrimary.setEnabled(true);
+//            btnEventsPrimary.setOnClickListener(x ->
+//                    Toast.makeText(requireContext(), "Events tapped", Toast.LENGTH_SHORT).show());
+//
+//            // TODO: set up RecyclerView adapter & data source here.
+//            // eventsRecycler.setLayoutManager(...); eventsRecycler.setAdapter(...);
+//            // loadEventsAndSubmitToAdapter();
+//        } else {
+//            // EVENT MODE: reuse this button as Join/Leave for the given eventId
+//            setupJoinLeaveForEvent();
+//        }
     }
 
     // Join/Leave logic (only active when eventId is provided)
@@ -137,86 +137,86 @@ public class EntrantLandingFragment extends Fragment {
      * {@link DbManager#addUserToWaitlist(String, String)}, and
      * {@link DbManager#cancelWaitlist(String, String)}.
      */
-    private void setupJoinLeaveForEvent() {
-        // Validate required args; disable UI if missing.
-        if (isEmpty(entrantId)) {
-            btnEventsPrimary.setEnabled(false);
-            btnEventsPrimary.setText(R.string.join_waitlist);
-            Toast.makeText(requireContext(), "Missing entrantId for join/leave", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        // Disable while checking membership state
-        btnEventsPrimary.setEnabled(false);
-
-        // Resolve current membership to set correct label
-        DbManager.getInstance()
-                .isUserInWaitlist(eventId, entrantId)
-                .addOnSuccessListener(inWaitlist -> {
-                    isOnWaitlist = inWaitlist != null && inWaitlist;
-                    renderPrimaryActionLabel();
-                    btnEventsPrimary.setEnabled(true);
-                })
-                .addOnFailureListener(e -> {
-                    // Default to "Join" if check fails
-                    isOnWaitlist = false;
-                    renderPrimaryActionLabel();
-                    btnEventsPrimary.setEnabled(true);
-                });
-
-        // Toggle join/leave on click
-        btnEventsPrimary.setOnClickListener(v -> {
-            btnEventsPrimary.setEnabled(false); // prevent double taps during network call
-            if (isOnWaitlist) {
-                leaveWaitlist();
-            } else {
-                joinWaitlist();
-            }
-        });
-    }
+//    private void setupJoinLeaveForEvent() {
+//        // Validate required args; disable UI if missing.
+//        if (isEmpty(entrantId)) {
+//            btnEventsPrimary.setEnabled(false);
+//            btnEventsPrimary.setText(R.string.join_waitlist);
+//            Toast.makeText(requireContext(), "Missing entrantId for join/leave", Toast.LENGTH_LONG).show();
+//            return;
+//        }
+//
+//        // Disable while checking membership state
+//        btnEventsPrimary.setEnabled(false);
+//
+//        // Resolve current membership to set correct label
+//        DbManager.getInstance()
+//                .isUserInWaitlist(eventId, entrantId)
+//                .addOnSuccessListener(inWaitlist -> {
+//                    isOnWaitlist = inWaitlist != null && inWaitlist;
+//                    renderPrimaryActionLabel();
+//                    btnEventsPrimary.setEnabled(true);
+//                })
+//                .addOnFailureListener(e -> {
+//                    // Default to "Join" if check fails
+//                    isOnWaitlist = false;
+//                    renderPrimaryActionLabel();
+//                    btnEventsPrimary.setEnabled(true);
+//                });
+//
+//        // Toggle join/leave on click
+//        btnEventsPrimary.setOnClickListener(v -> {
+//            btnEventsPrimary.setEnabled(false); // prevent double taps during network call
+//            if (isOnWaitlist) {
+//                leaveWaitlist();
+//            } else {
+//                joinWaitlist();
+//            }
+//        });
+//    }
 
     /** Updates the bottom primary button text based on {@link #isOnWaitlist}. */
-    private void renderPrimaryActionLabel() {
-        btnEventsPrimary.setText(isOnWaitlist ? R.string.leave_waitlist : R.string.join_waitlist);
-    }
+//    private void renderPrimaryActionLabel() {
+//        btnEventsPrimary.setText(isOnWaitlist ? R.string.leave_waitlist : R.string.join_waitlist);
+//    }
 
     /** Adds the current entrant to the event's waitlist and refreshes the UI on success. */
     private void joinWaitlist() {
-        DbManager.getInstance()
-                .addUserToWaitlist(eventId, entrantId)
-                .addOnSuccessListener(v -> {
-                    isOnWaitlist = true;
-                    renderPrimaryActionLabel();
-                    Toast.makeText(requireContext(), "Joined waitlist", Toast.LENGTH_SHORT).show();
-                    btnEventsPrimary.setEnabled(true);
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(requireContext(), "Join failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    btnEventsPrimary.setEnabled(true);
-                });
+//        DbManager.getInstance()
+//                .addUserToWaitlist(eventId, entrantId)
+//                .addOnSuccessListener(v -> {
+//                    isOnWaitlist = true;
+//                    renderPrimaryActionLabel();
+//                    Toast.makeText(requireContext(), "Joined waitlist", Toast.LENGTH_SHORT).show();
+//                    btnEventsPrimary.setEnabled(true);
+//                })
+//                .addOnFailureListener(e -> {
+//                    Toast.makeText(requireContext(), "Join failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//                    btnEventsPrimary.setEnabled(true);
+//                });
     }
 
     /** Removes the current entrant from the event's waitlist and refreshes the UI on success. */
     private void leaveWaitlist() {
-        DbManager.getInstance()
-                .cancelWaitlist(eventId, entrantId)
-                .addOnSuccessListener(v -> {
-                    isOnWaitlist = false;
-                    renderPrimaryActionLabel();
-                    Toast.makeText(requireContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
-                    btnEventsPrimary.setEnabled(true);
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(requireContext(), "Leave failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    btnEventsPrimary.setEnabled(true);
-                });
+//        DbManager.getInstance()
+//                .cancelWaitlist(eventId, entrantId)
+//                .addOnSuccessListener(v -> {
+//                    isOnWaitlist = false;
+//                    renderPrimaryActionLabel();
+//                    Toast.makeText(requireContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
+//                    btnEventsPrimary.setEnabled(true);
+//                })
+//                .addOnFailureListener(e -> {
+//                    Toast.makeText(requireContext(), "Leave failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+//                    btnEventsPrimary.setEnabled(true);
+//                });
     }
 
     // ---------------------------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------------------------
 
-    private static boolean isEmpty(@Nullable String s) {
-        return s == null || s.trim().isEmpty();
-    }
+//    private static boolean isEmpty(@Nullable String s) {
+//        return s == null || s.trim().isEmpty();
+//    }
 }
