@@ -50,20 +50,20 @@ public class EntrantEventsFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        recyclerView = view.findViewById(R.id.recycler_view_events);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new EventAdapter(
-                eventList,
-                entrantId,
-                event -> Toast.makeText(getContext(),
-                        "Clicked on: " + (event.getEventName() == null ? "" : event.getEventName()),
-                        Toast.LENGTH_SHORT).show()
-        );
-        recyclerView.setAdapter(adapter);
-
-        // TODO: load events into eventList, then adapter.notifyDataSetChanged();
+//        super.onViewCreated(view, savedInstanceState);
+//
+//        recyclerView = view.findViewById(R.id.recycler_view_events);
+//        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+//
+//        adapter = new EventAdapter(
+//                eventList,
+//                entrantId,
+//                event -> Toast.makeText(getContext(),
+//                        "Clicked on: " + (event.getEventName() == null ? "" : event.getEventName()),
+//                        Toast.LENGTH_SHORT).show()
+//        );
+//        recyclerView.setAdapter(adapter);
+//
+//        // TODO: load events into eventList, then adapter.notifyDataSetChanged();
     }
 }

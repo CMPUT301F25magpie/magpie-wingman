@@ -128,8 +128,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
             date        = itemView.findViewById(R.id.text_view_event_date);
             location    = itemView.findViewById(R.id.text_view_event_location);
             description = itemView.findViewById(R.id.text_view_event_description);
-            btnJoinLeave= itemView.findViewById(R.id.btnJoinLeave);
-            progress    = itemView.findViewById(R.id.progressJoin);
+//            btnJoinLeave= itemView.findViewById(R.id.btnJoinLeave);
+//            progress    = itemView.findViewById(R.id.progressJoin);
         }
 //
 //        void setWaitlistState(boolean onList) {

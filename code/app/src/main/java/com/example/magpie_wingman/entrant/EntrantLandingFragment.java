@@ -13,6 +13,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
@@ -46,7 +48,7 @@ public class EntrantLandingFragment extends Fragment {
     private EditText searchBar;
     private ImageView btnFilter, btnInfo, btnSettings;
     private RecyclerView eventsRecycler;
-    private Button btnInvitations, btnScanQr, btnEventsPrimary;
+    private Button btnInvitations, btnScanQr, btnEventsPrimary, btnNotifications;
 
     // Local state for Join/Leave
     private boolean isOnWaitlist = false;
@@ -91,27 +93,35 @@ public class EntrantLandingFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
-//        super.onViewCreated(v, savedInstanceState);
-//
-//        // --- Bind views to XML IDs ---
-//        searchBar        = v.findViewById(R.id.search_bar);
-//        btnFilter        = v.findViewById(R.id.btn_filter);
-//        btnInfo          = v.findViewById(R.id.btn_info);
-//        btnSettings      = v.findViewById(R.id.btn_settings);
-//        eventsRecycler   = v.findViewById(R.id.recycler_view_events);
-//        btnInvitations   = v.findViewById(R.id.btn_invitations);
-//        btnScanQr        = v.findViewById(R.id.btn_scan_qr);
-//        btnEventsPrimary = v.findViewById(R.id.btn_events); // <-- will act as Join/Leave if eventId present
-//
-//        // --- Wire top-bar actions ---
-//        btnFilter.setOnClickListener(x -> Toast.makeText(requireContext(), "Filter tapped", Toast.LENGTH_SHORT).show());
-//        btnInfo.setOnClickListener(x -> Toast.makeText(requireContext(), "Info tapped", Toast.LENGTH_SHORT).show());
-//        btnSettings.setOnClickListener(x -> Toast.makeText(requireContext(), "Settings tapped", Toast.LENGTH_SHORT).show());
-//
-//        // --- Bottom bar actions ---
-//        btnInvitations.setOnClickListener(x -> Toast.makeText(requireContext(), "Invitations", Toast.LENGTH_SHORT).show());
-//        btnScanQr.setOnClickListener(x -> Toast.makeText(requireContext(), "Scan QR", Toast.LENGTH_SHORT).show());
-//
+        super.onViewCreated(v, savedInstanceState);
+
+        // --- Bind views to XML IDs ---
+        searchBar        = v.findViewById(R.id.search_bar);
+        btnFilter        = v.findViewById(R.id.btn_filter);
+        btnInfo          = v.findViewById(R.id.btn_info);
+        btnSettings      = v.findViewById(R.id.btn_settings);
+        eventsRecycler   = v.findViewById(R.id.recycler_view_events);
+        btnInvitations   = v.findViewById(R.id.btn_invitations);
+        btnScanQr        = v.findViewById(R.id.btn_scan_qr);
+        btnEventsPrimary = v.findViewById(R.id.btn_events);
+        btnNotifications = v.findViewById(R.id.btn_notification);
+
+        NavController navController = Navigation.findNavController(v);
+
+        // --- Top bar actions ---
+        btnFilter.setOnClickListener(x -> navController.navigate(R.id.action_entrantLandingFragment3_to_entrantEventSearchFilterFragment));
+
+        btnInfo.setOnClickListener(x ->
+                navController.navigate(R.id.action_entrantLandingFragment3_to_entrantDetailsFragment));
+
+        btnSettings.setOnClickListener( x -> navController.navigate(R.id.action_entrantLandingFragment3_to_entrantSettingsFragment));
+
+        // --- Bottom bar actions ---
+        btnInvitations.setOnClickListener(x -> navController.navigate(R.id.action_entrantLandingFragment3_to_entrantInvitationsFragment));
+        btnScanQr.setOnClickListener(x -> navController.navigate(R.id.action_entrantLandingFragment3_to_scanQRFragment));
+        btnEventsPrimary.setOnClickListener(x -> navController.navigate(R.id.action_entrantLandingFragment3_to_entrantEventsFragment));
+        btnNotifications.setOnClickListener(x -> navController.navigate(R.id.action_entrantLandingFragment3_to_entrantNotificationsFragment));
+
 //        // --- List mode and Event mode wiring ---
 //        if (isEmpty(eventId)) {
 //            // LIST MODE: keep "Events" label and normal behavior
@@ -119,7 +129,7 @@ public class EntrantLandingFragment extends Fragment {
 //            btnEventsPrimary.setEnabled(true);
 //            btnEventsPrimary.setOnClickListener(x ->
 //                    Toast.makeText(requireContext(), "Events tapped", Toast.LENGTH_SHORT).show());
-//
+
 //            // TODO: set up RecyclerView adapter & data source here.
 //            // eventsRecycler.setLayoutManager(...); eventsRecycler.setAdapter(...);
 //            // loadEventsAndSubmitToAdapter();

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/adminProfilesFragment">
+    app:startDestination="@id/loginFragment">
 
 
 
@@ -74,6 +74,9 @@
         <action
             android:id="@+id/action_entrantLandingFragment3_to_entrantSettingsFragment"
             app:destination="@id/entrantSettingsFragment" />
+        <action
+            android:id="@+id/action_entrantLandingFramgnet3_to_entrantAboutUsFragment"
+            app:destination="@id/entrantAboutUsFragment"  />
     </fragment>
     <fragment
         android:id="@+id/organizerLandingFragment2"
@@ -422,7 +425,7 @@
     </fragment>
     <fragment
         android:id="@+id/entrantSettingsFragment"
-        android:name="com.example.magpie_wingman.EntrantSettingsFragment"
+        android:name="com.example.magpie_wingman.entrant.EntrantSettingsFragment"
         android:label="fragment_entrant_settings"
         tools:layout="@layout/fragment_entrant_settings" >
         <action
@@ -440,7 +443,7 @@
     </fragment>
     <fragment
         android:id="@+id/entrantEditProfileFragment"
-        android:name="com.example.magpie_wingman.EntrantEditProfileFragment"
+        android:name="com.example.magpie_wingman.entrant.EntrantEditProfileFragment"
         android:label="fragment_entrant_edit_profile2"
         tools:layout="@layout/fragment_entrant_edit_profile" >
         <action
@@ -449,7 +452,7 @@
     </fragment>
     <fragment
         android:id="@+id/organizerSettingsFragment"
-        android:name="com.example.magpie_wingman.OrganizerSettingsFragment"
+        android:name="com.example.magpie_wingman.organizer.OrganizerSettingsFragment"
         android:label="fragment_organizer_settings"
         tools:layout="@layout/fragment_organizer_settings" >
         <action
@@ -467,7 +470,7 @@
     </fragment>
     <fragment
         android:id="@+id/organizerEditProfileFragment"
-        android:name="com.example.magpie_wingman.OrganizerEditProfileFragment"
+        android:name="com.example.magpie_wingman.organizer.OrganizerEditProfileFragment"
         android:label="fragment_organizer_edit_profile"
         tools:layout="@layout/fragment_organizer_edit_profile" >
         <action
@@ -476,7 +479,7 @@
     </fragment>
     <fragment
         android:id="@+id/adminSettingsFragment"
-        android:name="com.example.magpie_wingman.AdminSettingsFragment"
+        android:name="com.example.magpie_wingman.admin.AdminSettingsFragment"
         android:label="fragment_admin_settings"
         tools:layout="@layout/fragment_admin_settings" >
         <action
@@ -491,7 +494,7 @@
     </fragment>
     <fragment
         android:id="@+id/adminEditProfileFragment"
-        android:name="com.example.magpie_wingman.AdminEditProfileFragment"
+        android:name="com.example.magpie_wingman.admin.AdminEditProfileFragment"
         android:label="fragment_admin_edit_profile"
         tools:layout="@layout/fragment_admin_edit_profile" >
         <action
