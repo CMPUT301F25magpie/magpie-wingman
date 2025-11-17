@@ -422,7 +422,7 @@
     </fragment>
     <fragment
         android:id="@+id/entrantSettingsFragment"
-        android:name="com.example.magpie_wingman.EntrantSettingsFragment"
+        android:name="com.example.magpie_wingman.entrant.EntrantSettingsFragment"
         android:label="fragment_entrant_settings"
         tools:layout="@layout/fragment_entrant_settings" >
         <action

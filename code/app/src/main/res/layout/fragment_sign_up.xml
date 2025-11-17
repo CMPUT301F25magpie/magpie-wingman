@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:padding="24dp"
-    tools:context=".ui.signup.SignUpFragment">
+    tools:context="data.SignUpFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
