@@ -416,7 +416,7 @@
     </fragment>
     <fragment
         android:id="@+id/signUpFragment"
-        android:name="com.example.magpie_wingman.SignUpFragment"
+        android:name="com.example.magpie_wingman.data.SignUpFragment"
         android:label="fragment_sign_up"
         tools:layout="@layout/fragment_sign_up" >
         <action
