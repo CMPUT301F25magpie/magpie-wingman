@@ -1,5 +1,6 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -26,8 +27,8 @@
                 android:layout_height="28dp"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_arrow_back"
-                android:tint="#000000"
-                android:contentDescription="Back" />
+                android:contentDescription="Back"
+                app:tint="#000000" />
 
             <ImageView
                 android:id="@+id/image_logo"
@@ -86,10 +87,11 @@
                 android:textSize="16sp"/>
 
             <ImageView
+                android:id="@+id/btn_edit_profile"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_chevron_right"
-                android:tint="#FFFFFF" />
+                app:tint="#FFFFFF" />
         </LinearLayout>
 
         <!-- SECTION: MORE -->
@@ -120,10 +122,11 @@
                 android:textSize="16sp"/>
 
             <ImageView
+                android:id="@+id/btn_about_us"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/ic_chevron_right"
-                android:tint="#FFFFFF" />
+                app:tint="#FFFFFF" />
         </LinearLayout>
 
         <!-- Logout & Delete Buttons -->
