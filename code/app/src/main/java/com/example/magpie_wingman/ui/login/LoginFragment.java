@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,7 +35,10 @@ public class LoginFragment extends Fragment {
         Button btnEntrant   = view.findViewById(R.id.btn_test_entrant);
         Button btnOrganizer = view.findViewById(R.id.btn_test_organizer);
         Button btnAdmin     = view.findViewById(R.id.btn_test_admin);
+        TextView btnSignUpText = view.findViewById(R.id.signUpText);
 
+        btnSignUpText.setOnClickListener(v ->
+                navController.navigate(R.id.action_loginFragment_to_signUpFragment));
 
         btnEntrant.setOnClickListener(v ->
                 navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
