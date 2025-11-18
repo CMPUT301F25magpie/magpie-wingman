@@ -49,67 +49,67 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
-        Event e = events.get(position);
+//        Event e = events.get(position);
+//
+//        // --- Bind basic fields ---
+//        h.name.setText(safe(e.getEventName()));
+//        h.date.setText(safe(e.getEventStartTime().toString()));
+//        h.location.setText(safe(e.getEventLocation()));
+//        h.description.setText(safe(e.getDescription()));
+//
+//
+//        // --- Initialize join/leave UI state per-row ---
+//        h.btnJoinLeave.setEnabled(false);
+//        h.progress.setVisibility(View.VISIBLE);
+//
+//        final String eventId = e.getEventId(); // ensure your Event exposes this
+//        DbManager.getInstance()
+//                .isUserInWaitlist(eventId, entrantId)
+//                .addOnSuccessListener(inWaitlist -> {
+//                    boolean onList = inWaitlist != null && inWaitlist;
+//                    h.setWaitlistState(onList);
+//                })
+//                .addOnFailureListener(err -> {
+//                    // default to "Join" on error
+//                    h.setWaitlistState(false);
+//                });
+//
+//        // --- Click handlers ---
+//        h.itemView.setOnClickListener(v -> {
+//            if (clicker != null) clicker.onEventClick(e);
+//        });
 
-        // --- Bind basic fields ---
-        h.name.setText(safe(e.getEventName()));
-        h.date.setText(safe(e.getEventStartTime().toString()));
-        h.location.setText(safe(e.getEventLocation()));
-        h.description.setText(safe(e.getDescription()));
-
-
-        // --- Initialize join/leave UI state per-row ---
-        h.btnJoinLeave.setEnabled(false);
-        h.progress.setVisibility(View.VISIBLE);
-
-        final String eventId = e.getEventId(); // ensure your Event exposes this
-        DbManager.getInstance()
-                .isUserInWaitlist(eventId, entrantId)
-                .addOnSuccessListener(inWaitlist -> {
-                    boolean onList = inWaitlist != null && inWaitlist;
-                    h.setWaitlistState(onList);
-                })
-                .addOnFailureListener(err -> {
-                    // default to "Join" on error
-                    h.setWaitlistState(false);
-                });
-
-        // --- Click handlers ---
-        h.itemView.setOnClickListener(v -> {
-            if (clicker != null) clicker.onEventClick(e);
-        });
-
-        h.btnJoinLeave.setOnClickListener(v -> {
-            int pos = h.getBindingAdapterPosition();
-            if (pos == RecyclerView.NO_POSITION) return;
-
-            h.btnJoinLeave.setEnabled(false);
-            h.progress.setVisibility(View.VISIBLE);
-
-            if (h.isOnWaitlist) {
-                DbManager.getInstance()
-                        .cancelWaitlist(eventId, entrantId)
-                        .addOnSuccessListener(x -> {
-                            h.setWaitlistState(false);
-                            Toast.makeText(v.getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e1 -> {
-                            Toast.makeText(v.getContext(), "Leave failed: " + e1.getMessage(), Toast.LENGTH_LONG).show();
-                            h.resetEnabled();
-                        });
-            } else {
-                DbManager.getInstance()
-                        .addUserToWaitlist(eventId, entrantId)
-                        .addOnSuccessListener(x -> {
-                            h.setWaitlistState(true);
-                            Toast.makeText(v.getContext(), "Joined waitlist", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e1 -> {
-                            Toast.makeText(v.getContext(), "Join failed: " + e1.getMessage(), Toast.LENGTH_LONG).show();
-                            h.resetEnabled();
-                        });
-            }
-        });
+//        h.btnJoinLeave.setOnClickListener(v -> {
+//            int pos = h.getBindingAdapterPosition();
+//            if (pos == RecyclerView.NO_POSITION) return;
+//
+//            h.btnJoinLeave.setEnabled(false);
+//            h.progress.setVisibility(View.VISIBLE);
+//
+//            if (h.isOnWaitlist) {
+//                DbManager.getInstance()
+//                        .cancelWaitlist(eventId, entrantId)
+//                        .addOnSuccessListener(x -> {
+//                            h.setWaitlistState(false);
+//                            Toast.makeText(v.getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
+//                        })
+//                        .addOnFailureListener(e1 -> {
+//                            Toast.makeText(v.getContext(), "Leave failed: " + e1.getMessage(), Toast.LENGTH_LONG).show();
+//                            h.resetEnabled();
+//                        });
+//            } else {
+//                DbManager.getInstance()
+//                        .addUserToWaitlist(eventId, entrantId)
+//                        .addOnSuccessListener(x -> {
+//                            h.setWaitlistState(true);
+//                            Toast.makeText(v.getContext(), "Joined waitlist", Toast.LENGTH_SHORT).show();
+//                        })
+//                        .addOnFailureListener(e1 -> {
+//                            Toast.makeText(v.getContext(), "Join failed: " + e1.getMessage(), Toast.LENGTH_LONG).show();
+//                            h.resetEnabled();
+//                        });
+//            }
+//        });
     }
 
     @Override public int getItemCount() { return events.size(); }
@@ -120,7 +120,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
         Button btnJoinLeave;
         ProgressBar progress;
         boolean isOnWaitlist = false;
-
+//
         VH(@NonNull View itemView) {
             super(itemView);
             poster      = itemView.findViewById(R.id.image_view_event_poster);
@@ -128,22 +128,22 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
             date        = itemView.findViewById(R.id.text_view_event_date);
             location    = itemView.findViewById(R.id.text_view_event_location);
             description = itemView.findViewById(R.id.text_view_event_description);
-            btnJoinLeave= itemView.findViewById(R.id.btnJoinLeave);
-            progress    = itemView.findViewById(R.id.progressJoin);
+//            btnJoinLeave= itemView.findViewById(R.id.btnJoinLeave);
+//            progress    = itemView.findViewById(R.id.progressJoin);
         }
-
-        void setWaitlistState(boolean onList) {
-            isOnWaitlist = onList;
-            btnJoinLeave.setText(onList
-                    ? R.string.leave_waitlist
-                    : R.string.join_waitlist);
-            resetEnabled();
-        }
-
-        void resetEnabled() {
-            progress.setVisibility(View.GONE);
-            btnJoinLeave.setEnabled(true);
-        }
+//
+//        void setWaitlistState(boolean onList) {
+//            isOnWaitlist = onList;
+//            btnJoinLeave.setText(onList
+//                    ? R.string.leave_waitlist
+//                    : R.string.join_waitlist);
+//            resetEnabled();
+//        }
+//
+//        void resetEnabled() {
+//            progress.setVisibility(View.GONE);
+//            btnJoinLeave.setEnabled(true);
+//        }
     }
 
     private static String safe(String s) { return s == null ? "" : s; }

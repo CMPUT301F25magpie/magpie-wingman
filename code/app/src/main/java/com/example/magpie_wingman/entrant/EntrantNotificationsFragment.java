@@ -36,62 +36,62 @@ public class EntrantNotificationsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View v, Bundle savedInstanceState) {
-        super.onViewCreated(v, savedInstanceState);
-
-        // Toolbar back navigation
-        MaterialToolbar tb = v.findViewById(R.id.toolbar_notifications);
-        if (tb != null) {
-            tb.setNavigationOnClickListener(_v ->
-                    requireActivity().getOnBackPressedDispatcher().onBackPressed());
-        }
-
-        recyclerView = v.findViewById(R.id.recycler_notifications);
-        adapter = new NotificationAdapter();
-        recyclerView.setAdapter(adapter);
-
-        String deviceId = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
-
-        DbManager.getInstance().findUserByDeviceId(deviceId)
-                .addOnSuccessListener(id -> {
-                    if (!isAdded() || id == null || id.isEmpty()) return;
-                    userId = id;
-                    attachListenerFor(userId);
-                });
+//        super.onViewCreated(v, savedInstanceState);
+//
+//        // Toolbar back navigation
+//        MaterialToolbar tb = v.findViewById(R.id.toolbar_notifications);
+//        if (tb != null) {
+//            tb.setNavigationOnClickListener(_v ->
+//                    requireActivity().getOnBackPressedDispatcher().onBackPressed());
+//        }
+//
+//        recyclerView = v.findViewById(R.id.recycler_notifications);
+//        adapter = new NotificationAdapter();
+//        recyclerView.setAdapter(adapter);
+//
+//        String deviceId = Settings.Secure.getString(
+//                requireContext().getContentResolver(),
+//                Settings.Secure.ANDROID_ID
+//        );
+//
+//        DbManager.getInstance().findUserByDeviceId(deviceId)
+//                .addOnSuccessListener(id -> {
+//                    if (!isAdded() || id == null || id.isEmpty()) return;
+//                    userId = id;
+//                    attachListenerFor(userId);
+//                });
     }
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
-        detachListener();
+//        super.onDestroyView();
+//        detachListener();
     }
 
     private void attachListenerFor(String uid) {
-        FirebaseFirestore db = DbManager.getInstance().getDb();
-        CollectionReference ref = db.collection("users")
-                .document(uid)
-                .collection("notifications");
-
-        Query q = ref.orderBy("timestamp", Query.Direction.DESCENDING);
-
-        registration = q.addSnapshotListener((QuerySnapshot snaps, com.google.firebase.firestore.FirebaseFirestoreException e) -> {
-            if (!isAdded()) return;
-            if (e != null || snaps == null) {
-                adapter.submitList(new ArrayList<>());
-                return;
-            }
-            List<Notification> list = new ArrayList<>();
-            snaps.getDocuments().forEach(d -> list.add(Notification.from(d)));
-            adapter.submitList(list);
-        });
+//        FirebaseFirestore db = DbManager.getInstance().getDb();
+//        CollectionReference ref = db.collection("users")
+//                .document(uid)
+//                .collection("notifications");
+//
+//        Query q = ref.orderBy("timestamp", Query.Direction.DESCENDING);
+//
+//        registration = q.addSnapshotListener((QuerySnapshot snaps, com.google.firebase.firestore.FirebaseFirestoreException e) -> {
+//            if (!isAdded()) return;
+//            if (e != null || snaps == null) {
+//                adapter.submitList(new ArrayList<>());
+//                return;
+//            }
+//            List<Notification> list = new ArrayList<>();
+//            snaps.getDocuments().forEach(d -> list.add(Notification.from(d)));
+//            adapter.submitList(list);
+//        });
     }
 
     private void detachListener() {
-        if (registration != null) {
-            registration.remove();
-            registration = null;
-        }
+//        if (registration != null) {
+//            registration.remove();
+//            registration = null;
+//        }
     }
 }

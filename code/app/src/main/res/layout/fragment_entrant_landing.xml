@@ -98,8 +98,8 @@
         android:background="#2E5BFF"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
-            android:id="@+id/notificationsTitle"
+        <Button
+            android:id="@+id/btn_notification"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Notifications"

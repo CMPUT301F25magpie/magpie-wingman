@@ -42,134 +42,134 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
 
     @Override
     public void onViewCreated(View v, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(v, savedInstanceState);
-
-        MaterialToolbar tb = v.findViewById(R.id.toolbar_invitations);
-        if (tb != null) {
-            tb.setNavigationOnClickListener(_v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
-        }
-
-        recycler = v.findViewById(R.id.recycler_invitations);
-        adapter = new InvitationAdapter(this);
-        recycler.setAdapter(adapter);
-
-        // Retrieve deviceId
-        String deviceId = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
-
-        DbManager.getInstance().findUserByDeviceId(deviceId)
-                .addOnSuccessListener(uid -> {
-                    userId = uid;
-                    loadInvitations();
-                });
+//        super.onViewCreated(v, savedInstanceState);
+//
+//        MaterialToolbar tb = v.findViewById(R.id.toolbar_invitations);
+//        if (tb != null) {
+//            tb.setNavigationOnClickListener(_v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+//        }
+//
+//        recycler = v.findViewById(R.id.recycler_invitations);
+//        adapter = new InvitationAdapter(this);
+//        recycler.setAdapter(adapter);
+//
+//        // Retrieve deviceId
+//        String deviceId = Settings.Secure.getString(
+//                requireContext().getContentResolver(),
+//                Settings.Secure.ANDROID_ID
+//        );
+//
+//        DbManager.getInstance().findUserByDeviceId(deviceId)
+//                .addOnSuccessListener(uid -> {
+//                    userId = uid;
+//                    loadInvitations();
+//                });
     }
 
     // Load all events where this user is present in events/{eventId}/registrable/{userId}
-    private void loadInvitations() {
-        if (TextUtils.isEmpty(userId)) return;
-
-        FirebaseFirestore db = DbManager.getInstance().getDb();
-
-        db.collectionGroup("registrable")
-                .whereEqualTo(FieldPath.documentId(), userId)
-                .get()
-                .addOnSuccessListener(snaps -> {
-                    List<Invitation> out = new ArrayList<>();
-                    if (snaps.isEmpty()) {
-                        adapter.setItems(out);
-                        return;
-                    }
-
-                    final int[] pending = {snaps.size()};
-                    for (DocumentSnapshot registrableDoc : snaps) {
-                        DocumentReference eventDoc = registrableDoc.getReference().getParent().getParent();
-                        if (eventDoc == null) {
-                            if (--pending[0] == 0) adapter.setItems(out);
-                            continue;
-                        }
-
-                        eventDoc.get().addOnSuccessListener(ev -> {
-                            String eventId = ev.getId();
-                            String name = getStringSafe(ev, "eventName");
-                            String desc = getStringSafe(ev, "description");
-                            String location = getStringSafe(ev, "eventLocation");
-                            String datetime = formatRange(ev.get("registrationStart"), ev.get("registrationEnd"));
-
-                            long invitedAt = readInvitedAt(registrableDoc);
-
-                            out.add(new Invitation(eventId, name, datetime, location, desc, invitedAt));
-
-                            if (--pending[0] == 0) {
-                                // Sort by newest invitation
-                                out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
-                                adapter.setItems(out);
-                            }
-                        }).addOnFailureListener(e -> {
-                            if (--pending[0] == 0) adapter.setItems(out);
-                        });
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Failed to load invitations: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
-    }
+//    private void loadInvitations() {
+//        if (TextUtils.isEmpty(userId)) return;
+//
+//        FirebaseFirestore db = DbManager.getInstance().getDb();
+//
+//        db.collectionGroup("registrable")
+//                .whereEqualTo(FieldPath.documentId(), userId)
+//                .get()
+//                .addOnSuccessListener(snaps -> {
+//                    List<Invitation> out = new ArrayList<>();
+//                    if (snaps.isEmpty()) {
+//                        adapter.setItems(out);
+//                        return;
+//                    }
+//
+//                    final int[] pending = {snaps.size()};
+//                    for (DocumentSnapshot registrableDoc : snaps) {
+//                        DocumentReference eventDoc = registrableDoc.getReference().getParent().getParent();
+//                        if (eventDoc == null) {
+//                            if (--pending[0] == 0) adapter.setItems(out);
+//                            continue;
+//                        }
+//
+//                        eventDoc.get().addOnSuccessListener(ev -> {
+//                            String eventId = ev.getId();
+//                            String name = getStringSafe(ev, "eventName");
+//                            String desc = getStringSafe(ev, "description");
+//                            String location = getStringSafe(ev, "eventLocation");
+//                            String datetime = formatRange(ev.get("registrationStart"), ev.get("registrationEnd"));
+//
+//                            long invitedAt = readInvitedAt(registrableDoc);
+//
+//                            out.add(new Invitation(eventId, name, datetime, location, desc, invitedAt));
+//
+//                            if (--pending[0] == 0) {
+//                                // Sort by newest invitation
+//                                out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
+//                                adapter.setItems(out);
+//                            }
+//                        }).addOnFailureListener(e -> {
+//                            if (--pending[0] == 0) adapter.setItems(out);
+//                        });
+//                    }
+//                })
+//                .addOnFailureListener(e ->
+//                        Toast.makeText(requireContext(), "Failed to load invitations: " + e.getMessage(), Toast.LENGTH_LONG).show()
+//                );
+//    }
 
     // Adapter actions
     @Override
     public void onAccept(Invitation inv, int position) {
-        if (TextUtils.isEmpty(userId)) return;
-
-        DbManager.getInstance()
-                .addUserToRegistered(inv.getEventId(), userId)
-                .addOnSuccessListener(_v -> {
-                    adapter.removeAt(position);
-                    Toast.makeText(requireContext(), "Invitation accepted.", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Accept failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
+//        if (TextUtils.isEmpty(userId)) return;
+//
+//        DbManager.getInstance()
+//                .addUserToRegistered(inv.getEventId(), userId)
+//                .addOnSuccessListener(_v -> {
+//                    adapter.removeAt(position);
+//                    Toast.makeText(requireContext(), "Invitation accepted.", Toast.LENGTH_SHORT).show();
+//                })
+//                .addOnFailureListener(e ->
+//                        Toast.makeText(requireContext(), "Accept failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+//                );
     }
 
     @Override
     public void onDecline(Invitation inv, int position) {
-        if (TextUtils.isEmpty(userId)) return;
-
-        DbManager.getInstance()
-                .cancelRegistrable(inv.getEventId(), userId)
-                .addOnSuccessListener(_v -> {
-                    adapter.removeAt(position);
-                    Toast.makeText(requireContext(), "Invitation declined.", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Decline failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                );
+//        if (TextUtils.isEmpty(userId)) return;
+//
+//        DbManager.getInstance()
+//                .cancelRegistrable(inv.getEventId(), userId)
+//                .addOnSuccessListener(_v -> {
+//                    adapter.removeAt(position);
+//                    Toast.makeText(requireContext(), "Invitation declined.", Toast.LENGTH_SHORT).show();
+//                })
+//                .addOnFailureListener(e ->
+//                        Toast.makeText(requireContext(), "Decline failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+//                );
     }
 
     // helpers
-    private static String getStringSafe(DocumentSnapshot d, String key) {
-        Object v = d.get(key);
-        return v == null ? "" : String.valueOf(v);
-    }
+//    private static String getStringSafe(DocumentSnapshot d, String key) {
+//        Object v = d.get(key);
+//        return v == null ? "" : String.valueOf(v);
+//    }
 
-    private static final SimpleDateFormat SDF =
-            new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault());
-
-    private static String formatRange(Object start, Object end) {
-        Date s = (start instanceof Timestamp) ? ((Timestamp) start).toDate() : null;
-        Date e = (end instanceof Timestamp) ? ((Timestamp) end).toDate() : null;
-        if (s == null && e == null) return "";
-        if (s != null && e != null) return SDF.format(s) + " – " + SDF.format(e);
-        return s != null ? SDF.format(s) : SDF.format(e);
-    }
-
-    private static long readInvitedAt(DocumentSnapshot doc) {
-        Object v = doc.get("invitedAt");
-        if (v == null) return 0L;
-        if (v instanceof Timestamp) return ((Timestamp) v).toDate().getTime();
-        if (v instanceof Long) return (Long) v;
-        if (v instanceof Double) return ((Double) v).longValue();
-        return 0L;
-    }
+//    private static final SimpleDateFormat SDF =
+//            new SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault());
+//
+//    private static String formatRange(Object start, Object end) {
+//        Date s = (start instanceof Timestamp) ? ((Timestamp) start).toDate() : null;
+//        Date e = (end instanceof Timestamp) ? ((Timestamp) end).toDate() : null;
+//        if (s == null && e == null) return "";
+//        if (s != null && e != null) return SDF.format(s) + " – " + SDF.format(e);
+//        return s != null ? SDF.format(s) : SDF.format(e);
+//    }
+//
+//    private static long readInvitedAt(DocumentSnapshot doc) {
+//        Object v = doc.get("invitedAt");
+//        if (v == null) return 0L;
+//        if (v instanceof Timestamp) return ((Timestamp) v).toDate().getTime();
+//        if (v instanceof Long) return (Long) v;
+//        if (v instanceof Double) return ((Double) v).longValue();
+//        return 0L;
+//    }
 }

@@ -30,10 +30,11 @@ public class LoginFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         NavController navController = Navigation.findNavController(view);
-
-        Button btnEntrant = view.findViewById(R.id.btn_test_entrant);
+// ---------------------------- USED FOR PART 3 TESTING ---------------------------------------
+        Button btnEntrant   = view.findViewById(R.id.btn_test_entrant);
         Button btnOrganizer = view.findViewById(R.id.btn_test_organizer);
-        Button btnAdmin = view.findViewById(R.id.btn_test_admin);
+        Button btnAdmin     = view.findViewById(R.id.btn_test_admin);
+
 
         btnEntrant.setOnClickListener(v ->
                 navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
