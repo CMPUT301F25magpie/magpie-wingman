@@ -11,9 +11,9 @@
     <!-- Logo -->
     <ImageView
         android:id="@+id/logoImage"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="60dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="20dp"
         android:src="@drawable/wingman_logo"
         android:contentDescription="@string/app_name"
         app:layout_constraintTop_toTopOf="parent"
