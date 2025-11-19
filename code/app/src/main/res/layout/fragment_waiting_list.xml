@@ -23,8 +23,8 @@
             android:layout_height="28dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_arrow_back"
-            android:tint="#000000"
-            android:contentDescription="Back" />
+            android:contentDescription="Back"
+            app:tint="#000000" />
 
         <ImageView
             android:id="@+id/image_logo"
@@ -93,8 +93,8 @@
                     android:layout_height="24dp"
                     android:src="@drawable/ic_location_pin"
                     android:background="@android:color/transparent"
-                    android:tint="#00C853"
-                    android:contentDescription="Location Pin"/>
+                    android:contentDescription="Location Pin"
+                    app:tint="#00C853" />
             </LinearLayout>
 
             <!-- Duplicate rows -->

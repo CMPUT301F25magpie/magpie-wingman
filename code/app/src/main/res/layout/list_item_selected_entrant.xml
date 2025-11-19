@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -15,8 +16,8 @@
         android:layout_width="22dp"
         android:layout_height="22dp"
         android:src="@drawable/ic_person"
-        android:tint="#000000"
-        android:contentDescription="Entrant" />
+        android:contentDescription="Entrant"
+        app:tint="#000000" />
 
     <!-- Entrant Name -->
     <TextView
@@ -36,6 +37,6 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:src="@drawable/ic_close"
-        android:tint="#FF3B30"
-        android:contentDescription="Remove Entrant" />
+        android:contentDescription="Remove Entrant"
+        app:tint="#FF3B30" />
 </LinearLayout>

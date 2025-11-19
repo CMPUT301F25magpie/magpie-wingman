@@ -23,8 +23,8 @@
             android:layout_height="28dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_arrow_back"
-            android:tint="#000000"
-            android:contentDescription="Back" />
+            android:contentDescription="Back"
+            app:tint="#000000" />
 
         <ImageView
             android:id="@+id/image_logo"
@@ -125,8 +125,8 @@
                     android:layout_height="36dp"
                     android:background="@drawable/circle_red"
                     android:src="@drawable/ic_close"
-                    android:tint="@android:color/white"
-                    android:contentDescription="Cancel Event" />
+                    android:contentDescription="Cancel Event"
+                    app:tint="@android:color/white" />
             </LinearLayout>
 
         </LinearLayout>

@@ -1,5 +1,6 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -26,8 +27,8 @@
                 android:layout_height="28dp"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_arrow_back"
-                android:tint="#000000"
-                android:contentDescription="Back" />
+                android:contentDescription="Back"
+                app:tint="#000000" />
 
             <ImageView
                 android:id="@+id/image_logo"
@@ -59,8 +60,8 @@
                 android:background="@android:color/transparent"
                 android:contentDescription="Info"
                 android:src="@drawable/ic_info"
-                android:tint="#000000"
-                android:gravity="end" />
+                android:gravity="end"
+                app:tint="#000000" />
         </LinearLayout>
 
         <!-- EVENT TITLE -->

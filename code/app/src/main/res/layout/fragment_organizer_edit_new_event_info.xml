@@ -27,8 +27,8 @@
                 android:layout_height="28dp"
                 android:background="@android:color/transparent"
                 android:src="@drawable/ic_arrow_back"
-                android:tint="#000000"
-                android:contentDescription="Back" />
+                android:contentDescription="Back"
+                app:tint="#000000" />
 
             <ImageView
                 android:id="@+id/image_info"

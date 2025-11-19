@@ -77,7 +77,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:src="@drawable/ic_close"
-        android:tint="#FF3B30"
         android:background="@drawable/bg_remove_circle"
-        android:contentDescription="Remove Event" />
+        android:contentDescription="Remove Event"
+        app:tint="#FF3B30" />
 </LinearLayout>

@@ -1,5 +1,6 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -22,8 +23,8 @@
             android:layout_height="28dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_arrow_back"
-            android:tint="#000000"
-            android:contentDescription="Back" />
+            android:contentDescription="Back"
+            app:tint="#000000" />
 
         <ImageView
             android:id="@+id/image_logo"
@@ -130,9 +131,9 @@
                         android:layout_height="32dp"
                         android:background="@drawable/circle_green"
                         android:src="@drawable/ic_check"
-                        android:tint="#FFFFFF"
                         android:layout_marginBottom="8dp"
-                        android:contentDescription="Accept Invitation"/>
+                        android:contentDescription="Accept Invitation"
+                        app:tint="#FFFFFF" />
 
                     <ImageButton
                         android:id="@+id/button_decline"
@@ -140,8 +141,8 @@
                         android:layout_height="32dp"
                         android:background="@drawable/circle_red"
                         android:src="@drawable/ic_close"
-                        android:tint="#FFFFFF"
-                        android:contentDescription="Decline Invitation"/>
+                        android:contentDescription="Decline Invitation"
+                        app:tint="#FFFFFF" />
                 </LinearLayout>
             </LinearLayout>
 

@@ -1,5 +1,6 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -17,9 +18,9 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_person"
-            android:tint="#000000"
             android:layout_marginEnd="8dp"
-            android:contentDescription="User" />
+            android:contentDescription="User"
+            app:tint="#000000" />
 
         <TextView
             android:id="@+id/text_person_name"
@@ -36,6 +37,6 @@
         android:layout_height="24dp"
         android:src="@drawable/ic_location_pin"
         android:background="@android:color/transparent"
-        android:tint="#00C853"
-        android:contentDescription="Location Pin"/>
+        android:contentDescription="Location Pin"
+        app:tint="#00C853" />
 </LinearLayout>

@@ -45,8 +45,8 @@
             android:layout_height="28dp"
             android:src="@drawable/ic_settings"
             android:background="@android:color/transparent"
-            android:tint="#000000"
-            android:contentDescription="Settings" />
+            android:contentDescription="Settings"
+            app:tint="#000000" />
     </LinearLayout>
 
     <!-- EVENT LIST -->
@@ -136,9 +136,9 @@
                         android:layout_height="36dp"
                         android:background="@drawable/circle_white"
                         android:src="@drawable/ic_more"
-                        android:tint="#000000"
                         android:layout_marginBottom="6dp"
-                        android:contentDescription="More Options"/>
+                        android:contentDescription="More Options"
+                        app:tint="#000000" />
 
                     <ImageButton
                         android:id="@+id/button_edit"
@@ -146,8 +146,8 @@
                         android:layout_height="36dp"
                         android:background="@drawable/circle_yellow"
                         android:src="@drawable/ic_edit"
-                        android:tint="#FFFFFF"
-                        android:contentDescription="Edit Event"/>
+                        android:contentDescription="Edit Event"
+                        app:tint="#FFFFFF" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
