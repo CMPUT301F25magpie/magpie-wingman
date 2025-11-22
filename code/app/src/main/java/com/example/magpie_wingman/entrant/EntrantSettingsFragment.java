@@ -127,18 +127,18 @@ public class EntrantSettingsFragment extends Fragment {
 //        });
 
         // --- About Us ---
-        rowAboutUs.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
-                .setTitle("About us")
-                .setMessage("Wingman — sample app for event management.\nVersion 1.0")
-                .setPositiveButton(android.R.string.ok, null)
-                .show());
+//        rowAboutUs.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
+//                .setTitle("About us")
+//                .setMessage("Wingman — sample app for event management.\nVersion 1.0")
+//                .setPositiveButton(android.R.string.ok, null)
+//                .show());
 
         // --- Log out ---
-        logoutButton.setOnClickListener(v -> {
-            clearUserIdFromPrefs();
-            Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show();
-            requireActivity().finish();
-        });
+//        logoutButton.setOnClickListener(v -> {
+//            clearUserIdFromPrefs();
+//            Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show();
+//            requireActivity().finish();
+//        });
 
         // --- Delete account (preexisting DbManager method) ---
         deleteButton.setOnClickListener(v -> confirmAndDeleteProfile());
@@ -156,10 +156,14 @@ public class EntrantSettingsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         ImageView btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+        ImageView btnAboutUs = view.findViewById(R.id.btn_about_us);
+        Button btnLogOut = view.findViewById(R.id.button_logout);
 
         NavController navController = Navigation.findNavController(view);
 
         btnEditProfile.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantEditProfileFragment));
+        btnAboutUs.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantAboutUsFragment));
+        btnLogOut.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_loginFragment));
     }
 
     // =============================================================================================
