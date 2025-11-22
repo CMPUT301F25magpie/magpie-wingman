@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +17,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
@@ -92,6 +95,7 @@ public class EntrantSettingsFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
+
         // Inflate XML
         View root = inflater.inflate(R.layout.fragment_entrant_settings, container, false);
 
@@ -116,11 +120,11 @@ public class EntrantSettingsFragment extends Fragment {
         initNotificationSwitches();
 
         // --- Edit Profile ---
-        rowEditProfile.setOnClickListener(v -> {
+//        rowEditProfile.setOnClickListener(v -> {
             // TODO: Navigate to your EditProfile screen/fragment.
             // e.g., NavHostFragment.findNavController(this).navigate(R.id.action_settings_to_editProfile);
-            Toast.makeText(requireContext(), "Edit profile coming soon", Toast.LENGTH_SHORT).show();
-        });
+
+//        });
 
         // --- About Us ---
         rowAboutUs.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
@@ -145,6 +149,17 @@ public class EntrantSettingsFragment extends Fragment {
         logoutButton.setEnabled(true); // logout can still clear local state
 
         return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        ImageView btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+
+        NavController navController = Navigation.findNavController(view);
+
+        btnEditProfile.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantEditProfileFragment));
     }
 
     // =============================================================================================
