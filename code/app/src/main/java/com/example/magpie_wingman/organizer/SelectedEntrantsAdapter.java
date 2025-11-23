@@ -10,70 +10,59 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
-import com.example.magpie_wingman.data.model.Entrant; // Your team's file
+import com.example.magpie_wingman.data.model.UserProfile;
 
 import java.util.List;
 
-public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntrantsAdapter.EntrantViewHolder> {
+public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntrantsAdapter.ViewHolder> {
 
-    private List<Entrant> entrantList;
-    private OnEntrantRemoveListener removeListener;
-
-    // Interface for the click event
     public interface OnEntrantRemoveListener {
-        void onRemoveClicked(int position);
+        void onRemoveClicked(int position, UserProfile user);
     }
 
-    // Constructor to accept the listener
-    public SelectedEntrantsAdapter(List<Entrant> entrantList, OnEntrantRemoveListener removeListener) {
-        this.entrantList = entrantList;
-        this.removeListener = removeListener;
+    private final List<UserProfile> entrants;
+    private final OnEntrantRemoveListener listener;
+
+    public SelectedEntrantsAdapter(List<UserProfile> entrants, OnEntrantRemoveListener listener) {
+        this.entrants = entrants;
+        this.listener = listener;
     }
 
     @NonNull
     @Override
-    public EntrantViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.list_item_entrant, parent, false);
-        return new EntrantViewHolder(view, removeListener);
+                .inflate(R.layout.list_item_selected_entrant, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
-        Entrant entrant = entrantList.get(position);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        UserProfile user = entrants.get(position);
 
-        // THIS IS THE FIX:
-        // The Entrant class extends User, which has a 'userName' field
-        // The getter is almost certainly getUserName()
-        holder.nameTextView.setText(entrant.getUserName());
+        holder.name.setText(user.getName());
+
+        // Handle "X" button click
+        holder.removeBtn.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onRemoveClicked(holder.getAdapterPosition(), user);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return entrantList.size();
+        return entrants.size();
     }
 
-    /**
-     * The ViewHolder class
-     */
-    public static class EntrantViewHolder extends RecyclerView.ViewHolder {
-        ImageView profileImageView;
-        TextView nameTextView;
-        ImageView removeImageView;
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView name;
+        ImageView removeBtn;
 
-        public EntrantViewHolder(@NonNull View itemView, OnEntrantRemoveListener removeListener) {
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            profileImageView = itemView.findViewById(R.id.image_view_profile);
-            nameTextView = itemView.findViewById(R.id.text_view_entrant_name);
-            removeImageView = itemView.findViewById(R.id.image_view_remove);
-
-            // Set the click listener on the "X"
-            removeImageView.setOnClickListener(v -> {
-                int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    removeListener.onRemoveClicked(position);
-                }
-            });
+            name = itemView.findViewById(R.id.text_view_name);
+            removeBtn = itemView.findViewById(R.id.id_close);
         }
     }
 }

@@ -1,55 +1,48 @@
 package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import android.provider.Settings; // Import this
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
+
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Event;
+import com.google.firebase.firestore.DocumentSnapshot;
+
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class DetailedEventDescriptionFragment extends Fragment {
 
-    // UI Components
-    private TextView titleTextView;
-    private TextView locationTextView;
-    private TextView descriptionTextView;
-    private Button signUpButton;
-
-    // Data
     private String eventId;
-    private String eventName;
-    private String eventDescription;
-    private String eventLocation;
+    private String entrantId;
 
-    // Firebase
-    private DbManager dbManager;
+    // UI Elements
+    private TextView title, location, date, description, waitlistCount;
+    private Button joinButton;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy - hh:mm a", Locale.getDefault());
 
     public DetailedEventDescriptionFragment() {
-        // Required empty public constructor
+
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Get the DbManager instance
-        dbManager = DbManager.getInstance();
-
-        // Get the event data passed from the list
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
-            eventName = getArguments().getString("eventName");
-            eventDescription = getArguments().getString("eventDescription");
-            eventLocation = getArguments().getString("eventLocation");
+            entrantId = getArguments().getString("entrantId");
         }
     }
 
@@ -63,60 +56,80 @@ public class DetailedEventDescriptionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Find views
-        titleTextView = view.findViewById(R.id.text_view_event_title_detail);
-        locationTextView = view.findViewById(R.id.text_view_event_location_detail);
-        descriptionTextView = view.findViewById(R.id.text_view_event_description_detail);
-        signUpButton = view.findViewById(R.id.button_sign_up);
+        // Bind UI
+        title = view.findViewById(R.id.text_event_title);
+        location = view.findViewById(R.id.text_event_location);
+        date = view.findViewById(R.id.text_event_date);
+        description = view.findViewById(R.id.text_event_description);
+        waitlistCount = view.findViewById(R.id.text_waiting_list);
+        joinButton = view.findViewById(R.id.button_join_waitlist);
+        ImageButton backBtn = view.findViewById(R.id.button_back);
 
-        // Set the event data to the views
-        titleTextView.setText(eventName);
-        locationTextView.setText(eventLocation);
-        descriptionTextView.setText(eventDescription);
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
-        // Set the click listener for the "Sign Up" button
-        signUpButton.setOnClickListener(v -> {
-            signUpForEvent();
-        });
+        loadEventDetails();
+        updateButtonState();
+
+        joinButton.setOnClickListener(v -> toggleJoinStatus());
     }
 
-    /**
-     * Signs the user up for the current event.
-     */
-    private void signUpForEvent() {
-        if (eventId == null) {
-            Toast.makeText(getContext(), "Error: Event ID is null", Toast.LENGTH_SHORT).show();
-            return;
-        }
+    private void loadEventDetails() {
+        if (eventId == null) return;
 
-        // Get the device ID as a mock/stand-in for the userId
-        String mockUserId = Settings.Secure.getString(
-                getContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
+        DbManager.getInstance().getDb().collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    Event event = documentSnapshot.toObject(Event.class);
+                    if (event != null) {
+                        title.setText(event.getEventName());
+                        location.setText(event.getEventLocation());
+                        description.setText(event.getDescription());
+                        waitlistCount.setText("Waiting List: " + event.getWaitlistCount());
 
-        if (mockUserId == null) {
-            Toast.makeText(getContext(), "Error: Could not get user ID", Toast.LENGTH_SHORT).show();
-            return;
-        }
+                        if (event.getEventStartTime() != null) {
+                            date.setText(dateFormat.format(event.getEventStartTime()));
+                        }
+                    }
+                });
+    }
 
-        // Disable the button to prevent multiple clicks
-        signUpButton.setEnabled(false);
-        signUpButton.setText("Signing up...");
+    private void updateButtonState() {
+        joinButton.setEnabled(false);
 
-        // Call your team's DbManager function
-        dbManager.addUserToWaitlist(eventId, mockUserId)
-                .addOnSuccessListener(aVoid -> {
-                    // Success!
-                    signUpButton.setText("Signed Up!");
-                    Toast.makeText(getContext(), "Successfully signed up for " + eventName, Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    // Failure
-                    Log.e("DetailedEventDesc", "Failed to sign up", e);
-                    Toast.makeText(getContext(), "Failed to sign up. Please try again.", Toast.LENGTH_LONG).show();
-                    signUpButton.setEnabled(true);
-                    signUpButton.setText("Sign Up for Event");
+        DbManager.getInstance().isUserInWaitlist(eventId, entrantId)
+                .addOnSuccessListener(isJoined -> {
+                    joinButton.setEnabled(true);
+                    if (isJoined) {
+                        joinButton.setText("Leave Waiting List");
+                        joinButton.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light, null));
+                    } else {
+                        joinButton.setText("Join Waiting List");
+                        // Use your green drawable here
+                        joinButton.setBackgroundResource(R.drawable.green_button_bg);
+                    }
+                });
+    }
+
+    private void toggleJoinStatus() {
+        joinButton.setEnabled(false);
+        DbManager.getInstance().isUserInWaitlist(eventId, entrantId)
+                .addOnSuccessListener(isJoined -> {
+                    if (isJoined) {
+
+                        DbManager.getInstance().cancelWaitlist(eventId, entrantId)
+                                .addOnSuccessListener(v -> {
+                                    Toast.makeText(getContext(), "Left Waitlist", Toast.LENGTH_SHORT).show();
+                                    updateButtonState();
+                                });
+                    }
+                    else {
+
+                        DbManager.getInstance().addUserToWaitlist(eventId, entrantId)
+                                .addOnSuccessListener(v -> {
+                                    Toast.makeText(getContext(), "Joined Waitlist", Toast.LENGTH_SHORT).show();
+                                    updateButtonState();
+                                });
+                    }
                 });
     }
 }

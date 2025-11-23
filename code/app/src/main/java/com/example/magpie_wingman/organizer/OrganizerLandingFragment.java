@@ -2,11 +2,19 @@ package com.example.magpie_wingman.organizer;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 
 import com.example.magpie_wingman.R;
 
@@ -25,6 +33,9 @@ public class OrganizerLandingFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    // UI elements
+    private EditText eventSearchBar;
 
     public OrganizerLandingFragment() {
         // Required empty public constructor
@@ -60,7 +71,25 @@ public class OrganizerLandingFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_organizer_landing, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View v,
+                              @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(v, savedInstanceState);
+
+        NavController navController = Navigation.findNavController(v);
+
+        // navigation
+        Button btn_CreateEvent = v.findViewById(R.id.button_new_event);
+        ImageButton btn_Settings = v.findViewById((R.id.button_settings));
+
+        btn_CreateEvent.setOnClickListener(x -> navController.navigate(R.id.action_organizerLandingFragment2_to_organizerNewEventFragment));
+        btn_Settings.setOnClickListener( x -> navController.navigate(R.id.action_organizerLandingFragment2_to_organizerSettingsFragment));
+
+
+
     }
 }
