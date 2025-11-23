@@ -59,7 +59,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
         h.description.setText(e.getDescription());
         h.waitlistCount.setText("Waiting List: " + e.getWaitlistCount());
 
-        // Check DB status for button state
         DbManager.getInstance().isUserInWaitlist(e.getEventId(), entrantId)
                 .addOnSuccessListener(isInWaitlist -> {
                     if (isInWaitlist) {
@@ -69,27 +68,21 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
                     }
                 });
 
-        // Click on the whole card to go to Details
         h.itemView.setOnClickListener(v -> {
             if (clicker != null) clicker.onEventClick(e);
         });
 
-        // Click on the "Join" pill button
         h.joinContainer.setOnClickListener(v -> {
-            // Disable click temporarily
             h.joinContainer.setEnabled(false);
-
             DbManager.getInstance().isUserInWaitlist(e.getEventId(), entrantId)
                     .addOnSuccessListener(isInWaitlist -> {
                         if (isInWaitlist) {
-                            // Leave
                             DbManager.getInstance().cancelWaitlist(e.getEventId(), entrantId).addOnSuccessListener(aVoid -> {
                                 setButtonState(h, false);
                                 Toast.makeText(v.getContext(), "Left Waitlist", Toast.LENGTH_SHORT).show();
                                 h.joinContainer.setEnabled(true);
                             });
                         } else {
-                            // Join
                             DbManager.getInstance().addUserToWaitlist(e.getEventId(), entrantId).addOnSuccessListener(aVoid -> {
                                 setButtonState(h, true);
                                 Toast.makeText(v.getContext(), "Joined Waitlist", Toast.LENGTH_SHORT).show();
@@ -103,12 +96,10 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
     private void setButtonState(VH h, boolean isJoined) {
         if (isJoined) {
             h.joinText.setText("Joined");
-            h.joinContainer.setBackgroundResource(R.drawable.rounded_join_button); // Assuming you have a green bg
-            // Optional: Change color to indicate "active"
+            h.joinContainer.setBackgroundResource(R.drawable.rounded_join_button);
         } else {
             h.joinText.setText("Join");
-            h.joinContainer.setBackgroundColor(Color.parseColor("#888888")); // Grey out if not joined?
-            // Or keep original drawable if that is the default "Join" state
+            h.joinContainer.setBackgroundColor(Color.parseColor("#888888"));
         }
     }
 
@@ -130,8 +121,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
             location = itemView.findViewById(R.id.text_view_event_location);
             description = itemView.findViewById(R.id.text_view_event_description);
             waitlistCount = itemView.findViewById(R.id.text_view_waitlist);
-
-            // The Button in your XML is actually a LinearLayout
             joinContainer = itemView.findViewById(R.id.join_button_container);
             joinText = itemView.findViewById(R.id.join_text);
         }

@@ -39,10 +39,7 @@ public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntran
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         UserProfile user = entrants.get(position);
-
         holder.name.setText(user.getName());
-
-        // Handle "X" button click
         holder.removeBtn.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onRemoveClicked(holder.getAdapterPosition(), user);

@@ -28,11 +28,9 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private RecyclerView recyclerView;
     private SelectedEntrantsAdapter adapter;
     private List<UserProfile> selectedEntrantsList;
-    private String eventId; //
+    private String eventId;
 
-    public SelectedEntrantsListFragment() {
-        // Required empty public constructor
-    }
+    public SelectedEntrantsListFragment() { }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,7 +65,6 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     }
 
     private void loadEntrants() {
-
         DbManager.getInstance().getEventRegistrable(eventId)
                 .addOnSuccessListener(userIds -> {
                     selectedEntrantsList.clear();
@@ -75,11 +72,8 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                         adapter.notifyDataSetChanged();
                         return;
                     }
-
-
                     for (String uid : userIds) {
                         DbManager.getInstance().getUserName(uid).addOnSuccessListener(name -> {
-                            // Create a temp profile to display
                             UserProfile profile = new UserProfile(uid, name, UserRole.ENTRANT);
                             selectedEntrantsList.add(profile);
                             adapter.notifyItemInserted(selectedEntrantsList.size() - 1);

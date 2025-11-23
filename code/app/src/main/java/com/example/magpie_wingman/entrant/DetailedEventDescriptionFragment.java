@@ -28,14 +28,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private String eventId;
     private String entrantId;
 
-    // UI Elements
     private TextView title, location, date, description, waitlistCount;
     private Button joinButton;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy - hh:mm a", Locale.getDefault());
 
-    public DetailedEventDescriptionFragment() {
-
-    }
+    public DetailedEventDescriptionFragment() { }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,11 +41,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
             eventId = getArguments().getString("eventId");
             entrantId = getArguments().getString("entrantId");
         }
+        if (entrantId == null) entrantId = "test_user_id";
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_detailed_event_description, container, false);
     }
 
@@ -56,7 +53,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Bind UI
         title = view.findViewById(R.id.text_event_title);
         location = view.findViewById(R.id.text_event_location);
         date = view.findViewById(R.id.text_event_date);
@@ -75,7 +71,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
     private void loadEventDetails() {
         if (eventId == null) return;
-
         DbManager.getInstance().getDb().collection("events").document(eventId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -85,7 +80,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         location.setText(event.getEventLocation());
                         description.setText(event.getDescription());
                         waitlistCount.setText("Waiting List: " + event.getWaitlistCount());
-
                         if (event.getEventStartTime() != null) {
                             date.setText(dateFormat.format(event.getEventStartTime()));
                         }
@@ -95,7 +89,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
     private void updateButtonState() {
         joinButton.setEnabled(false);
-
         DbManager.getInstance().isUserInWaitlist(eventId, entrantId)
                 .addOnSuccessListener(isJoined -> {
                     joinButton.setEnabled(true);
@@ -104,7 +97,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         joinButton.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light, null));
                     } else {
                         joinButton.setText("Join Waiting List");
-                        // Use your green drawable here
                         joinButton.setBackgroundResource(R.drawable.green_button_bg);
                     }
                 });
@@ -115,15 +107,12 @@ public class DetailedEventDescriptionFragment extends Fragment {
         DbManager.getInstance().isUserInWaitlist(eventId, entrantId)
                 .addOnSuccessListener(isJoined -> {
                     if (isJoined) {
-
                         DbManager.getInstance().cancelWaitlist(eventId, entrantId)
                                 .addOnSuccessListener(v -> {
                                     Toast.makeText(getContext(), "Left Waitlist", Toast.LENGTH_SHORT).show();
                                     updateButtonState();
                                 });
-                    }
-                    else {
-
+                    } else {
                         DbManager.getInstance().addUserToWaitlist(eventId, entrantId)
                                 .addOnSuccessListener(v -> {
                                     Toast.makeText(getContext(), "Joined Waitlist", Toast.LENGTH_SHORT).show();

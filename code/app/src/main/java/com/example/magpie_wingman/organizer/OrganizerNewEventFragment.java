@@ -31,24 +31,19 @@ import java.util.Map;
 
 public class OrganizerNewEventFragment extends Fragment {
 
-    // UI Components
     private EditText eventTitleField, eventLimitField, eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
     private EditText eventDateField, eventTimeField;
     private EditText regStartDateField, regEndDateField;
     private Button createButton;
 
-
     private final Calendar eventCalendar = Calendar.getInstance();
     private final Calendar regStartCalendar = Calendar.getInstance();
     private final Calendar regEndCalendar = Calendar.getInstance();
 
-
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-    public OrganizerNewEventFragment() {
-
-    }
+    public OrganizerNewEventFragment() { }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -59,39 +54,29 @@ public class OrganizerNewEventFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-
         eventTitleField = view.findViewById(R.id.edit_event_title);
         eventLimitField = view.findViewById(R.id.edit_limit);
         eventAddressField = view.findViewById(R.id.edit_address);
         eventCityField = view.findViewById(R.id.edit_city);
         eventProvinceField = view.findViewById(R.id.edit_province);
         eventDescriptionField = view.findViewById(R.id.edit_description);
-
         eventDateField = view.findViewById(R.id.edit_date);
         eventTimeField = view.findViewById(R.id.edit_time);
-
         regStartDateField = view.findViewById(R.id.edit_registration_start);
         regEndDateField = view.findViewById(R.id.edit_registration_end);
-
         createButton = view.findViewById(R.id.button_create);
         ImageButton backBtn = view.findViewById(R.id.button_back);
 
-
         setupPickers();
-
-
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
         createButton.setOnClickListener(v -> saveEvent(view));
     }
 
     private void setupPickers() {
-
         makeReadOnly(eventDateField);
         makeReadOnly(eventTimeField);
         makeReadOnly(regStartDateField);
         makeReadOnly(regEndDateField);
-
-
         eventDateField.setOnClickListener(v -> showDate(eventCalendar, eventDateField));
         eventTimeField.setOnClickListener(v -> showTime(eventCalendar, eventTimeField));
         regStartDateField.setOnClickListener(v -> showDate(regStartCalendar, regStartDateField));
@@ -111,41 +96,27 @@ public class OrganizerNewEventFragment extends Fragment {
         int capacity = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
         String location = eventAddressField.getText().toString() + ", " + eventCityField.getText().toString();
 
-
         createButton.setEnabled(false);
         createButton.setText("Creating...");
-
         String organizerId = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-
 
         new Thread(() -> {
             try {
-
                 com.google.android.gms.tasks.Task<Void> task = DbManager.getInstance().createEvent(
-                        title,
-                        desc,
-                        organizerId,
-                        regStartCalendar.getTime(),
-                        regEndCalendar.getTime()
+                        title, desc, organizerId, regStartCalendar.getTime(), regEndCalendar.getTime()
                 );
-
-
                 if (getActivity() != null) {
                     task.addOnSuccessListener(getActivity(), aVoid -> {
-
                         findLastEventAndFillDetails(title, organizerId, location, capacity, eventCalendar.getTime());
-
                         Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
                         Navigation.findNavController(view).navigateUp();
                     }).addOnFailureListener(getActivity(), e -> {
-
                         createButton.setEnabled(true);
                         createButton.setText("CREATE");
                         Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception e) {
-
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         createButton.setEnabled(true);
@@ -154,8 +125,8 @@ public class OrganizerNewEventFragment extends Fragment {
                 }
             }
         }).start();
-
     }
+
     private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, Date start) {
         DbManager.getInstance().getDb().collection("events")
                 .whereEqualTo("eventName", title)
@@ -165,20 +136,15 @@ public class OrganizerNewEventFragment extends Fragment {
                 .addOnSuccessListener(snapshots -> {
                     if (!snapshots.isEmpty()) {
                         String eventId = snapshots.getDocuments().get(0).getId();
-
                         Map<String, Object> updates = new HashMap<>();
                         updates.put("eventLocation", loc);
                         updates.put("eventCapacity", cap);
                         updates.put("eventStartTime", start);
                         updates.put("waitlistCount", 0);
-
-                        DbManager.getInstance().getDb().collection("events").document(eventId)
-                                .set(updates, SetOptions.merge());
+                        DbManager.getInstance().getDb().collection("events").document(eventId).set(updates, SetOptions.merge());
                     }
                 });
     }
-
-
 
     private void makeReadOnly(EditText et) {
         et.setFocusable(false);

@@ -31,34 +31,27 @@ public class EntrantEventsFragment extends Fragment {
     private EventAdapter adapter;
     private List<Event> eventList;
 
-    public EntrantEventsFragment() {
-        // Required empty public constructor
-    }
+    public EntrantEventsFragment() { }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // TODO: Ensure you are passing the entrantID via args or getting from a singleton
-        // For now, defaulting to arguments
         if (getArguments() != null) {
             entrantId = getArguments().getString(ARG_ENTRANT_ID);
         }
         if (entrantId == null) {
-            // Fallback for testing part 3 without full login flow
             entrantId = "test_user_id";
         }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_entrant_events, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
 
         ImageButton backBtn = view.findViewById(R.id.button_back);
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
@@ -68,18 +61,16 @@ public class EntrantEventsFragment extends Fragment {
 
         eventList = new ArrayList<>();
 
-
         adapter = new EventAdapter(eventList, entrantId, event -> {
-
             Bundle bundle = new Bundle();
             bundle.putString("eventId", event.getEventId());
             bundle.putString("entrantId", entrantId);
+
             NavController navController = Navigation.findNavController(view);
             navController.navigate(R.id.action_entrantEventsFragment_to_detailedEventDescriptionFragment, bundle);
         });
 
         recyclerView.setAdapter(adapter);
-
         fetchEvents();
     }
 
@@ -96,8 +87,6 @@ public class EntrantEventsFragment extends Fragment {
                     }
                     adapter.notifyDataSetChanged();
                 })
-                .addOnFailureListener(e -> {
-                    Log.e("EntrantEvents", "Error fetching events", e);
-                });
+                .addOnFailureListener(e -> Log.e("EntrantEvents", "Error fetching events", e));
     }
 }
