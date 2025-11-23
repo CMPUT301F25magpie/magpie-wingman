@@ -877,5 +877,47 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Logs in a user by email + password.
+     *
+     * Firestore schema assumptions:
+     *  - Collection: "users"
+     *  - Fields: "email" (String), "password" (String), plus whatever else your User model has.
+     *
+     * @param email    User's email address.
+     * @param password User's password (plain-text for this assignment).
+     * @return Task resolving to the matching User on success, or failing with an Exception on error.
+     */
+    public Task<User> loginWithEmailAndPassword(String email, String password) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException() != null
+                                ? task.getException()
+                                : new Exception("Login query failed");
+                    }
+
+                    QuerySnapshot snap = task.getResult();
+                    if (snap == null || snap.isEmpty()) {
+                        throw new Exception("Invalid email or password");
+                    }
+
+                    DocumentSnapshot doc = snap.getDocuments().get(0);
+
+                    // Check password directly from the document
+                    String storedPassword = doc.getString("password");
+                    if (storedPassword == null || !storedPassword.equals(password)) {
+                        throw new Exception("Invalid email or password");
+                    }
+
+                    // Build a proper User with the correct, immutable userId
+                    return User.from(doc);
+                });
+    }
+
+
 }
 
