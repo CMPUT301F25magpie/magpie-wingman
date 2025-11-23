@@ -71,7 +71,7 @@ public class OrganizerLandingFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
+        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_organizer_landing, container, false);
     }
 
@@ -88,7 +88,6 @@ public class OrganizerLandingFragment extends Fragment {
 
         btn_CreateEvent.setOnClickListener(x -> navController.navigate(R.id.action_organizerLandingFragment2_to_organizerNewEventFragment));
         btn_Settings.setOnClickListener( x -> navController.navigate(R.id.action_organizerLandingFragment2_to_organizerSettingsFragment));
-
 
 
     }

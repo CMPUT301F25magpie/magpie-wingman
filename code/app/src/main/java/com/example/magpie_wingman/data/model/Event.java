@@ -1,6 +1,6 @@
 package com.example.magpie_wingman.data.model;
 
-import com.google.firebase.Timestamp;
+import java.util.Date;
 
 /**
  * Event an organizer creates/
@@ -10,8 +10,8 @@ public class Event {
     private String eventId;
     private String organizerId;
     private String eventName;
-    private long eventStartTime;
-    private long eventEndTime;
+    private Date eventStartTime;
+    private Date eventEndTime;
     private String eventLocation;
     private String eventDescription;
     private String eventPosterURL;
@@ -22,8 +22,8 @@ public class Event {
     // required empty constructor for Firestore / deserialization
     public Event() {}
 
-    public Event(String eventId, String organizerId, String eventName, long eventStartTime,
-                 long eventEndTime, String eventLocation, String eventDescription,
+    public Event(String eventId, String organizerId, String eventName, Date eventStartTime,
+                 Date eventEndTime, String eventLocation, String eventDescription,
                  String eventPosterURL, int eventCapacity) {
         this.eventId = eventId;
         this.organizerId = organizerId;
@@ -45,10 +45,10 @@ public class Event {
     public String getEventName() {
         return eventName;
     }
-    public long getEventStartTime() {
+    public Date getEventStartTime() {
         return eventStartTime;
     }
-    public long getEventEndTime() { return eventEndTime;  }
+    public Date getEventEndTime() { return eventEndTime;  }
     public String getEventLocation() {
         return eventLocation;
     }
@@ -77,8 +77,8 @@ public class Event {
 
     public void setEventName(String eventName) { this.eventName = eventName; }
 
-    public void setEventStartTime(long eventStartTime) { this.eventStartTime = eventStartTime; }
-    public void setEventEndTime(long eventEndTime) { this.eventEndTime = eventEndTime; }
+    public void setEventStartTime(Date eventStartTime) { this.eventStartTime = eventStartTime; }
+    public void setEventEndTime(Date eventEndTime) { this.eventEndTime = eventEndTime; }
 
     public void setEventLocation(String eventLocation) { this.eventLocation = eventLocation; }
 
