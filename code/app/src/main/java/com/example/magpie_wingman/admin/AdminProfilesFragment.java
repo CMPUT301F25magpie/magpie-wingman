@@ -211,4 +211,32 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                     .show();
         }
     }
+
+    private void removeFromFullList(@NonNull UserProfile target) {
+        String userId = target.getUserId();
+        if (userId == null) return;
+
+        for (int i = 0; i < fullProfileList.size(); i++) {
+            UserProfile profile = fullProfileList.get(i);
+            if (userId.equals(profile.getUserId())) {
+                fullProfileList.remove(i);
+                break;
+            }
+        }
+    }
+
+    private void replaceInFullList(@NonNull UserProfile updated) {
+        String userId = updated.getUserId();
+        if (userId == null) return;
+
+        for (int i = 0; i < fullProfileList.size(); i++) {
+            UserProfile profile = fullProfileList.get(i);
+            if (userId.equals(profile.getUserId())) {
+                fullProfileList.set(i, updated);
+                return;
+            }
+        }
+        // If not found (e.g., due to filtering), just add it.
+        fullProfileList.add(updated);
+    }
 }
