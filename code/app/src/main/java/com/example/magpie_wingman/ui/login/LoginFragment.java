@@ -1,6 +1,7 @@
 package com.example.magpie_wingman.ui.login;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,8 +21,7 @@ import androidx.navigation.Navigation;
 import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
-import com.example.magpie_wingman.data.model.User;
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginFragment extends Fragment {
 
@@ -51,13 +51,16 @@ public class LoginFragment extends Fragment {
         Button btnAdmin        = view.findViewById(R.id.btn_test_admin);
         TextView btnSignUpText = view.findViewById(R.id.signUpText);
 
-        // ---- Sign up navigation (already existed) ----
+        DbManager dbManager = DbManager.getInstance();
+        FirebaseFirestore db = dbManager.getDb();
+
+        // ---- Sign up navigation ----
         btnSignUpText.setOnClickListener(v ->
                 navController.navigate(R.id.action_loginFragment_to_signUpFragment));
 
-        // ---- REAL email/password login ----
+        // ---- REAL email/password login using DbManager.loginWithEmailAndPassword ----
         loginButton.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
+            String email    = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString();
 
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
@@ -67,37 +70,84 @@ public class LoginFragment extends Fragment {
                 return;
             }
 
-            // Optionally you can show a loading spinner, but at least disable the button
             loginButton.setEnabled(false);
 
-            Task<User> task = DbManager.getInstance()
-                    .loginWithEmailAndPassword(email, password);
+            dbManager.loginWithEmailAndPassword(email, password)
+                    .addOnSuccessListener(user -> {
+                        // We have a valid User object
+                        MyApp.getInstance().setCurrentUser(user);
+                        String userId = user.getUserId();
 
-            task.addOnSuccessListener(user -> {
-                // Save globally
-                MyApp.getInstance().setCurrentUser(user);
+                        // Now fetch the user document to check isAdmin and handle rememberMe/deviceId
+                        db.collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(doc -> {
+                                    loginButton.setEnabled(true);
 
-                // TODO (later): if (rememberMe.isChecked()) { persist rememberMe + deviceId }
+                                    if (doc == null || !doc.exists()) {
+                                        // Fallback: treat as normal entrant
+                                        navController.navigate(
+                                                R.id.action_loginFragment_to_entrantLandingFragment3
+                                        );
+                                        return;
+                                    }
 
-                // Navigate to entrant landing fragment
-                navController.navigate(
-                        R.id.action_loginFragment_to_entrantLandingFragment3
-                );
+                                    Boolean adminField = doc.getBoolean("isAdmin");
+                                    boolean isAdmin = adminField != null && adminField;
 
-                loginButton.setEnabled(true);
-            }).addOnFailureListener(e -> {
-                Toast.makeText(requireContext(),
-                                "Invalid login credentials",
-                                Toast.LENGTH_SHORT)
-                        .show();
-                // For debugging if needed:
-                // Log.d("LOGIN", "Login failed: " + e.getMessage());
+                                    // Current device ID
+                                    String deviceId = Settings.Secure.getString(
+                                            requireContext().getContentResolver(),
+                                            Settings.Secure.ANDROID_ID
+                                    );
 
-                loginButton.setEnabled(true);
-            });
+                                    if (isAdmin) {
+                                        // Admins: never auto-login for safety
+                                        dbManager.updateRememberMe(userId, false);
+                                        // (Optional) still keep deviceId current, but it won't be used for auto-login
+                                        db.collection("users")
+                                                .document(userId)
+                                                .update("deviceId", deviceId);
+
+                                        navController.navigate(
+                                                R.id.action_loginFragment_to_adminLandingFragment22
+                                        );
+                                    } else {
+                                        // Normal user/organizer: Option 2 behavior
+                                        boolean remember = rememberMe.isChecked();
+
+                                        // Use helper for rememberMe
+                                        dbManager.updateRememberMe(userId, remember);
+
+                                        // Tie auto-login to THIS device
+                                        db.collection("users")
+                                                .document(userId)
+                                                .update("deviceId", deviceId);
+
+                                        navController.navigate(
+                                                R.id.action_loginFragment_to_entrantLandingFragment3
+                                        );
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    loginButton.setEnabled(true);
+                                    // If doc fetch fails, just show an error and stay on login
+                                    Toast.makeText(requireContext(),
+                                            "Login failed. Please try again.",
+                                            Toast.LENGTH_SHORT).show();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        loginButton.setEnabled(true);
+                        Toast.makeText(requireContext(),
+                                        "Invalid login credentials",
+                                        Toast.LENGTH_SHORT)
+                                .show();
+                    });
         });
 
-        // ---- Bottom test buttons (kept as-is) ----
+        // ---- Bottom test buttons (unchanged) ----
         btnEntrant.setOnClickListener(v ->
                 navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
 

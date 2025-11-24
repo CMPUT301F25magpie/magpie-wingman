@@ -8,4 +8,5 @@
     <color name="inv_red_fill">#FDECEC</color>
     <color name="inv_green_ripple">#A0CDEBD1</color>
     <color name="inv_red_ripple">#A0F5C9C5</color>
+    <color name="splash_dark">#0B0B18</color>
 </resources>
