@@ -9,9 +9,13 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
@@ -30,6 +34,7 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     private RecyclerView recyclerView;
     private ProfileAdapter adapter;
     private final List<UserProfile> userProfileList = new ArrayList<>();
+    private final List<UserProfile> fullProfileList = new ArrayList<>();
 
     public AdminProfilesFragment() { }
 
@@ -46,8 +51,37 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
         recyclerView = view.findViewById(R.id.recycler_view_admin_profiles);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        ImageButton backButton = view.findViewById(R.id.button_back);
+        EditText searchBar = view.findViewById(R.id.search_bar_profiles);
+
+
         adapter = new ProfileAdapter(userProfileList, this);
         recyclerView.setAdapter(adapter);
+
+        // back button
+        backButton.setOnClickListener(v  ->
+                requireActivity()
+                        .getOnBackPressedDispatcher()
+                        .onBackPressed()
+        );
+
+        // searchbar
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterProfiles(s.toString());
+            }
+        });
 
         refreshProfiles(null);
     }
@@ -56,8 +90,12 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
     private void refreshProfiles(@Nullable UserRole filter) {
         DbManager.getInstance().fetchProfiles(filter)
                 .addOnSuccessListener(list -> {
+                    fullProfileList.clear();
+                    fullProfileList.addAll(list);
+
                     userProfileList.clear();
                     userProfileList.addAll(list);
+
                     adapter.notifyDataSetChanged();
                 })
                 .addOnFailureListener(e ->
@@ -66,9 +104,37 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                                 Toast.LENGTH_LONG).show());
     }
 
+    /**
+     * Filters profiles by name using the fullProfileList as the source.
+     */
+    private void filterProfiles(@NonNull String query) {
+        String q = query.trim().toLowerCase();
+
+        userProfileList.clear();
+
+        if (q.isEmpty()) {
+            userProfileList.addAll(fullProfileList);
+        } else {
+            for (UserProfile profile : fullProfileList) {
+                String name = profile.getName();
+                if (name != null && name.toLowerCase().contains(q)) {
+                    userProfileList.add(profile);
+                }
+            }
+        }
+
+        adapter.notifyDataSetChanged();
+    }
+
+
+
     // Called when the "X" is clicked in a row
     @Override
     public void onRemoveClicked(int position) {
+        if (position < 0 || position >= userProfileList.size()) {
+            return;
+        }
+
         UserProfile target = userProfileList.get(position);
 
         if (target.getRole() == UserRole.ORGANIZER) {
@@ -78,38 +144,47 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                     .setMessage("Choose what to do with this organizer:")
                     .setNegativeButton(android.R.string.cancel, null)
                     .setNeutralButton("Delete Account", (d, w) -> {
-                        // HARD DELETE: remove account + from all events (existing path)
+                        // HARD DELETE: remove account + from all events
                         DbManager.getInstance().deleteProfile(target.getUserId(), target.getRole())
                                 .addOnSuccessListener(v -> {
+                                    removeFromFullList(target);
                                     userProfileList.remove(position);
                                     adapter.notifyItemRemoved(position);
                                     adapter.notifyItemRangeChanged(position, userProfileList.size());
                                     Toast.makeText(requireContext(), "Profile removed", Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e ->
-                                        Toast.makeText(requireContext(), "Remove failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                                        Toast.makeText(requireContext(),
+                                                "Remove failed: " + e.getMessage(),
+                                                Toast.LENGTH_LONG).show());
                     })
                     .setPositiveButton("Revoke & Delete Events", (d, w) -> {
                         // SOFT REMOVE: revoke organizer + delete all events (keeps account as Entrant)
                         DbManager.getInstance().revokeOrganizerAndDeleteEvents(target.getUserId())
                                 .addOnSuccessListener(v -> {
-                                    // EITHER: update row locally with a NEW immutable UserProfile…
+                                    // Create updated profile with Entrant role
                                     UserProfile updated = new UserProfile(
                                             target.getUserId(),
                                             target.getName(),
                                             UserRole.ENTRANT,
                                             target.getProfileImageUrl()
                                     );
+
+                                    // Update in the full list
+                                    replaceInFullList(updated);
+
+                                    // Update in the currently displayed list
                                     userProfileList.set(position, updated);
                                     adapter.notifyItemChanged(position);
 
-                                    // …OR if you prefer server truth, comment the 3 lines above and use:
-                                    // refreshProfiles(null);
-
-                                    Toast.makeText(requireContext(), "Organizer revoked and events deleted.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(),
+                                            "Organizer revoked and events deleted.",
+                                            Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e ->
-                                        Toast.makeText(requireContext(), "Action failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                                        Toast.makeText(requireContext(),
+                                                "Action failed: " + e.getMessage(),
+                                                Toast.LENGTH_LONG).show());
                     })
                     .show();
 
@@ -122,13 +197,16 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
                     .setPositiveButton("Remove", (d, w) -> {
                         DbManager.getInstance().deleteProfile(target.getUserId(), target.getRole())
                                 .addOnSuccessListener(v -> {
+                                    removeFromFullList(target);
                                     userProfileList.remove(position);
                                     adapter.notifyItemRemoved(position);
                                     adapter.notifyItemRangeChanged(position, userProfileList.size());
                                     Toast.makeText(requireContext(), "Profile removed", Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e ->
-                                        Toast.makeText(requireContext(), "Remove failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                                        Toast.makeText(requireContext(),
+                                                "Remove failed: " + e.getMessage(),
+                                                Toast.LENGTH_LONG).show());
                     })
                     .show();
         }

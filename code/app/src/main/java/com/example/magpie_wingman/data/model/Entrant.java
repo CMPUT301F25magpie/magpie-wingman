@@ -9,7 +9,6 @@ public class Entrant extends User{
     private List<String> enrolledEvents = new ArrayList<>();
     private String profileImageUrl;
 
-
     public Entrant(String userId,
                    String name,
                    @Nullable String profileImageUrl,
