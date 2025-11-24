@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/white"
     android:padding="24dp"
-    tools:context="data.SignUpFragment">
+    tools:context=".ui.login.SignUpFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -148,39 +148,6 @@
             android:textColorHint="#808080"
             android:textColor="#000000" />
 
-        <!-- Role Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="16dp"
-            android:weightSum="2">
-
-            <Button
-                android:id="@+id/entrantButton"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Entrant"
-                android:textColor="@android:color/white"
-                android:background="@drawable/role_button_selected"
-                android:textAllCaps="false"
-                android:backgroundTint="@null" />
-
-            <Button
-                android:id="@+id/organizerButton"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="Organizer"
-                android:textColor="@android:color/white"
-                android:background="@drawable/role_button_unselected"
-                android:textAllCaps="false"
-                android:backgroundTint="@null" />
-        </LinearLayout>
 
         <!-- Register -->
         <Button

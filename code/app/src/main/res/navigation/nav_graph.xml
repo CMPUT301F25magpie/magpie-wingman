@@ -3,7 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.example.magpie_wingman.ui.login.SplashFragment"
+        android:label="fragment_splash"
+        tools:layout="@layout/fragment_splash">
+
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+
+        <action
+            android:id="@+id/action_splashFragment_to_entrantLandingFragment3"
+            app:destination="@id/entrantLandingFragment3" />
+    </fragment>
 
     <fragment
         android:id="@+id/FirstFragment"
@@ -414,7 +429,7 @@
     </fragment>
     <fragment
         android:id="@+id/signUpFragment"
-        android:name="com.example.magpie_wingman.data.SignUpFragment"
+        android:name="com.example.magpie_wingman.ui.login.SignUpFragment"
         android:label="fragment_sign_up"
         tools:layout="@layout/fragment_sign_up" >
         <action

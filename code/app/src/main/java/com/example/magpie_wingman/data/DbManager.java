@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+
 /**
  * This utility class contains all of the "Helper Methods" that read from and write to the database
  * Helper method functionalities include:
@@ -100,7 +101,7 @@ public class DbManager {
      * Creates a new user document.
      * The userId will be generated using generateUserID and will also act as the document ID
      */
-    public Task<Void> createUser(String name, String email, String phone) {
+    public Task<Void> createUser(String name, String email, String phone, String password) {
         String userId = generateUserId(name);
 
         Map<String, Object> user = new HashMap<>();
@@ -108,6 +109,7 @@ public class DbManager {
         user.put("name", name);
         user.put("email", email);
         user.put("phone", phone);
+        user.put("password",password);
         user.put("isOrganizer", true);
         user.put("deviceId", Settings.Secure.getString(
                 appContext.getContentResolver(),
@@ -877,5 +879,81 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Logs in a user by email + password.
+     *
+     * Firestore schema assumptions:
+     *  - Collection: "users"
+     *  - Fields: "email" (String), "password" (String), plus whatever else your User model has.
+     *
+     * @param email    User's email address.
+     * @param password User's password (plain-text for this assignment).
+     * @return Task resolving to the matching User on success, or failing with an Exception on error.
+     */
+    public Task<User> loginWithEmailAndPassword(String email, String password) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException() != null
+                                ? task.getException()
+                                : new Exception("Login query failed");
+                    }
+
+                    QuerySnapshot snap = task.getResult();
+                    if (snap == null || snap.isEmpty()) {
+                        throw new Exception("Invalid email or password");
+                    }
+
+                    DocumentSnapshot doc = snap.getDocuments().get(0);
+
+                    // Check password directly from the document
+                    String storedPassword = doc.getString("password");
+                    if (storedPassword == null || !storedPassword.equals(password)) {
+                        throw new Exception("Invalid email or password");
+                    }
+
+                    // Build a proper User with the correct, immutable userId
+                    return User.from(doc);
+                });
+    }
+
+    public com.google.android.gms.tasks.Task<Boolean> isEmailInUse(String email) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful() || task.getResult() == null) {
+                        // Treat failure as "not in use" for now, but you can tighten this if you want
+                        return false;
+                    }
+                    return !task.getResult().isEmpty();
+                });
+    }
+
+    public com.google.android.gms.tasks.Task<Void> updateDOBByEmail(String email, java.util.Date newDOB) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful() || task.getResult() == null || task.getResult().isEmpty()) {
+                        // No user found or error; you can also choose to throw here instead
+                        return com.google.android.gms.tasks.Tasks.forResult(null);
+                    }
+
+                    String userId = task.getResult().getDocuments().get(0).getId();
+                    return updateDOB(userId, newDOB);
+                });
+    }
+
+    public Task<Void> updateRememberMe(String userId, boolean rememberMe) {
+        return db.collection("users")
+                .document(userId)
+                .update("rememberMe", rememberMe);
+    }
 }
 
