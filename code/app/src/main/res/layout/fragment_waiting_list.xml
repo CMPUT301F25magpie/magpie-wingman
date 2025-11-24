@@ -10,6 +10,7 @@
 
     <!-- HEADER BAR -->
     <LinearLayout
+        android:id="@+id/toolbar_waitlist"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
@@ -43,6 +44,29 @@
             android:textSize="18sp"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
+
+    <!-- Needed by WaitingListFragment logic, stays hidden until used -->
+    <ProgressBar
+        android:id="@+id/waitlist_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/waitlist_empty_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No entrants on the waiting list."
+        android:textColor="#FFFFFF"
+        android:visibility="gone"
+        android:padding="8dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_waitlist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
 
     <!-- WAITING LIST CONTAINER -->
     <ScrollView

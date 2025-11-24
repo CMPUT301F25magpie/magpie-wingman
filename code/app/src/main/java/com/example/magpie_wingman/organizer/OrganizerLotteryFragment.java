@@ -35,12 +35,12 @@ public class OrganizerLotteryFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_organizer_lottery, container, false);
 
-        sampleInput = view.findViewById(R.id.lottery_sample_input);
-        selectButton = view.findViewById(R.id.lottery_select_button);
+        sampleInput = view.findViewById(R.id.edit_maximum);
+        selectButton = view.findViewById(R.id.button_select);
 
         // Toolbar back navigation
         NavController navController = NavHostFragment.findNavController(this);
-        View toolbar = view.findViewById(R.id.toolbar_lottery);
+        View toolbar = view.findViewById(R.id.button_back);
         if (toolbar != null) toolbar.setOnClickListener(v -> navController.navigateUp());
 
         // Get eventId from navigation args
@@ -54,6 +54,11 @@ public class OrganizerLotteryFragment extends Fragment {
     }
 
     private void runLottery() {
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(getContext(), "Event ID missing — open lottery from event details.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         String input = sampleInput.getText().toString().trim();
 
         if (input.isEmpty()) {
