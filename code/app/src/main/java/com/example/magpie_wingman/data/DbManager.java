@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
+
 /**
  * This utility class contains all of the "Helper Methods" that read from and write to the database
  * Helper method functionalities include:
@@ -100,16 +101,16 @@ public class DbManager {
      * Creates a new user document.
      * The userId will be generated using generateUserID and will also act as the document ID
      */
-    public Task<Void> createUser(String name, String email, String password) {
+    public Task<Void> createUser(String name, String email, String phone, String password) {
         String userId = generateUserId(name);
 
         Map<String, Object> user = new HashMap<>();
         user.put("userId", userId);
         user.put("name", name);
         user.put("email", email);
-        user.put("password", password);
+        user.put("phone", phone);
+        user.put("password",password);
         user.put("isOrganizer", true);
-        user.put("rememberMe",false);
         user.put("deviceId", Settings.Secure.getString(
                 appContext.getContentResolver(),
                 Settings.Secure.ANDROID_ID
@@ -134,8 +135,8 @@ public class DbManager {
     public Task<Void> createEvent(String eventName,
                                   String description,
                                   String organizerId,
-                                  Date regStart,
-                                  Date regEnd) {
+                                  Object regStart,
+                                  Object regEnd) {
 
         String eventId;
         DocumentSnapshot doc;
@@ -247,6 +248,37 @@ public class DbManager {
         return tcs.getTask();
     }
 
+    public Task<Void> revokeOrganizerAndDeleteEvents(String organizerId) {
+        TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                // 1) Revoke organizer role
+                Tasks.await(changeOrgPerms(organizerId, false));
+
+                // 2) Find all events they own (your schema uses "organizerId")
+                QuerySnapshot organizerEvents = Tasks.await(
+                        db.collection("events")
+                                .whereEqualTo("organizerId", organizerId)
+                                .get()
+                );
+
+                // 3) Delete each event (deep) using your existing helper
+                List<Task<Void>> deletes = new ArrayList<>();
+                for (DocumentSnapshot d : organizerEvents.getDocuments()) {
+                    deletes.add(deleteEvent(d.getId()));
+                }
+                Tasks.await(Tasks.whenAll(deletes));
+
+                tcs.setResult(null);
+            } catch (Exception e) {
+                tcs.setException(e);
+            }
+        });
+
+        return tcs.getTask();
+    }
+
     public Task<List<UserProfile>> fetchProfiles(@Nullable UserRole roleFilter) {
         TaskCompletionSource<List<UserProfile>> tcs = new TaskCompletionSource<>();
 
@@ -297,6 +329,25 @@ public class DbManager {
         }
         return deleteEntrant(userId);
     }
+
+    /**
+     * Helper function that checks if user is in a waitlist
+     * @param eventId eventId of the event waitlist to check
+     * @param userId userId of the user to check
+     * @return
+     */
+    public Task<Boolean> isUserInWaitlist(String eventId, String userId) {
+        return db.collection("events")
+                .document(eventId)
+                .collection("waitlist")
+                .document(userId)
+                .get()
+                .continueWith(task ->
+                        task.isSuccessful() && task.getResult() != null && task.getResult().exists());
+    }
+
+
+
 
     /**
      * Deletes an event document and its subcollections
@@ -552,20 +603,6 @@ public class DbManager {
     }
 
     /**
-     * Adds/Updates user's date of birth.
-     *
-     * @param userId     ID of the user document to update.
-     * @param newDOB   New phone number to set.
-     * @return Task that completes when the update finishes.
-     */
-
-    public Task<Void> updateDOB(String userId, Date newDOB) {
-        return db.collection("users")
-                .document(userId)
-                .update("dateOfBirth", newDOB);
-    }
-
-    /**
      * Updates the user's phone number.
      *
      * @param userId     ID of the user document to update.
@@ -578,21 +615,6 @@ public class DbManager {
                 .update("phone", newPhone);
     }
 
-
-    /**
-     * Updates the user's password.
-     *
-     * @param userId     ID of the user document to update.
-     * @param newPassword   New password.
-     * @return Task that completes when the update finishes.
-     */
-    public Task <Void> updatePassword(String userId, String newPassword) {
-        return db.collection("users")
-                .document(userId)
-                .update("password", newPassword);
-    }
-
-
     /**
      * Changes a user's organizer permissions.
      *
@@ -604,19 +626,6 @@ public class DbManager {
         return db.collection("users")
                 .document(userId)
                 .update("isOrganizer", isOrganizer);
-    }
-
-    /**
-     * Changes a user's organizer permissions.
-     *
-     * @param userId      The ID of the user to update.
-     * @param rememberMe True to grant organizer permissions; false to revoke them.
-     * @return A Task that completes when the update finishes.
-     */
-    public Task<Void> setRememberMe(String userId, boolean rememberMe) {
-        return db.collection("users")
-                .document(userId)
-                .update("rememberMe", rememberMe);
     }
 
     /**
@@ -829,6 +838,34 @@ public class DbManager {
                     return users;
                 });
     }
+
+    /**
+     * Updates the user's password.
+     *
+     * @param userId     ID of the user document to update.
+     * @param newPassword   New password.
+     * @return Task that completes when the update finishes.
+     */
+    public Task <Void> updatePassword(String userId, String newPassword) {
+        return db.collection("users")
+                .document(userId)
+                .update("password", newPassword);
+    }
+
+    /**
+     * Adds/Updates user's date of birth.
+     *
+     * @param userId     ID of the user document to update.
+     * @param newDOB   New phone number to set.
+     * @return Task that completes when the update finishes.
+     */
+
+    public Task<Void> updateDOB(String userId, Date newDOB) {
+        return db.collection("users")
+                .document(userId)
+                .update("dateOfBirth", newDOB);
+    }
+
     public Task<String> findUserByDeviceId(String deviceId) {
         return db.collection("users")
                 .whereEqualTo("deviceId", deviceId)
@@ -840,6 +877,83 @@ public class DbManager {
                     }
                     return task.getResult().getDocuments().get(0).getId(); // Return userId
                 });
+    }
+
+    /**
+     * Logs in a user by email + password.
+     *
+     * Firestore schema assumptions:
+     *  - Collection: "users"
+     *  - Fields: "email" (String), "password" (String), plus whatever else your User model has.
+     *
+     * @param email    User's email address.
+     * @param password User's password (plain-text for this assignment).
+     * @return Task resolving to the matching User on success, or failing with an Exception on error.
+     */
+    public Task<User> loginWithEmailAndPassword(String email, String password) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException() != null
+                                ? task.getException()
+                                : new Exception("Login query failed");
+                    }
+
+                    QuerySnapshot snap = task.getResult();
+                    if (snap == null || snap.isEmpty()) {
+                        throw new Exception("Invalid email or password");
+                    }
+
+                    DocumentSnapshot doc = snap.getDocuments().get(0);
+
+                    // Check password directly from the document
+                    String storedPassword = doc.getString("password");
+                    if (storedPassword == null || !storedPassword.equals(password)) {
+                        throw new Exception("Invalid email or password");
+                    }
+
+                    // Build a proper User with the correct, immutable userId
+                    return User.from(doc);
+                });
+    }
+
+    public com.google.android.gms.tasks.Task<Boolean> isEmailInUse(String email) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful() || task.getResult() == null) {
+                        // Treat failure as "not in use" for now, but you can tighten this if you want
+                        return false;
+                    }
+                    return !task.getResult().isEmpty();
+                });
+    }
+
+    public com.google.android.gms.tasks.Task<Void> updateDOBByEmail(String email, java.util.Date newDOB) {
+        return db.collection("users")
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful() || task.getResult() == null || task.getResult().isEmpty()) {
+                        // No user found or error; you can also choose to throw here instead
+                        return com.google.android.gms.tasks.Tasks.forResult(null);
+                    }
+
+                    String userId = task.getResult().getDocuments().get(0).getId();
+                    return updateDOB(userId, newDOB);
+                });
+    }
+
+    public Task<Void> updateRememberMe(String userId, boolean rememberMe) {
+        return db.collection("users")
+                .document(userId)
+                .update("rememberMe", rememberMe);
     }
 }
 
