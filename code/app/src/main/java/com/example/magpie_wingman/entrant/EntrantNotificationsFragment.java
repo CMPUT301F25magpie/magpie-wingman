@@ -1,66 +1,97 @@
 package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.magpie_wingman.R;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link EntrantNotificationsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Notification;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class EntrantNotificationsFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public EntrantNotificationsFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment EntrantNotificationsFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static EntrantNotificationsFragment newInstance(String param1, String param2) {
-        EntrantNotificationsFragment fragment = new EntrantNotificationsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private RecyclerView recyclerView;
+    private NotificationAdapter adapter;
+    private ListenerRegistration registration;
+    private String userId;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_entrant_notifications, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View v, Bundle savedInstanceState) {
+//        super.onViewCreated(v, savedInstanceState);
+//
+//        // Toolbar back navigation
+//        MaterialToolbar tb = v.findViewById(R.id.toolbar_notifications);
+//        if (tb != null) {
+//            tb.setNavigationOnClickListener(_v ->
+//                    requireActivity().getOnBackPressedDispatcher().onBackPressed());
+//        }
+//
+//        recyclerView = v.findViewById(R.id.recycler_notifications);
+//        adapter = new NotificationAdapter();
+//        recyclerView.setAdapter(adapter);
+//
+//        String deviceId = Settings.Secure.getString(
+//                requireContext().getContentResolver(),
+//                Settings.Secure.ANDROID_ID
+//        );
+//
+//        DbManager.getInstance().findUserByDeviceId(deviceId)
+//                .addOnSuccessListener(id -> {
+//                    if (!isAdded() || id == null || id.isEmpty()) return;
+//                    userId = id;
+//                    attachListenerFor(userId);
+//                });
+    }
+
+    @Override
+    public void onDestroyView() {
+//        super.onDestroyView();
+//        detachListener();
+    }
+
+    private void attachListenerFor(String uid) {
+//        FirebaseFirestore db = DbManager.getInstance().getDb();
+//        CollectionReference ref = db.collection("users")
+//                .document(uid)
+//                .collection("notifications");
+//
+//        Query q = ref.orderBy("timestamp", Query.Direction.DESCENDING);
+//
+//        registration = q.addSnapshotListener((QuerySnapshot snaps, com.google.firebase.firestore.FirebaseFirestoreException e) -> {
+//            if (!isAdded()) return;
+//            if (e != null || snaps == null) {
+//                adapter.submitList(new ArrayList<>());
+//                return;
+//            }
+//            List<Notification> list = new ArrayList<>();
+//            snaps.getDocuments().forEach(d -> list.add(Notification.from(d)));
+//            adapter.submitList(list);
+//        });
+    }
+
+    private void detachListener() {
+//        if (registration != null) {
+//            registration.remove();
+//            registration = null;
+//        }
     }
 }

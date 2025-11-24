@@ -1,63 +1,172 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="#0B0B18"
+    android:padding="0dp"
     tools:context=".entrant.DetailedEventDescriptionFragment">
 
+    <!-- HEADER BAR -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/white"
+        android:paddingHorizontal="12dp">
+
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            app:tint="#000000" />
 
         <ImageView
-            android:id="@+id/image_view_event_poster_detail"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:contentDescription="@string/event_poster"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.MediumComponent" />
+            android:id="@+id/image_logo"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/wingman_logo"
+            android:contentDescription="Logo"
+            android:layout_marginStart="8dp" />
 
         <TextView
-            android:id="@+id/text_view_event_title_detail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            tools:text="Event Title"
-            android:textSize="24sp"
+            android:text="Event Description"
+            android:textColor="#000000"
             android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary" />
-
-        <TextView
-            android:id="@+id/text_view_event_location_detail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            tools:text="Event Location"
-            android:textSize="16sp"
-            android:textColor="?android:attr/textColorSecondary" />
-
-        <TextView
-            android:id="@+id/text_view_event_description_detail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            tools:text="This is a long description of the event, explaining all the details, what to expect, and any rules that might apply. It can span multiple lines."
-            android:textSize="16sp"
-            android:lineSpacingExtra="4dp"
-            android:textColor="?android:attr/textColorSecondary" />
-
-        <Button
-            android:id="@+id/button_sign_up"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:padding="12dp"
-            android:text="Sign Up for Event"
-            android:textSize="16sp" />
-
+            android:textSize="18sp"
+            android:layout_marginStart="8dp"/>
     </LinearLayout>
-</ScrollView>
+
+    <!-- MAIN CONTENT -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Event Info Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#151526"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp"
+                android:elevation="2dp">
+
+                <!-- Left Text Info -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/text_event_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Title"
+                        android:textStyle="bold"
+                        android:textSize="20sp"
+                        android:textColor="@android:color/white"/>
+
+                    <TextView
+                        android:id="@+id/text_event_location"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Location"
+                        android:textColor="#CCCCCC"
+                        android:textSize="14sp"
+                        android:layout_marginTop="2dp"/>
+
+                    <TextView
+                        android:id="@+id/text_event_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Date - Time"
+                        android:textColor="#CCCCCC"
+                        android:textSize="13sp"
+                        android:layout_marginTop="4dp"/>
+
+                    <TextView
+                        android:id="@+id/text_waiting_list"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="waiting list: XX"
+                        android:textColor="#CCCCCC"
+                        android:textSize="13sp"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+                <!-- Right Poster -->
+                <ImageView
+                    android:id="@+id/image_event_poster"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_music"
+                    android:background="@drawable/rounded_white"
+                    android:clipToOutline="true"
+                    android:contentDescription="@string/event_poster"/>
+            </LinearLayout>
+
+            <!-- White Description Box -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/rounded_white"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/label_description"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Description:"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="6dp"/>
+
+                <TextView
+                    android:id="@+id/text_event_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Consequat adipiscing elit quisque faucibus ex sapien vitae. Pretium tellus convallis tempus tellus eu aenean."
+                    android:textSize="14sp"
+                    android:textColor="#222222"
+                    android:lineSpacingExtra="4dp"/>
+            </LinearLayout>
+
+            <!-- Join Button -->
+            <Button
+                android:id="@+id/button_join_waitlist"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Join Waiting List"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:background="@drawable/green_button_bg"
+                android:backgroundTint="@null"
+                />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
+
+
+

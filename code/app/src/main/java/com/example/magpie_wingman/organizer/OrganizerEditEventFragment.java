@@ -51,47 +51,40 @@ public class OrganizerEditEventFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        // Find all the views
-        eventTitleField = view.findViewById(R.id.edit_text_event_title);
-        eventAddressField = view.findViewById(R.id.edit_text_location_address);
-        eventDescriptionField = view.findViewById(R.id.edit_text_event_description);
-
-        regStartDateField = view.findViewById(R.id.text_reg_start_date);
-        regStartTimeField = view.findViewById(R.id.text_reg_start_time);
-        regEndDateField = view.findViewById(R.id.text_reg_end_date);
-        regEndTimeField = view.findViewById(R.id.text_reg_end_time);
-
-        saveButton = view.findViewById(R.id.button_save);
-
-        // **NOTE:** This is where you would load existing event data.
-        // For example:
-        // Event myEvent = ... (load from Firebase) ...
-        // eventTitleField.setText(myEvent.getName());
-        // regStartCalendar.setTimeInMillis(myEvent.getRegStart());
-        // regEndCalendar.setTimeInMillis(myEvent.getRegEnd());
-        // updateDateFields(); // A helper to set the text
-
-        // Set click listeners for the registration fields
-        regStartDateField.setOnClickListener(v ->
-                showDatePicker(regStartDateField, regStartCalendar)
-        );
-        regStartTimeField.setOnClickListener(v ->
-                showTimePicker(regStartTimeField, regStartCalendar)
-        );
-        regEndDateField.setOnClickListener(v ->
-                showDatePicker(regEndDateField, regEndCalendar)
-        );
-        regEndTimeField.setOnClickListener(v ->
-                showTimePicker(regEndTimeField, regEndCalendar)
-        );
-
-        saveButton.setOnClickListener(v -> {
-            // Here is where you would get all the data and UPDATE Firebase
-            String eventName = eventTitleField.getText().toString();
-            Toast.makeText(getContext(), "Saving changes for: " + eventName, Toast.LENGTH_SHORT).show();
-        });
+//        super.onViewCreated(view, savedInstanceState);
+//
+//        // Find all the views
+//        eventTitleField = view.findViewById(R.id.edit_text_event_title);
+//        eventAddressField = view.findViewById(R.id.edit_text_location_address);
+//        eventDescriptionField = view.findViewById(R.id.edit_text_event_description);
+//
+//        regStartDateField = view.findViewById(R.id.text_reg_start_date);
+//        regStartTimeField = view.findViewById(R.id.text_reg_start_time);
+//        regEndDateField = view.findViewById(R.id.text_reg_end_date);
+//        regEndTimeField = view.findViewById(R.id.text_reg_end_time);
+//
+//        saveButton = view.findViewById(R.id.button_save);
+//
+//
+//        // Set click listeners for the registration fields
+//        regStartDateField.setOnClickListener(v ->
+//                showDatePicker(regStartDateField, regStartCalendar)
+//        );
+//        regStartTimeField.setOnClickListener(v ->
+//                showTimePicker(regStartTimeField, regStartCalendar)
+//        );
+//        regEndDateField.setOnClickListener(v ->
+//                showDatePicker(regEndDateField, regEndCalendar)
+//        );
+//        regEndTimeField.setOnClickListener(v ->
+//                showTimePicker(regEndTimeField, regEndCalendar)
+//        );
+//
+//        saveButton.setOnClickListener(v -> {
+//            // Here is where you would get all the data and UPDATE Firebase
+//            String eventName = eventTitleField.getText().toString();
+//            Toast.makeText(getContext(), "Saving changes for: " + eventName, Toast.LENGTH_SHORT).show();
+//        });
     }
 
     /**
@@ -100,19 +93,19 @@ public class OrganizerEditEventFragment extends Fragment {
      * @param calendar  The Calendar instance to store the selected date.
      */
     private void showDatePicker(final TextInputEditText dateField, final Calendar calendar) {
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-        new DatePickerDialog(getContext(), (datePicker, y, m, d) -> {
-            calendar.set(Calendar.YEAR, y);
-            calendar.set(Calendar.MONTH, m);
-            calendar.set(Calendar.DAY_OF_MONTH, d);
-
-            // Format date as "yyyy-MM-dd" to match mockup
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            dateField.setText(sdf.format(calendar.getTime()));
-        }, year, month, day).show();
+//        int year = calendar.get(Calendar.YEAR);
+//        int month = calendar.get(Calendar.MONTH);
+//        int day = calendar.get(Calendar.DAY_OF_MONTH);
+//
+//        new DatePickerDialog(getContext(), (datePicker, y, m, d) -> {
+//            calendar.set(Calendar.YEAR, y);
+//            calendar.set(Calendar.MONTH, m);
+//            calendar.set(Calendar.DAY_OF_MONTH, d);
+//
+//            // Format date as "yyyy-MM-dd" to match mockup
+//            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+//            dateField.setText(sdf.format(calendar.getTime()));
+//        }, year, month, day).show();
     }
 
     /**
@@ -121,16 +114,16 @@ public class OrganizerEditEventFragment extends Fragment {
      * @param calendar  The Calendar instance to store the selected time.
      */
     private void showTimePicker(final TextInputEditText timeField, final Calendar calendar) {
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-
-        new TimePickerDialog(getContext(), (timePicker, h, m) -> {
-            calendar.set(Calendar.HOUR_OF_DAY, h);
-            calendar.set(Calendar.MINUTE, m);
-
-            // Format time as "HH:mm" (24-hour) to match mockup
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            timeField.setText(sdf.format(calendar.getTime()));
-        }, hour, minute, true).show(); // true for 24-hour format
+//        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+//        int minute = calendar.get(Calendar.MINUTE);
+//
+//        new TimePickerDialog(getContext(), (timePicker, h, m) -> {
+//            calendar.set(Calendar.HOUR_OF_DAY, h);
+//            calendar.set(Calendar.MINUTE, m);
+//
+//            // Format time as "HH:mm" (24-hour) to match mockup
+//            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+//            timeField.setText(sdf.format(calendar.getTime()));
+//        }, hour, minute, true).show(); // true for 24-hour format
     }
 }

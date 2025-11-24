@@ -1,59 +1,106 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0B0B1A"
+    android:orientation="vertical"
+    android:background="#0B0B18"
     tools:context=".organizer.WaitingListFragment">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar_waitlist"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            app:title="@string/waitlist_title"
-            app:navigationIcon="@drawable/ic_arrow_back"
-            app:navigationIconTint="@android:color/white"
-            app:titleTextColor="@android:color/white"
-            android:background="#0B0B1A" />
-    </com.google.android.material.appbar.AppBarLayout>
-
+    <!-- HEADER BAR -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/white"
+        android:paddingHorizontal="12dp">
 
-        <ProgressBar
-            android:id="@+id/waitlist_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            app:tint="#000000" />
+
+        <ImageView
+            android:id="@+id/image_logo"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/wingman_logo"
+            android:contentDescription="Logo"
+            android:layout_marginStart="8dp" />
 
         <TextView
-            android:id="@+id/waitlist_empty_text"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/waitlist_empty_message"
-            android:textColor="#AAAAAA"
-            android:gravity="center"
-            android:layout_marginTop="20dp"
-            android:visibility="gone" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_waitlist"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingTop="8dp"
-            android:dividerHeight="1dp"
-            android:divider="?android:attr/listDivider"
-            android:clipToPadding="false" />
+            android:text="Waiting List"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginStart="8dp"/>
     </LinearLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <!-- WAITING LIST CONTAINER -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_white"
+            android:padding="12dp">
+
+            <!-- Example entrant rows -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_person"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="User"
+                        app:tint="#000000" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Person 1"
+                        android:textColor="#000000"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+
+                <ImageButton
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_location_pin"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Location Pin"
+                    app:tint="#00C853" />
+            </LinearLayout>
+
+            <!-- Duplicate rows -->
+            <include layout="@layout/item_waiting_person" />
+            <include layout="@layout/item_waiting_person" />
+            <include layout="@layout/item_waiting_person" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
