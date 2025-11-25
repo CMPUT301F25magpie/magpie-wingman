@@ -869,15 +869,17 @@ public class DbManager {
     public Task<String> findUserByDeviceId(String deviceId) {
         return db.collection("users")
                 .whereEqualTo("deviceId", deviceId)
+                .whereEqualTo("rememberMe", true)   // only consider rememberme users
                 .limit(1)
                 .get()
                 .continueWith(task -> {
-                    if (!task.isSuccessful() || task.getResult().isEmpty()) {
-                        return null; // No match found
+                    if (!task.isSuccessful() || task.getResult() == null || task.getResult().isEmpty()) {
+                        return null; // No remembered user on this device
                     }
                     return task.getResult().getDocuments().get(0).getId(); // Return userId
                 });
     }
+
 
     /**
      * Logs in a user by email + password.

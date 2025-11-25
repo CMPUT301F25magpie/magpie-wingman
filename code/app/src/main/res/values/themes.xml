@@ -4,6 +4,7 @@
         <item name="colorPrimary">#2E5BFF</item>
         <item name="colorPrimaryVariant">#2E5BFF</item>
         <item name="colorSecondary">#2E5BFF</item>
+        <item name="android:windowBackground">@color/splash_dark</item>
     </style>
 
     <style name="Theme.MagpieWingman" parent="Base.Theme.MagpieWingman" />

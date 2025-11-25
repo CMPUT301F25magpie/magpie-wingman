@@ -20,30 +20,25 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.User;
 
 /**
  * Settings screen for entrant users backed by a custom layout
  * {@code fragment_entrant_settings.xml}.
  *
- * <p>Responsibilities:</p>
- * <ul>
- *   <li>Load/display the user's display name.</li>
- *   <li>Toggle/persist notification preferences.</li>
- *   <li>Log out (clear local session and finish Activity).</li>
- *   <li>Delete account (calls preexisting {@link DbManager#deleteEntrant(String)}).</li>
- * </ul>
- *
- * <p>Pass the signed-in user's id via {@link #newInstance(String)} or ensure it is
- * available in SharedPreferences under "user_id".</p>
+ * Responsibilities:
+ *  - Load/display the user's display name.
+ *  - Toggle/persist notification preferences.
+ *  - Log out (clear local session and finish Activity).
+ *  - Delete account (calls preexisting DbManager#deleteEntrant(String)).
  */
 public class EntrantSettingsFragment extends Fragment {
 
-    /** Argument key for the signed-in entrant's app/user id. */
     public static final String ARG_ENTRANT_ID = "arg_entrant_id";
 
-    // Cached once on create; used by UI actions like delete.
     private String entrantId;
 
     // UI
@@ -53,18 +48,12 @@ public class EntrantSettingsFragment extends Fragment {
     private Button logoutButton;
     private Button deleteButton;
 
-    // Pref keys for local persistence of switch states
+    // Pref keys
     private static final String PREFS = "app_prefs";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_NOTIFY_ADMINS = "notify_admins";
     private static final String KEY_NOTIFY_ORGANIZERS = "notify_organizers";
 
-    /**
-     * Helper to build this fragment with an entrant id argument.
-     *
-     * @param entrantId the app/user id of the signed-in entrant
-     * @return a configured EntrantSettingsFragment
-     */
     public static EntrantSettingsFragment newInstance(@NonNull String entrantId) {
         Bundle b = new Bundle();
         b.putString(ARG_ENTRANT_ID, entrantId);
@@ -77,12 +66,10 @@ public class EntrantSettingsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1) Prefer the id passed in via arguments.
         if (getArguments() != null) {
             entrantId = getArguments().getString(ARG_ENTRANT_ID);
         }
 
-        // 2) Fallback to a locally cached id (guest/session flows).
         if (TextUtils.isEmpty(entrantId)) {
             entrantId = loadUserIdFromPrefs();
         }
@@ -95,8 +82,6 @@ public class EntrantSettingsFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
-
-        // Inflate XML
         View root = inflater.inflate(R.layout.fragment_entrant_settings, container, false);
 
         // --- Bind views ---
@@ -109,44 +94,17 @@ public class EntrantSettingsFragment extends Fragment {
         logoutButton = root.findViewById(R.id.button_logout);
         deleteButton = root.findViewById(R.id.button_delete_account);
 
-        // --- Back button ---
         back.setOnClickListener(v ->
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
-        // --- Load/display user name ---
         bindUserName();
-
-        // --- Initialize switches from prefs and persist changes ---
         initNotificationSwitches();
 
-        // --- Edit Profile ---
-//        rowEditProfile.setOnClickListener(v -> {
-            // TODO: Navigate to your EditProfile screen/fragment.
-            // e.g., NavHostFragment.findNavController(this).navigate(R.id.action_settings_to_editProfile);
-
-//        });
-
-        // --- About Us ---
-//        rowAboutUs.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
-//                .setTitle("About us")
-//                .setMessage("Wingman — sample app for event management.\nVersion 1.0")
-//                .setPositiveButton(android.R.string.ok, null)
-//                .show());
-
-        // --- Log out ---
-//        logoutButton.setOnClickListener(v -> {
-//            clearUserIdFromPrefs();
-//            Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show();
-//            requireActivity().finish();
-//        });
-
-        // --- Delete account (preexisting DbManager method) ---
         deleteButton.setOnClickListener(v -> confirmAndDeleteProfile());
 
-        // Disable destructive buttons if id is unknown
         boolean hasId = !TextUtils.isEmpty(entrantId);
         deleteButton.setEnabled(hasId);
-        logoutButton.setEnabled(true); // logout can still clear local state
+        logoutButton.setEnabled(true);
 
         return root;
     }
@@ -159,21 +117,43 @@ public class EntrantSettingsFragment extends Fragment {
         ImageView btnAboutUs = view.findViewById(R.id.btn_about_us);
         Button btnLogOut = view.findViewById(R.id.button_logout);
 
+        // NEW: mode-switch buttons
+        Button btnEntrantMode = view.findViewById(R.id.button_entrant_mode);
+        Button btnOrganizerMode = view.findViewById(R.id.button_organizer_mode);
+
         NavController navController = Navigation.findNavController(view);
 
-        btnEditProfile.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantEditProfileFragment));
-        btnAboutUs.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantAboutUsFragment));
-        btnLogOut.setOnClickListener(v -> navController.navigate(R.id.action_entrantSettingsFragment_to_loginFragment));
+        btnEditProfile.setOnClickListener(
+                v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantEditProfileFragment)
+        );
+        btnAboutUs.setOnClickListener(
+                v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantAboutUsFragment)
+        );
+        btnLogOut.setOnClickListener(
+                v -> navController.navigate(R.id.action_entrantSettingsFragment_to_loginFragment)
+        );
+
+        // --- Mode switch logic based on current user ---
+        User currentUser = MyApp.getInstance().getCurrentUser();
+
+        if (currentUser == null || !currentUser.isOrganizer()) {
+            // Not an organizer -> no mode switching
+            btnEntrantMode.setVisibility(View.GONE);
+            btnOrganizerMode.setVisibility(View.GONE);
+        } else {
+            // Entrant settings = already in entrant mode
+            btnEntrantMode.setEnabled(false);
+            btnOrganizerMode.setEnabled(true);
+
+            btnOrganizerMode.setOnClickListener(v ->
+                    navController.navigate(R.id.organizerLandingFragment2));
+        }
     }
 
     // =============================================================================================
     // Data / actions
     // =============================================================================================
 
-    /**
-     * Resolves and displays the entrant's name using DbManager.getUserName(entrantId).
-     * Falls back to the raw id if the name is missing.
-     */
     private void bindUserName() {
         if (TextUtils.isEmpty(entrantId)) {
             nameText.setText("Guest");
@@ -191,15 +171,10 @@ public class EntrantSettingsFragment extends Fragment {
                     })
                     .addOnFailureListener(e -> nameText.setText(entrantId));
         } catch (Throwable t) {
-            // Defensive: if DbManager not ready for any reason, fall back to id
             nameText.setText(entrantId);
         }
     }
 
-    /**
-     * Initialize switches from SharedPreferences and persist changes.
-     * Replace/augment with Firestore-backed settings if desired later.
-     */
     private void initNotificationSwitches() {
         boolean adminsOn = getPrefs().getBoolean(KEY_NOTIFY_ADMINS, false);
         boolean organizersOn = getPrefs().getBoolean(KEY_NOTIFY_ORGANIZERS, true);
@@ -214,10 +189,6 @@ public class EntrantSettingsFragment extends Fragment {
                 getPrefs().edit().putBoolean(KEY_NOTIFY_ORGANIZERS, isChecked).apply());
     }
 
-    /**
-     * Shows a confirmation dialog before deleting the user's profile.
-     * No-op if the user cancels.
-     */
     private void confirmAndDeleteProfile() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete your profile?")
@@ -227,10 +198,6 @@ public class EntrantSettingsFragment extends Fragment {
                 .show();
     }
 
-    /**
-     * Calls the preexisting DbManager.deleteEntrant(...) and finishes the Activity on success.
-     * Clears any locally cached "user_id" to avoid stale sessions.
-     */
     private void performDelete() {
         if (TextUtils.isEmpty(entrantId)) {
             Toast.makeText(requireContext(), "Could not resolve your user ID.", Toast.LENGTH_LONG).show();
@@ -240,10 +207,8 @@ public class EntrantSettingsFragment extends Fragment {
         DbManager.getInstance()
                 .deleteEntrant(entrantId)
                 .addOnSuccessListener(v -> {
-                    // Clear locally cached id for guest/legacy flows, if present.
                     clearUserIdFromPrefs();
                     Toast.makeText(requireContext(), "Profile deleted", Toast.LENGTH_SHORT).show();
-                    // Return to splash/login or close current activity.
                     requireActivity().finish();
                 })
                 .addOnFailureListener(e ->
@@ -255,11 +220,6 @@ public class EntrantSettingsFragment extends Fragment {
     // Local storage helpers
     // =============================================================================================
 
-    /**
-     * Reads a user id from SharedPreferences, or null if not set.
-     *
-     * @return cached user id or null
-     */
     @Nullable
     private String loadUserIdFromPrefs() {
         try {
@@ -269,15 +229,14 @@ public class EntrantSettingsFragment extends Fragment {
         }
     }
 
-    /** Removes locally cached user id from SharedPreferences. */
     private void clearUserIdFromPrefs() {
         try {
             getPrefs().edit().remove(KEY_USER_ID).apply();
         } catch (Throwable ignored) {}
     }
 
-    /** Convenience accessor for the app's SharedPreferences. */
     private android.content.SharedPreferences getPrefs() {
         return requireContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 }
+
