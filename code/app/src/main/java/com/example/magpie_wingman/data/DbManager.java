@@ -5,6 +5,7 @@ import android.provider.Settings;
 
 import androidx.annotation.Nullable;
 
+import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.model.User;
 import com.example.magpie_wingman.data.model.UserProfile;
 import com.example.magpie_wingman.data.model.UserRole;
@@ -954,6 +955,43 @@ public class DbManager {
         return db.collection("users")
                 .document(userId)
                 .update("rememberMe", rememberMe);
+    }
+
+    /**
+     * Fetches all events from the "events" collection as Event models
+     * for use in entrant lists.
+     */
+    public Task<List<Event>> getAllEvents() {
+        return db.collection("events")
+                .get()
+                .continueWith(task -> {
+                    List<Event> results = new ArrayList<>();
+                    if (!task.isSuccessful() || task.getResult() == null) {
+                        return results;
+                    }
+
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        String eventId      = doc.getId();
+                        String organizerId  = doc.getString("organizerId");
+                        String name         = doc.getString("eventName");
+                        String description  = doc.getString("description");
+
+                        // At the moment you only store these fields; dates/location can be added later.
+                        Event e = new Event(
+                                eventId,
+                                organizerId,
+                                name,
+                                /* eventStartTime */ null,
+                                /* eventEndTime   */ null,
+                                /* eventLocation  */ null,
+                                /* eventDescription */ description,
+                                /* eventPosterURL */ null,
+                                /* eventCapacity  */ 0
+                        );
+                        results.add(e);
+                    }
+                    return results;
+                });
     }
 }
 

@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class User {
     }
 
     /** Minimal constructor. don't need contact/device fields at creation time. */
-    public User(String userId, String name, boolean isOrganizer, @Nullable String profileImageUrl) {
+    public User(String userId, String name, boolean isOrganizer, @Nullable String profileImageUrl, String email, String phone, String deviceId, Date birthday) {
         this(userId, name, isOrganizer, profileImageUrl, null, null, null);
     }
 
