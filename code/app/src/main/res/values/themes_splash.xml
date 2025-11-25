@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Splash theme: only for app startup -->
+    <style name="Theme.MagpieWingman.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Instant background while app is starting -->
+        <item name="android:windowBackground">@color/splash_dark</item>
+
+
+        <!-- No title/action bar during splash -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+</resources>

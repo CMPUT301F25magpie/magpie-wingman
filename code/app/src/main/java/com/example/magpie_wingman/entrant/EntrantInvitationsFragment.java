@@ -1,25 +1,26 @@
 package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Invitation;
-import com.google.android.material.appbar.MaterialToolbar;
+import com.example.magpie_wingman.data.model.User;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -28,10 +29,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class EntrantInvitationsFragment extends Fragment implements InvitationAdapter.OnActionListener {
+public class EntrantInvitationsFragment extends Fragment {
 
-    private RecyclerView recycler;
-    private InvitationAdapter adapter;
+    private LinearLayout invitationsList;
+    private final List<Invitation> invitations = new ArrayList<>();
     private String userId;
 
     @Nullable
@@ -44,26 +45,20 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
     public void onViewCreated(View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
-        MaterialToolbar tb = v.findViewById(R.id.toolbar_invitations);
-        if (tb != null) {
-            tb.setNavigationOnClickListener(_v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
+        // Header back button
+        ImageButton backBtn = v.findViewById(R.id.button_back);
+        if (backBtn != null) {
+            backBtn.setOnClickListener(_v ->
+                    requireActivity().getOnBackPressedDispatcher().onBackPressed()
+            );
         }
 
-        recycler = v.findViewById(R.id.recycler_invitations);
-        adapter = new InvitationAdapter(this);
-        recycler.setAdapter(adapter);
+        invitationsList = v.findViewById(R.id.invitations_list);
 
-        // Retrieve deviceId
-        String deviceId = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
-
-        DbManager.getInstance().findUserByDeviceId(deviceId)
-                .addOnSuccessListener(uid -> {
-                    userId = uid;
-                    loadInvitations();
-                });
+        // Retrieve current logged-in user
+        User current = MyApp.getInstance().getCurrentUser();
+        userId = current.getUserId();
+        loadInvitations();
     }
 
     // Load all events where this user is present in events/{eventId}/registrable/{userId}
@@ -73,12 +68,12 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
         db.collectionGroup("registrable")
-                .whereEqualTo(FieldPath.documentId(), userId)
+                .whereEqualTo("userId", userId)
                 .get()
                 .addOnSuccessListener(snaps -> {
                     List<Invitation> out = new ArrayList<>();
                     if (snaps.isEmpty()) {
-                        adapter.setItems(out);
+                        applyInvitations(out);
                         return;
                     }
 
@@ -86,64 +81,121 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
                     for (DocumentSnapshot registrableDoc : snaps) {
                         DocumentReference eventDoc = registrableDoc.getReference().getParent().getParent();
                         if (eventDoc == null) {
-                            if (--pending[0] == 0) adapter.setItems(out);
+                            if (--pending[0] == 0) {
+                                out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
+                                applyInvitations(out);
+                            }
                             continue;
                         }
 
                         eventDoc.get().addOnSuccessListener(ev -> {
-                            String eventId = ev.getId();
-                            String name = getStringSafe(ev, "eventName");
-                            String desc = getStringSafe(ev, "description");
-                            String location = getStringSafe(ev, "eventLocation");
-                            String datetime = formatRange(ev.get("registrationStart"), ev.get("registrationEnd"));
+                            if (ev != null && ev.exists()) {
+                                String eventId = ev.getId();
+                                String name = getStringSafe(ev, "eventName");
+                                String desc = getStringSafe(ev, "description");
+                                String location = getStringSafe(ev, "eventLocation");
+                                String datetime = formatRange(ev.get("registrationStart"),
+                                        ev.get("registrationEnd"));
 
-                            long invitedAt = readInvitedAt(registrableDoc);
+                                long invitedAt = readInvitedAt(registrableDoc);
 
-                            out.add(new Invitation(eventId, name, datetime, location, desc, invitedAt));
+                                out.add(new Invitation(eventId, name, datetime, location, desc, invitedAt));
+                            }
 
                             if (--pending[0] == 0) {
                                 // Sort by newest invitation
                                 out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
-                                adapter.setItems(out);
+                                applyInvitations(out);
                             }
                         }).addOnFailureListener(e -> {
-                            if (--pending[0] == 0) adapter.setItems(out);
+                            if (--pending[0] == 0) {
+                                out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
+                                applyInvitations(out);
+                            }
                         });
                     }
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Failed to load invitations: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(),
+                                "Failed to load invitations: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
                 );
     }
 
-    // Adapter actions
-    @Override
+    private void applyInvitations(List<Invitation> newItems) {
+        invitations.clear();
+        invitations.addAll(newItems);
+        renderInvitations();
+    }
+
+    private void renderInvitations() {
+        if (!isAdded() || invitationsList == null) return;
+
+        invitationsList.removeAllViews();
+
+        if (invitations.isEmpty()) {
+            return;
+        }
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+
+        for (int i = 0; i < invitations.size(); i++) {
+            Invitation inv = invitations.get(i);
+
+            // Reuse card layout (item_invitation.xml) for each invitation
+            View card = inflater.inflate(R.layout.item_invitation, invitationsList, false);
+
+            TextView titleTv = card.findViewById(R.id.text_event_title);
+            TextView datetimeTv = card.findViewById(R.id.text_event_date);
+            TextView locationTv = card.findViewById(R.id.text_event_location);
+            TextView descTv = card.findViewById(R.id.text_event_description);
+            ImageButton btnAccept = card.findViewById(R.id.button_accept);
+            ImageButton btnDecline = card.findViewById(R.id.button_decline);
+
+            titleTv.setText(inv.getEventName());
+            datetimeTv.setText(inv.getDatetime());
+            locationTv.setText(inv.getLocation());
+            descTv.setText(inv.getDescription());
+
+            final int position = i;
+            btnAccept.setOnClickListener(v -> onAccept(inv, position));
+            btnDecline.setOnClickListener(v -> onDecline(inv, position));
+
+            invitationsList.addView(card);
+        }
+    }
+
     public void onAccept(Invitation inv, int position) {
         if (TextUtils.isEmpty(userId)) return;
 
         DbManager.getInstance()
                 .addUserToRegistered(inv.getEventId(), userId)
                 .addOnSuccessListener(_v -> {
-                    adapter.removeAt(position);
-                    Toast.makeText(requireContext(), "Invitation accepted.", Toast.LENGTH_SHORT).show();
+                    removeInvitationAt(position);
+                    Toast.makeText(requireContext(),
+                            "Invitation accepted.", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Accept failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(),
+                                "Accept failed: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
                 );
     }
 
-    @Override
     public void onDecline(Invitation inv, int position) {
         if (TextUtils.isEmpty(userId)) return;
 
         DbManager.getInstance()
                 .cancelRegistrable(inv.getEventId(), userId)
                 .addOnSuccessListener(_v -> {
-                    adapter.removeAt(position);
-                    Toast.makeText(requireContext(), "Invitation declined.", Toast.LENGTH_SHORT).show();
+                    removeInvitationAt(position);
+                    Toast.makeText(requireContext(),
+                            "Invitation declined.", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Decline failed: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(),
+                                "Decline failed: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
                 );
     }
 
@@ -171,5 +223,11 @@ public class EntrantInvitationsFragment extends Fragment implements InvitationAd
         if (v instanceof Long) return (Long) v;
         if (v instanceof Double) return ((Double) v).longValue();
         return 0L;
+    }
+
+    private void removeInvitationAt(int position) {
+        if (position < 0 || position >= invitations.size()) return;
+        invitations.remove(position);
+        renderInvitations();
     }
 }

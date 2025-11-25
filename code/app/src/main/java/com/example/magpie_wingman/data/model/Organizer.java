@@ -13,6 +13,7 @@ public class Organizer extends User {
                      @Nullable String phone,
                      @Nullable String deviceId,
                      @Nullable Date birthday) {
-        super(userId, name, /*isOrganizer*/ true, profileImageUrl, email, phone, deviceId, birthday);
+        //Removed 'birthday' from super() call
+        super(userId, name, /*isOrganizer*/ true, profileImageUrl, email, phone, deviceId);
     }
 }

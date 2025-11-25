@@ -2,24 +2,24 @@ package com.example.magpie_wingman.entrant;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.User;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
-import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.text.ParseException;
@@ -32,9 +32,11 @@ import java.util.Locale;
 
 public class EntrantEditProfileFragment extends Fragment {
 
-    private TextInputEditText firstNameEt, lastNameEt, emailEt, dobEt, phoneEt, passwordEt;
-    private MaterialButtonToggleGroup roleToggle;
-    private MaterialButton btnEntrant, btnOrganizer, btnUpdate;
+    private EditText firstNameEt, lastNameEt, emailEt, dobEt, phoneEt, passwordEt;
+    private Button btnEntrant, btnOrganizer, btnUpdate;
+
+    // Tracks which role is currently selected
+    private boolean isOrganizerSelected = false;
 
     private final SimpleDateFormat dobFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
@@ -48,43 +50,46 @@ public class EntrantEditProfileFragment extends Fragment {
     public void onViewCreated(View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
-        // Toolbar back
-        MaterialToolbar toolbar = v.findViewById(R.id.toolbar_edit_profile);
-        if (toolbar != null) {
-            toolbar.setNavigationOnClickListener(_v ->
+        // Header back button
+        ImageButton backBtn = v.findViewById(R.id.button_back);
+        if (backBtn != null) {
+            backBtn.setOnClickListener(_v ->
                     requireActivity().getOnBackPressedDispatcher().onBackPressed()
             );
         }
 
         // Inputs
-        firstNameEt  = v.findViewById(R.id.input_first_name);
-        lastNameEt   = v.findViewById(R.id.input_last_name);
-        emailEt      = v.findViewById(R.id.input_email);
-        dobEt        = v.findViewById(R.id.input_dob);
-        phoneEt      = v.findViewById(R.id.input_phone);
-        passwordEt   = v.findViewById(R.id.input_password);
+        firstNameEt  = v.findViewById(R.id.edit_first_name);
+        lastNameEt   = v.findViewById(R.id.edit_last_name);
+        emailEt      = v.findViewById(R.id.edit_email);
+        dobEt        = v.findViewById(R.id.edit_dob);
+        phoneEt      = v.findViewById(R.id.edit_phone);
+        passwordEt   = v.findViewById(R.id.edit_password);
 
-        // Role segmented control
-        roleToggle   = v.findViewById(R.id.toggle_role);
-        btnEntrant   = v.findViewById(R.id.btn_role_entrant);
-        btnOrganizer = v.findViewById(R.id.btn_role_organizer);
+        // Role buttons
+        btnEntrant   = v.findViewById(R.id.button_entrant);
+        btnOrganizer = v.findViewById(R.id.button_organizer);
 
         // Update button
-        btnUpdate    = v.findViewById(R.id.btn_update_profile);
+        btnUpdate    = v.findViewById(R.id.button_update);
 
         // Date picker
         if (dobEt != null) {
             dobEt.setOnClickListener(_v -> showDatePicker());
         }
 
-        // Retrieve deviceId
-        String deviceId = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
+        // Role button click listeners
+        if (btnEntrant != null) {
+            btnEntrant.setOnClickListener(_v -> setRole(false));
+        }
+        if (btnOrganizer != null) {
+            btnOrganizer.setOnClickListener(_v -> setRole(true));
+        }
 
-        DbManager.getInstance().findUserByDeviceId(deviceId)
-                .addOnSuccessListener(this::loadUser);
+        // Retrieve current logged-in user
+        User current = MyApp.getInstance().getCurrentUser();
+        String userId = current.getUserId();
+        loadUser(userId);
     }
 
     // Loads profile data
@@ -109,7 +114,7 @@ public class EntrantEditProfileFragment extends Fragment {
         dbm.getIsOrganizer(userId).addOnSuccessListener(isOrg -> {
             // default to Entrant if null
             boolean organizer = isOrg != null && isOrg;
-            roleToggle.check(organizer ? R.id.btn_role_organizer : R.id.btn_role_entrant);
+            setRole(organizer);
         });
 
         // Load DOB
@@ -137,7 +142,7 @@ public class EntrantEditProfileFragment extends Fragment {
             String email = text(emailEt);
             String phone = text(phoneEt);
             String newPassword = text(passwordEt);
-            boolean isOrganizer = roleToggle.getCheckedButtonId() == R.id.btn_role_organizer;
+            boolean isOrganizer = isOrganizerSelected;
 
             if (TextUtils.isEmpty(first)) {
                 firstNameEt.setError("First name required");
@@ -215,7 +220,7 @@ public class EntrantEditProfileFragment extends Fragment {
                 (view, year, month, dayOfMonth) -> {
                     String dd = String.format(Locale.getDefault(), "%02d", dayOfMonth);
                     String mm = String.format(Locale.getDefault(), "%02d", month + 1);
-                    dobEt.setText(dd + "/" + mm + "/" + year); // dd/MM/yyyy
+                    dobEt.setText(dd + "/" + mm + "/" + year);  // dd/MM/yyyy
                 },
                 c.get(Calendar.YEAR),
                 c.get(Calendar.MONTH),
@@ -224,8 +229,23 @@ public class EntrantEditProfileFragment extends Fragment {
         dlg.show();
     }
 
-    private static String text(TextInputEditText et) {
-        return et.getText() == null ? "" : et.getText().toString().trim();
+    private void setRole(boolean organizer) {
+        isOrganizerSelected = organizer;
+
+        if (btnEntrant == null || btnOrganizer == null) return;
+
+        if (organizer) {
+            btnOrganizer.setBackgroundResource(R.drawable.blue_button_bg);
+            btnEntrant.setBackgroundResource(R.drawable.white_button_bg);
+        } else {
+            btnEntrant.setBackgroundResource(R.drawable.blue_button_bg);
+            btnOrganizer.setBackgroundResource(R.drawable.white_button_bg);
+        }
+    }
+
+    private static String text(EditText et) {
+        if (et == null || et.getText() == null) return "";
+        return et.getText().toString().trim();
     }
 
     private static String[] splitName(String full) {

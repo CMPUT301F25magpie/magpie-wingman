@@ -3,55 +3,50 @@ package com.example.magpie_wingman.organizer;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.SetOptions;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
-import java.text.SimpleDateFormat;
-import java.util.concurrent.Executors; // Import Executors
+import java.util.Map;
 
 public class OrganizerNewEventFragment extends Fragment {
 
-    // UI
-    private TextInputEditText eventTitleField;
-    private TextInputEditText eventAddressField;
-    private TextInputEditText eventDescriptionField;
-    private TextInputEditText regStartDateField;
-    private TextInputEditText regStartTimeField;
-    private TextInputEditText regEndDateField;
-    private TextInputEditText regEndTimeField;
+    private EditText eventTitleField, eventLimitField, eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
+    private EditText eventDateField, eventTimeField;
+    private EditText regStartDateField, regEndDateField;
     private Button createButton;
 
-    // Date/Time holders
-    private Calendar regStartCalendar = Calendar.getInstance();
-    private Calendar regEndCalendar = Calendar.getInstance();
+    private final Calendar eventCalendar = Calendar.getInstance();
+    private final Calendar regStartCalendar = Calendar.getInstance();
+    private final Calendar regEndCalendar = Calendar.getInstance();
 
-    private DbManager dbManager;
+    private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-    public OrganizerNewEventFragment() {
-        // Required empty public constructor
-    }
+    public OrganizerNewEventFragment() { }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_organizer_new_event, container, false);
     }
 
@@ -59,116 +54,118 @@ public class OrganizerNewEventFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        try {
-            dbManager = DbManager.getInstance();
-        } catch (IllegalStateException e) {
-            if (getContext() != null) {
-                DbManager.init(getContext().getApplicationContext());
-                dbManager = DbManager.getInstance();
-            }
-        }
-
-        // Find views
-        eventTitleField = view.findViewById(R.id.edit_text_event_title);
-        eventAddressField = view.findViewById(R.id.edit_text_location_address);
-        eventDescriptionField = view.findViewById(R.id.edit_text_event_description);
-        regStartDateField = view.findViewById(R.id.text_reg_start_date);
-        regStartTimeField = view.findViewById(R.id.text_reg_start_time);
-        regEndDateField = view.findViewById(R.id.text_reg_end_date);
-        regEndTimeField = view.findViewById(R.id.text_reg_end_time);
+        eventTitleField = view.findViewById(R.id.edit_event_title);
+        eventLimitField = view.findViewById(R.id.edit_limit);
+        eventAddressField = view.findViewById(R.id.edit_address);
+        eventCityField = view.findViewById(R.id.edit_city);
+        eventProvinceField = view.findViewById(R.id.edit_province);
+        eventDescriptionField = view.findViewById(R.id.edit_description);
+        eventDateField = view.findViewById(R.id.edit_date);
+        eventTimeField = view.findViewById(R.id.edit_time);
+        regStartDateField = view.findViewById(R.id.edit_registration_start);
+        regEndDateField = view.findViewById(R.id.edit_registration_end);
         createButton = view.findViewById(R.id.button_create);
+        ImageButton backBtn = view.findViewById(R.id.button_back);
 
-        // Set click listeners
-        regStartDateField.setOnClickListener(v -> showDatePicker(regStartDateField, regStartCalendar));
-        regStartTimeField.setOnClickListener(v -> showTimePicker(regStartTimeField, regStartCalendar));
-        regEndDateField.setOnClickListener(v -> showDatePicker(regEndDateField, regEndCalendar));
-        regEndTimeField.setOnClickListener(v -> showTimePicker(regEndTimeField, regEndCalendar));
-
-        createButton.setOnClickListener(v -> {
-            createNewEvent();
-        });
+        setupPickers();
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        createButton.setOnClickListener(v -> saveEvent(view));
     }
 
-    private void createNewEvent() {
+    private void setupPickers() {
+        makeReadOnly(eventDateField);
+        makeReadOnly(eventTimeField);
+        makeReadOnly(regStartDateField);
+        makeReadOnly(regEndDateField);
+        eventDateField.setOnClickListener(v -> showDate(eventCalendar, eventDateField));
+        eventTimeField.setOnClickListener(v -> showTime(eventCalendar, eventTimeField));
+        regStartDateField.setOnClickListener(v -> showDate(regStartCalendar, regStartDateField));
+        regEndDateField.setOnClickListener(v -> showDate(regEndCalendar, regEndDateField));
+    }
 
-        if (dbManager == null) {
-            Toast.makeText(getContext(), "Database Error. Please restart.", Toast.LENGTH_SHORT).show();
+    private void saveEvent(View view) {
+        String title = eventTitleField.getText().toString().trim();
+        String desc = eventDescriptionField.getText().toString().trim();
+        String limitStr = eventLimitField.getText().toString().trim();
+
+        if (TextUtils.isEmpty(title)) {
+            Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Get the data from the fields
-        String eventName = eventTitleField.getText().toString().trim();
-        String description = eventDescriptionField.getText().toString().trim();
-        Date regStartDate = regStartCalendar.getTime();
-        Date regEndDate = regEndCalendar.getTime();
-        String mockOrganizerId = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
-
-        if (TextUtils.isEmpty(eventName) || TextUtils.isEmpty(description)) {
-            Toast.makeText(getContext(), "Please fill out all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (regStartDate.equals(regEndDate)) {
-            Toast.makeText(getContext(), "Please set registration dates", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        int capacity = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
+        String location = eventAddressField.getText().toString() + ", " + eventCityField.getText().toString();
 
         createButton.setEnabled(false);
         createButton.setText("Creating...");
+        String organizerId = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
-
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            dbManager.createEvent(eventName, description, mockOrganizerId, regStartDate, regEndDate)
-                    .addOnSuccessListener(aVoid -> {
-                        // Success! Post result back to the UI thread.
-                        if (getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
-                            });
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        // Failure! Post result back to the UI thread.
-                        if (getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                Log.e("NewEventFragment", "Failed to create event", e);
-                                Toast.makeText(getContext(), "Error: Could not create event", Toast.LENGTH_LONG).show();
-                                createButton.setEnabled(true);
-                                createButton.setText("Create");
-                            });
-                        }
+        new Thread(() -> {
+            try {
+                com.google.android.gms.tasks.Task<Void> task = DbManager.getInstance().createEvent(
+                        title, desc, organizerId, regStartCalendar.getTime(), regEndCalendar.getTime()
+                );
+                if (getActivity() != null) {
+                    task.addOnSuccessListener(getActivity(), aVoid -> {
+                        findLastEventAndFillDetails(title, organizerId, location, capacity, eventCalendar.getTime());
+                        Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
+                        Navigation.findNavController(view).navigateUp();
+                    }).addOnFailureListener(getActivity(), e -> {
+                        createButton.setEnabled(true);
+                        createButton.setText("CREATE");
+                        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
-        });
-
+                }
+            } catch (Exception e) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        createButton.setEnabled(true);
+                        createButton.setText("CREATE");
+                    });
+                }
+            }
+        }).start();
     }
 
-    private void showDatePicker(final TextInputEditText dateField, final Calendar calendar) {
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-        new DatePickerDialog(requireContext(), (datePicker, y, m, d) -> {
-            calendar.set(Calendar.YEAR, y);
-            calendar.set(Calendar.MONTH, m);
-            calendar.set(Calendar.DAY_OF_MONTH, d);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-            dateField.setText(sdf.format(calendar.getTime()));
-        }, year, month, day).show();
+    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, Date start) {
+        DbManager.getInstance().getDb().collection("events")
+                .whereEqualTo("eventName", title)
+                .whereEqualTo("organizerId", orgId)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (!snapshots.isEmpty()) {
+                        String eventId = snapshots.getDocuments().get(0).getId();
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("eventLocation", loc);
+                        updates.put("eventCapacity", cap);
+                        updates.put("eventStartTime", start);
+                        updates.put("waitlistCount", 0);
+                        DbManager.getInstance().getDb().collection("events").document(eventId).set(updates, SetOptions.merge());
+                    }
+                });
     }
 
-    private void showTimePicker(final TextInputEditText timeField, final Calendar calendar) {
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
+    private void makeReadOnly(EditText et) {
+        et.setFocusable(false);
+        et.setClickable(true);
+        et.setLongClickable(false);
+    }
 
-        new TimePickerDialog(requireContext(), (timePicker, h, m) -> {
-            calendar.set(Calendar.HOUR_OF_DAY, h);
-            calendar.set(Calendar.MINUTE, m);
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            timeField.setText(sdf.format(calendar.getTime()));
-        }, hour, minute, true).show();
+    private void showDate(Calendar cal, EditText et) {
+        new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
+            cal.set(Calendar.YEAR, year);
+            cal.set(Calendar.MONTH, month);
+            cal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            et.setText(dateFmt.format(cal.getTime()));
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private void showTime(Calendar cal, EditText et) {
+        new TimePickerDialog(getContext(), (view, hourOfDay, minute) -> {
+            cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            cal.set(Calendar.MINUTE, minute);
+            et.setText(timeFmt.format(cal.getTime()));
+        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show();
     }
 }
