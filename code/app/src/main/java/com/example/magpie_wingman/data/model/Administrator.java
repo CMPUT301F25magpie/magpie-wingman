@@ -12,9 +12,9 @@ public class Administrator extends User {
                          @Nullable String email,
                          @Nullable String phone,
                          @Nullable String deviceId,
-                         @Nullable Date birthday) {
-        // Admins are not organizers; pass false
-        super(userId, name, /*isOrganizer*/ false, profileImageUrl, email, phone, deviceId, birthday);
+                         @Nullable Date birthday) { //Removed 'birthday' from super() call
+
+        super(userId, name, /*isOrganizer*/ false, profileImageUrl, email, phone, deviceId);
     }
 
     @Override

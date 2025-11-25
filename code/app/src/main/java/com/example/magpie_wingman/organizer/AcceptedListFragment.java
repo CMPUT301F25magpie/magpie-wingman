@@ -28,7 +28,8 @@ public class AcceptedListFragment extends Fragment implements AcceptedEntrantsAd
 
     public AcceptedListFragment() {}
 
-    private String eventId = "sampling#1213"; // TEMPORARY until navigation is fixed
+    // TODO: Use arguments to get real event ID
+    private String eventId = "sampling#1213";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -42,7 +43,6 @@ public class AcceptedListFragment extends Fragment implements AcceptedEntrantsAd
 
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
 
         registeredEntrantsList = new ArrayList<>();
         adapter = new AcceptedEntrantsAdapter(registeredEntrantsList, this);
@@ -67,6 +67,10 @@ public class AcceptedListFragment extends Fragment implements AcceptedEntrantsAd
                 .get()
                 .addOnSuccessListener(snap -> {
                     registeredEntrantsList.clear();
+                    if (snap.isEmpty()) {
+                        adapter.notifyDataSetChanged();
+                        return;
+                    }
 
                     for (QueryDocumentSnapshot doc : snap) {
                         String userId = doc.getId();
@@ -80,20 +84,18 @@ public class AcceptedListFragment extends Fragment implements AcceptedEntrantsAd
                                         userName = userId;
                                     }
 
-                                    registeredEntrantsList.add(new Entrant(userId, userName));
+                                    registeredEntrantsList.add(new Entrant(userId, userName, null, null, null, null));
                                     adapter.notifyDataSetChanged();
                                 })
                                 .addOnFailureListener(e -> {
 
-                                    registeredEntrantsList.add(new Entrant(userId, userId));
+                                    registeredEntrantsList.add(new Entrant(userId, userId, null, null, null, null));
                                     adapter.notifyDataSetChanged();
                                 });
                     }
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(getContext(),
-                                "Failed to load registered users.",
-                                Toast.LENGTH_SHORT).show()
+                        Toast.makeText(getContext(), "Failed to load registered users.", Toast.LENGTH_SHORT).show()
                 );
     }
 }

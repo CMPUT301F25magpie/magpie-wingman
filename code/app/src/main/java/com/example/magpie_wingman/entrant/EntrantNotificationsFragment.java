@@ -111,7 +111,7 @@ public class EntrantNotificationsFragment extends Fragment {
             View card = inflater.inflate(R.layout.item_notification, notificationsList, false);
 
             TextView titleTv = card.findViewById(R.id.text_notification_title);
-            TextView messageTv = card.findViewById(R.id.text_notification_message);
+            TextView messageTv = card.findViewById(R.id.text_message);
 
             titleTv.setText(n.getTitle());
             messageTv.setText(n.getBody());
