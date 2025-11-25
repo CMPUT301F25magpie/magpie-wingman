@@ -6,6 +6,7 @@
         <!-- Instant background while app is starting -->
         <item name="android:windowBackground">@color/splash_dark</item>
 
+
         <!-- No title/action bar during splash -->
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
