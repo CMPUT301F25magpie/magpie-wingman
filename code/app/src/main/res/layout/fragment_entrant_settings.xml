@@ -59,6 +59,48 @@
             android:textStyle="bold"
             android:textColor="#FFFFFF" />
 
+        <!-- SECTION: MODE -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Mode"
+            android:textColor="#B0B0B0"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/button_entrant_mode"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="Entrant mode"
+                android:textSize="14sp"
+                android:background="@drawable/red_button_bg"
+                android:backgroundTint="@null"
+                android:textColor="@android:color/white" />
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="0dp" />
+
+            <Button
+                android:id="@+id/button_organizer_mode"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="Organizer mode"
+                android:textSize="14sp"
+                android:background="@drawable/red_button_bg"
+                android:backgroundTint="@null"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
         <!-- SECTION: ACCOUNT SETTINGS -->
         <TextView
             android:layout_width="match_parent"
@@ -174,27 +216,28 @@
         </LinearLayout>
 
         <!-- Logout & Delete Buttons -->
+
         <Button
             android:id="@+id/button_logout"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="24dp"
-            android:text="Log Out"
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
             android:background="@drawable/red_button_bg"
-            android:backgroundTint="@null"/>
+            android:backgroundTint="@null"
+            android:text="Log Out"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
 
         <Button
             android:id="@+id/button_delete_account"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="12dp"
-            android:text="Delete Account"
-            android:textSize="16sp"
-            android:textColor="@android:color/white"
             android:background="@drawable/red_button_bg"
-            android:backgroundTint="@null"/>
+            android:backgroundTint="@null"
+            android:text="Delete Account"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
 
     </LinearLayout>
 </ScrollView>
