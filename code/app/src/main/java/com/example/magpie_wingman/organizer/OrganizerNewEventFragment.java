@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.R;
@@ -54,6 +55,8 @@ public class OrganizerNewEventFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        NavController navController = Navigation.findNavController(view);
+
         eventTitleField = view.findViewById(R.id.edit_event_title);
         eventLimitField = view.findViewById(R.id.edit_limit);
         eventAddressField = view.findViewById(R.id.edit_address);
@@ -66,10 +69,14 @@ public class OrganizerNewEventFragment extends Fragment {
         regEndDateField = view.findViewById(R.id.edit_registration_end);
         createButton = view.findViewById(R.id.button_create);
         ImageButton backBtn = view.findViewById(R.id.button_back);
+        ImageButton btn_Info = view.findViewById(R.id.button_info);
 
         setupPickers();
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
         createButton.setOnClickListener(v -> saveEvent(view));
+
+        btn_Info.setOnClickListener(v -> navController.navigate(R.id.action_organizerNewEventFragment_to_organizerEditNewEventInfoFragment));
+
     }
 
     private void setupPickers() {
