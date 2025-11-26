@@ -1,99 +1,119 @@
 package com.example.magpie_wingman.entrant;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Event;
+import com.google.android.material.imageview.ShapeableImageView;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
+public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
-    // Using a single date format, as agreed
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-    private List<Event> eventList;
-    private OnEventListener eventListener;
-
-    public interface OnEventListener {
-        void onEventClick(int position);
+    public interface OnJoinClick {
+        void onJoinClick(@NonNull Event event);
     }
 
-    public EventAdapter(List<Event> eventList, OnEventListener eventListener) {
-        this.eventList = eventList;
-        this.eventListener = eventListener;
+    private final List<Event> events;
+    private final String entrantId;
+    private final OnJoinClick callback;
+    private final SimpleDateFormat dateFormat =
+            new SimpleDateFormat("MMM dd - hh:mm a", Locale.getDefault());
+
+    public EventAdapter(@NonNull List<Event> events,
+                        @NonNull String entrantId,
+                        @NonNull OnJoinClick callback) {
+        this.events = events;
+        this.entrantId = entrantId;
+        this.callback = callback;
     }
 
     @NonNull
     @Override
-    public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View row = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.list_item_event, parent, false);
-        return new EventViewHolder(view, eventListener);
+        return new VH(row);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
-        Event event = eventList.get(position);
+    public void onBindViewHolder(@NonNull VH h, int position) {
+        Event e = events.get(position);
 
-        holder.eventName.setText(event.getEventName());
-        holder.eventLocation.setText(event.getEventLocation());
+        h.name.setText(e.getEventName());
+        h.location.setText(e.getEventLocation() != null ? e.getEventLocation() : "TBD");
 
-        // Use the correct getter: getEventDescription()
-        holder.eventDescription.setText(event.getEventDescription());
-
-        // FIX: Use the existing Date object, prioritize eventDate if present
-        Date dateToDisplay = event.getEventDate();
-        if (dateToDisplay == null) {
-            // If eventDate is null, use registrationStart (or just show TBD)
-            dateToDisplay = event.getRegistrationStart();
+        if (e.getEventStartTime() != null) {
+            h.date.setText(dateFormat.format(e.getEventStartTime()));
+        } else {
+            h.date.setText("Date TBD");
         }
 
-        if (dateToDisplay != null) {
-            String dateString = dateFormat.format(dateToDisplay);
-            holder.eventDate.setText(dateString);
+        h.description.setText(e.getDescription());
+        h.waitlistCount.setText("Waiting List: " + e.getWaitlistCount());
+
+        // Default until Firestore returns
+        setButtonState(h, false);
+
+        // Check if user already on the waitlist
+        if (entrantId != null && !entrantId.isEmpty()) {
+            DbManager.getInstance()
+                    .isUserInWaitlist(e.getEventId(), entrantId)
+                    .addOnSuccessListener(isInWaitlist ->
+                            setButtonState(h, Boolean.TRUE.equals(isInWaitlist)));
+        }
+
+        h.itemView.setOnClickListener(null);
+
+        // Only the button opens the event detail screen
+        h.joinContainer.setOnClickListener(v -> {
+            if (callback != null) {
+                callback.onJoinClick(e);
+            }
+        });
+    }
+
+    private void setButtonState(@NonNull VH h, boolean isJoined) {
+        if (isJoined) {
+            h.joinText.setText("Leave");
+            h.joinContainer.setBackgroundColor(Color.parseColor("#F44336")); // red
         } else {
-            holder.eventDate.setText("Date TBD");
+            h.joinText.setText("Join");
+            h.joinContainer.setBackgroundColor(Color.parseColor("#4CAF50")); // green
         }
     }
 
     @Override
     public int getItemCount() {
-        return eventList.size();
+        return events.size();
     }
 
-    public static class EventViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    static class VH extends RecyclerView.ViewHolder {
+        ShapeableImageView poster;
+        TextView name, date, location, description, waitlistCount, joinText;
+        LinearLayout joinContainer;
 
-        ImageView eventPoster;
-        TextView eventName;
-        TextView eventDate;
-        TextView eventLocation;
-        TextView eventDescription;
-        OnEventListener eventListener;
-
-        public EventViewHolder(@NonNull View itemView, OnEventListener eventListener) {
+        VH(@NonNull View itemView) {
             super(itemView);
-            eventPoster = itemView.findViewById(R.id.image_view_event_poster);
-            eventName = itemView.findViewById(R.id.text_view_event_name);
-            eventDate = itemView.findViewById(R.id.text_view_event_date);
-            eventLocation = itemView.findViewById(R.id.text_view_event_location);
-            eventDescription = itemView.findViewById(R.id.text_view_event_description);
-            this.eventListener = eventListener;
-
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            eventListener.onEventClick(getAdapterPosition());
+            poster        = itemView.findViewById(R.id.image_view_event_poster);
+            name          = itemView.findViewById(R.id.text_view_event_name);
+            date          = itemView.findViewById(R.id.text_view_event_date);
+            location      = itemView.findViewById(R.id.text_view_event_location);
+            description   = itemView.findViewById(R.id.text_view_event_description);
+            waitlistCount = itemView.findViewById(R.id.text_view_waitlist);
+            joinContainer = itemView.findViewById(R.id.join_button_container);
+            joinText      = itemView.findViewById(R.id.join_text);
         }
     }
 }

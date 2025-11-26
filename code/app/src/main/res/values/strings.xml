@@ -123,4 +123,7 @@
     <string name="toast_failed_waitlist">Failed to load waitlist: %1$s</string>
 
     <string name="list_item_event_join_button">Join waitlist</string>
+    <string name="join_waitlist">Join</string>
+    <string name="leave_waitlist">Leave</string>
+    <string name="events">Events</string>
 </resources>

@@ -38,15 +38,15 @@ public class OrganizerNotifyFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_organizer_notify, container, false);
 
         NavController navController = NavHostFragment.findNavController(this);
-        View toolbar = view.findViewById(R.id.toolbar_notify);
+        View toolbar = view.findViewById(R.id.button_back);
         if (toolbar != null) toolbar.setOnClickListener(v -> navController.navigateUp());
 
-        titleInput = view.findViewById(R.id.notify_title_input);
-        messageInput = view.findViewById(R.id.notify_message_input);
+        titleInput = view.findViewById(R.id.edit_notification_title);
+        messageInput = view.findViewById(R.id.edit_notification_message);
         waitlistCheck = view.findViewById(R.id.checkbox_waiting);
         registrableCheck = view.findViewById(R.id.checkbox_selected);
         cancelledCheck = view.findViewById(R.id.checkbox_cancelled);
-        Button sendButton = view.findViewById(R.id.notify_send_button);
+        Button sendButton = view.findViewById(R.id.button_send_notification);
 
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");

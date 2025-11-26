@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:layout_margin="8dp">
+
+    <!-- Poster Image -->
+    <ImageView
+        android:id="@+id/image_poster"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="@drawable/rounded_white"
+        android:contentDescription="Poster"
+        tools:src="@android:drawable/ic_menu_gallery" />
+
+    <!-- Red Remove Button -->
+    <ImageButton
+        android:id="@+id/button_remove_image"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:src="@drawable/ic_close"
+        android:background="@drawable/bg_remove_circle"
+        android:contentDescription="Remove Image"
+        app:tint="#FF3B30" />
+</FrameLayout>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@drawable/rounded_white"
+    android:padding="8dp"
+    android:layout_marginBottom="12dp"
+    android:gravity="center_vertical">
+
+    <!-- Event Image -->
+    <ImageView
+        android:id="@+id/image_event"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_music"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/rounded_image"
+        android:clipToOutline="true" />
+
+    <!-- Event Text -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text_event_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/text_event_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date - Time"
+            android:textColor="#444444"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/text_event_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textColor="#444444"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/text_event_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textColor="#444444"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Menu and Edit Buttons -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <ImageButton
+            android:id="@+id/button_menu"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/circle_white"
+            android:src="@drawable/ic_more"
+            android:layout_marginBottom="6dp"
+            android:contentDescription="More Options"
+            app:tint="#000000" />
+
+        <ImageButton
+            android:id="@+id/button_edit"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/circle_yellow"
+            android:src="@drawable/ic_edit"
+            android:contentDescription="Edit Event"
+            app:tint="#FFFFFF" />
+    </LinearLayout>
+
+</LinearLayout>

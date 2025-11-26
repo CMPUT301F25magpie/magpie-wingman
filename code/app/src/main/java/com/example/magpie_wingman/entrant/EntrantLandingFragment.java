@@ -1,66 +1,279 @@
 package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Event;
+import com.example.magpie_wingman.data.model.User;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link EntrantLandingFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * Entrant home screen.
+ *
+ * <p>This fragment is the landing page for entrant users. It shows:
+ * <ul>
+ *     <li>A search bar and top icons (filter, info, settings)</li>
+ *     <li>A list of all events that the entrant can browse</li>
+ *     <li>Bottom navigation buttons (invitations, scan QR, events, notifications)</li>
+ * </ul>
+ *
+ * <p>The list itself does <b>not</b> perform join/leave. Instead:
+ * <ul>
+ *     <li>Each row has a "Join / Leave" button whose appearance reflects the user's status.</li>
+ *     <li>Clicking that button opens the event details screen, where the user can actually
+ *         join or leave the waitlist.</li>
+ * </ul>
  */
 public class EntrantLandingFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    // -------------------------------------------------------------------------
+    // UI references
+    // -------------------------------------------------------------------------
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private ImageView  btnFilter;
+    private ImageView  btnInfo;
+    private ImageView  btnSettings;
+    private RecyclerView eventsRecycler;
+    private Button     btnInvitations;
+    private Button     btnScanQr;
+    private Button     btnEventsPrimary;
+    private Button     btnNotifications;
+
+    private final List<Event> eventList = new ArrayList<>();
+    private EventAdapter adapter;
+
+    // Currently logged-in entrant's id (from MyApp)
+    @Nullable
+    private String entrantId;
 
     public EntrantLandingFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment EntrantLandingFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static EntrantLandingFragment newInstance(String param1, String param2) {
-        EntrantLandingFragment fragment = new EntrantLandingFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        // Inflate the layout described in fragment_entrant_landing.xml
         return inflater.inflate(R.layout.fragment_entrant_landing, container, false);
     }
+
+    @Override
+    public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(v, savedInstanceState);
+
+        // Bind views from XML
+        EditText searchBar = v.findViewById(R.id.search_bar);
+        btnFilter        = v.findViewById(R.id.btn_filter);
+        btnInfo          = v.findViewById(R.id.btn_info);
+        btnSettings      = v.findViewById(R.id.btn_settings);
+        eventsRecycler   = v.findViewById(R.id.recycler_view_events);
+        btnInvitations   = v.findViewById(R.id.btn_invitations);
+        btnScanQr        = v.findViewById(R.id.btn_scan_qr);
+        btnEventsPrimary = v.findViewById(R.id.btn_events);
+        btnNotifications = v.findViewById(R.id.btn_notification);
+
+        // NavController for all navigation actions
+        NavController navController = Navigation.findNavController(v);
+
+        // Set up click listeners for top and bottom bars
+        setupChromeClickListeners(navController);
+
+        // Resolve the currently logged-in entrant from MyApp
+        User currentUser = MyApp.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            entrantId = currentUser.getUserId();
+        }
+
+        // Configure the events RecyclerView and load data from Firestore
+        setupEventsListForEntrant(entrantId);
+    }
+
+    // -------------------------------------------------------------------------
+    // UI chrome wiring (top bar + bottom bar)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Wires up the top icons (filter, info, settings) and bottom navigation buttons
+     * so they navigate to the appropriate entrant screens.
+     *
+     * @param navController Navigation controller used to perform fragment transitions.
+     */
+    private void setupChromeClickListeners(@NonNull NavController navController) {
+        // Top bar actions
+        btnFilter.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_entrantEventSearchFilterFragment));
+
+        btnInfo.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_entrantDetailsFragment));
+
+        btnSettings.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_entrantSettingsFragment));
+
+        // Bottom bar actions (invitations, scan QR, enrolled events, notifications)
+        btnInvitations.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_entrantInvitationsFragment));
+
+        btnScanQr.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_scanQRFragment));
+
+        // This "Events" button goes to the screen that shows events the user is enrolled in
+        btnEventsPrimary.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_entrantEventsFragment));
+
+        btnNotifications.setOnClickListener(x ->
+                navController.navigate(
+                        R.id.action_entrantLandingFragment3_to_entrantNotificationsFragment));
+    }
+
+    // -------------------------------------------------------------------------
+    // Event list wiring
+    // -------------------------------------------------------------------------
+
+    /**
+     * Sets up the RecyclerView to display a list of events and loads data
+     * from Firestore via {@link DbManager#getAllEvents()}.
+     *
+     * <p>The adapter is given a callback so that when the "Join / Leave" button
+     * in a row is pressed, we navigate to the event details screen.</p>
+     *
+     * @param entrantId the current entrant's ID, used by the adapter to reflect
+     *                  join/leave status; may be {@code null}.
+     */
+    private void setupEventsListForEntrant(@Nullable String entrantId) {
+        // Use a simple vertical list layout manager
+        eventsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
+        eventsRecycler.setHasFixedSize(true);
+        eventList.clear();
+
+        String userIdForAdapter = (entrantId != null) ? entrantId : "";
+
+        adapter = new EventAdapter(
+                eventList,
+                userIdForAdapter,
+                this::openEventDetails
+        );
+        eventsRecycler.setAdapter(adapter);
+
+        loadEvents();
+    }
+
+    /**
+     * Navigates to the event detail screen for the given event, bundling
+     * basic event information (id, name, location, time, description) so the
+     * detail fragment can render without having to re-query immediately.
+     *
+     * @param event the event whose details should be shown.
+     */
+    private void openEventDetails(@NonNull Event event) {
+        Bundle args = new Bundle();
+        args.putString("eventId", event.getEventId());
+        String name = event.getEventName();
+        args.putString("eventName", name != null ? name : "");
+
+        String location = event.getEventLocation();
+        args.putString("eventLocation", location != null ? location : "");
+
+        Date start = event.getEventStartTime();
+        if (start != null) {
+            args.putLong("eventStartTime", start.getTime());
+        }
+
+        String desc = event.getDescription();
+        args.putString("eventDescription", desc != null ? desc : "");
+
+        NavController navController = Navigation.findNavController(requireView());
+        navController.navigate(
+                R.id.action_entrantLandingFragment3_to_detailedEventDescriptionFragment,
+                args
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Helper
+    // -------------------------------------------------------------------------
+
+
+    /**
+     * Listens for events whose registration window is currently open and
+     * keeps the local event list in sync with Firestore.
+     * Only events with registrationEnd >= now are fetched from Firestore.
+     * On the client side we further filter out events whose registrationStart
+     * is still in the future.
+     */
+    private void loadEvents() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference eventsRef = db.collection("events");
+
+        Timestamp queryNow = Timestamp.now();
+
+        eventsRef
+                .whereGreaterThanOrEqualTo("registrationEnd", queryNow)
+                .orderBy("registrationEnd")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(getContext(),
+                                "Failed to load events", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Current time for client-side registrationStart check
+                    Timestamp now = Timestamp.now();
+
+                    // Clear existing items and rebuild list
+                    eventList.clear();
+
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            // Client-side: only keep events whose registration has started
+                            Timestamp regStart = doc.getTimestamp("registrationStart");
+                            if (regStart != null && regStart.compareTo(now) > 0) {
+                                // registrationStart is in the future → skip this event
+                                continue;
+                            }
+
+                            Event event = doc.toObject(Event.class);
+
+
+                            eventList.add(event);
+                        }
+                    }
+
+                    // updateAdapter
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
+    }
+
 }

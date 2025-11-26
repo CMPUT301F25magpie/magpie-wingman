@@ -3,38 +3,192 @@ package com.example.magpie_wingman.entrant;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
-/**
- * Settings screen for entrant users.
- *
- */
-public class EntrantSettingsFragment extends PreferenceFragmentCompat {
-    /**
-     * Inflates preferences and attaches the delete-account handler.
-     */
-    @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-        setPreferencesFromResource(R.xml.root_preferences, rootKey);
+import com.example.magpie_wingman.data.model.User;
 
-        Preference deletePref = findPreference("pref_delete_account");
-        if (deletePref != null) {
-            deletePref.setOnPreferenceClickListener(pref -> {
-                confirmAndDeleteProfile();
-                return true;
-            });
+/**
+ * Settings screen for entrant users backed by a custom layout
+ * {@code fragment_entrant_settings.xml}.
+ *
+ * Responsibilities:
+ *  - Load/display the user's display name.
+ *  - Toggle/persist notification preferences.
+ *  - Log out (clear local session and finish Activity).
+ *  - Delete account (calls preexisting DbManager#deleteEntrant(String)).
+ */
+public class EntrantSettingsFragment extends Fragment {
+
+    public static final String ARG_ENTRANT_ID = "arg_entrant_id";
+
+    private String entrantId;
+
+    // UI
+    private TextView nameText;
+    private Switch adminNotificationsSwitch;
+    private Switch organizerNotificationsSwitch;
+    private Button logoutButton;
+    private Button deleteButton;
+
+    // Pref keys
+    private static final String PREFS = "app_prefs";
+    private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_NOTIFY_ADMINS = "notify_admins";
+    private static final String KEY_NOTIFY_ORGANIZERS = "notify_organizers";
+
+    public static EntrantSettingsFragment newInstance(@NonNull String entrantId) {
+        Bundle b = new Bundle();
+        b.putString(ARG_ENTRANT_ID, entrantId);
+        EntrantSettingsFragment f = new EntrantSettingsFragment();
+        f.setArguments(b);
+        return f;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (getArguments() != null) {
+            entrantId = getArguments().getString(ARG_ENTRANT_ID);
+        }
+
+        if (TextUtils.isEmpty(entrantId)) {
+            entrantId = loadUserIdFromPrefs();
         }
     }
-    /**
-     * Shows a confirmation dialog before deleting the user's profile.
-     * No-op if the user cancels.
-     */
+
+    @Nullable
+    @Override
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
+        View root = inflater.inflate(R.layout.fragment_entrant_settings, container, false);
+
+        // --- Bind views ---
+        ImageButton back = root.findViewById(R.id.button_back);
+        nameText = root.findViewById(R.id.text_user_name);
+        adminNotificationsSwitch = root.findViewById(R.id.switch_admin_notifications);
+        organizerNotificationsSwitch = root.findViewById(R.id.switch_organizer_notifications);
+        View rowEditProfile = root.findViewById(R.id.row_edit_profile);
+        View rowAboutUs = root.findViewById(R.id.row_about_us);
+        logoutButton = root.findViewById(R.id.button_logout);
+        deleteButton = root.findViewById(R.id.button_delete_account);
+
+        back.setOnClickListener(v ->
+                requireActivity().getOnBackPressedDispatcher().onBackPressed());
+
+        bindUserName();
+        initNotificationSwitches();
+
+        deleteButton.setOnClickListener(v -> confirmAndDeleteProfile());
+
+        boolean hasId = !TextUtils.isEmpty(entrantId);
+        deleteButton.setEnabled(hasId);
+        logoutButton.setEnabled(true);
+
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        ImageView btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+        ImageView btnAboutUs = view.findViewById(R.id.btn_about_us);
+        Button btnLogOut = view.findViewById(R.id.button_logout);
+
+        // NEW: mode-switch buttons
+        Button btnEntrantMode = view.findViewById(R.id.button_entrant_mode);
+        Button btnOrganizerMode = view.findViewById(R.id.button_organizer_mode);
+
+        NavController navController = Navigation.findNavController(view);
+
+        btnEditProfile.setOnClickListener(
+                v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantEditProfileFragment)
+        );
+        btnAboutUs.setOnClickListener(
+                v -> navController.navigate(R.id.action_entrantSettingsFragment_to_entrantAboutUsFragment)
+        );
+        btnLogOut.setOnClickListener(
+                v -> navController.navigate(R.id.action_entrantSettingsFragment_to_loginFragment)
+        );
+
+        // --- Mode switch logic based on current user ---
+        User currentUser = MyApp.getInstance().getCurrentUser();
+
+        if (currentUser == null || !currentUser.isOrganizer()) {
+            // Not an organizer -> no mode switching
+            btnEntrantMode.setVisibility(View.GONE);
+            btnOrganizerMode.setVisibility(View.GONE);
+        } else {
+            // Entrant settings = already in entrant mode
+            btnEntrantMode.setEnabled(false);
+            btnOrganizerMode.setEnabled(true);
+
+            btnOrganizerMode.setOnClickListener(v ->
+                    navController.navigate(R.id.organizerLandingFragment2));
+        }
+    }
+
+    // =============================================================================================
+    // Data / actions
+    // =============================================================================================
+
+    private void bindUserName() {
+        if (TextUtils.isEmpty(entrantId)) {
+            nameText.setText("Guest");
+            return;
+        }
+        try {
+            DbManager.getInstance()
+                    .getUserName(entrantId)
+                    .addOnSuccessListener(name -> {
+                        if (name == null || name.trim().isEmpty()) {
+                            nameText.setText(entrantId);
+                        } else {
+                            nameText.setText(name);
+                        }
+                    })
+                    .addOnFailureListener(e -> nameText.setText(entrantId));
+        } catch (Throwable t) {
+            nameText.setText(entrantId);
+        }
+    }
+
+    private void initNotificationSwitches() {
+        boolean adminsOn = getPrefs().getBoolean(KEY_NOTIFY_ADMINS, false);
+        boolean organizersOn = getPrefs().getBoolean(KEY_NOTIFY_ORGANIZERS, true);
+
+        adminNotificationsSwitch.setChecked(adminsOn);
+        organizerNotificationsSwitch.setChecked(organizersOn);
+
+        adminNotificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                getPrefs().edit().putBoolean(KEY_NOTIFY_ADMINS, isChecked).apply());
+
+        organizerNotificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                getPrefs().edit().putBoolean(KEY_NOTIFY_ORGANIZERS, isChecked).apply());
+    }
+
     private void confirmAndDeleteProfile() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete your profile?")
@@ -45,34 +199,44 @@ public class EntrantSettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void performDelete() {
-        String userId = resolveCurrentUserId();
-        if (userId == null || userId.isEmpty()) {
+        if (TextUtils.isEmpty(entrantId)) {
             Toast.makeText(requireContext(), "Could not resolve your user ID.", Toast.LENGTH_LONG).show();
             return;
         }
-        DbManager.getInstance().deleteEntrant(userId)
+
+        DbManager.getInstance()
+                .deleteEntrant(entrantId)
                 .addOnSuccessListener(v -> {
-
-                    // If you cache a local user id for guest flows, clear it here:
-                    try {
-                        requireContext()
-                                .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                                .edit()
-                                .remove("user_id")
-                                .apply();
-                    } catch (Throwable ignored) {}
-
+                    clearUserIdFromPrefs();
                     Toast.makeText(requireContext(), "Profile deleted", Toast.LENGTH_SHORT).show();
-                    // Return to splash/login or close current activity
                     requireActivity().finish();
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(), "Delete failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        Toast.makeText(requireContext(),
+                                "Delete failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
-    private String resolveCurrentUserId() {
-        return Settings.Secure.getString(requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID);
+    // =============================================================================================
+    // Local storage helpers
+    // =============================================================================================
+
+    @Nullable
+    private String loadUserIdFromPrefs() {
+        try {
+            return getPrefs().getString(KEY_USER_ID, null);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
+    private void clearUserIdFromPrefs() {
+        try {
+            getPrefs().edit().remove(KEY_USER_ID).apply();
+        } catch (Throwable ignored) {}
+    }
+
+    private android.content.SharedPreferences getPrefs() {
+        return requireContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
 }
+

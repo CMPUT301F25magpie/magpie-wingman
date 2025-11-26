@@ -1,31 +1,266 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:background="#0B0B18"
     tools:context=".entrant.EntrantEventSearchFilterFragment">
 
+    <!-- HEADER BAR -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/white"
+        android:paddingHorizontal="12dp">
+
+        <ImageButton
+            android:id="@+id/button_back"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            app:tint="#000000" />
+
+        <ImageView
+            android:id="@+id/image_logo"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_filter"
+            android:contentDescription="Filter"
+            android:layout_marginStart="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filter Search"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- Category Row -->
+    <LinearLayout
+        android:id="@+id/category_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:weightSum="5"
+        android:layout_marginBottom="20dp"
+        android:paddingTop="12dp">
+
+        <ImageButton
+            android:id="@+id/btn_sports"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:background="@drawable/filter_chip_circle"
+            android:padding="12dp"
+            android:src="@drawable/ic_sports"
+            android:contentDescription="Sports"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_music"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:background="@drawable/filter_chip_circle"
+            android:padding="12dp"
+            android:src="@drawable/ic_music"
+            android:contentDescription="Music"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_art"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:background="@drawable/filter_chip_circle_selected"
+            android:padding="12dp"
+            android:src="@drawable/ic_art"
+            android:contentDescription="Art"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_food"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:background="@drawable/filter_chip_circle"
+            android:padding="12dp"
+            android:src="@drawable/ic_food"
+            android:contentDescription="Food"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btn_other"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:background="@drawable/filter_chip_circle"
+            android:padding="12dp"
+            android:src="@drawable/ic_more"
+            android:contentDescription="Other"
+            app:tint="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Category Labels -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="5"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Sports"
+            android:textColor="#A5A5B8"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Music"
+            android:textColor="#A5A5B8"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Art"
+            android:textColor="#A5A5B8"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Food"
+            android:textColor="#A5A5B8"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Other"
+            android:textColor="#A5A5B8"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Time & Date Section -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Search Events"
-        android:textSize="24sp"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/edit_text_search"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="Search by name, date, location..." />
-
-    <Button
-        android:id="@+id/button_apply_filter"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:text="Time + Date"
+        android:textColor="#A5A5B8"
+        android:textSize="14sp"
         android:layout_marginTop="24dp"
-        android:text="Search" />
+        android:layout_marginBottom="8dp" />
+
+    <!-- Time Filter Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/btn_today"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Today"
+            android:textColor="@android:color/white"
+            android:background="@drawable/filter_chip_bg"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_tomorrow"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Tomorrow"
+            android:textColor="@android:color/white"
+            android:background="@drawable/filter_chip_bg_selected"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btn_week"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="This week"
+            android:textColor="@android:color/white"
+            android:background="@drawable/filter_chip_bg" />
+    </LinearLayout>
+
+    <!-- Calendar Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@drawable/filter_calendar_bg"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:layout_marginBottom="24dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_calendar"
+            app:tint="#2E5BFF" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="Choose from calendar"
+            android:textColor="#2E5BFF"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Bottom Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_reset"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="RESET"
+            android:textColor="@android:color/white"
+            android:background="@drawable/filter_reset_bg"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btn_apply"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="APPLY"
+            android:textColor="@android:color/white"
+            android:background="@drawable/filter_apply_bg"/>
+    </LinearLayout>
 
 </LinearLayout>

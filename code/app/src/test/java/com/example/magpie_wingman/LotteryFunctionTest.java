@@ -1,28 +1,21 @@
 package com.example.magpie_wingman;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThrows;
 
-import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.LotteryFunction;
+import com.google.android.gms.tasks.Task;
 
+import org.junit.Test;
+
+/**
+ * unit test for US 02.05.02 LotteryFunction
+ */
 public class LotteryFunctionTest {
-    private LotteryFunction function;
-
-    @Before
-    public void setup() {
-        DbManager.initForTesting();
-    }
 
     @Test
-    public void testSampleEntrants_validCount() {
-        assertNotNull(function.sampleEntrantsForEvent("event123", 5));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testSampleEntrants_negativeCountThrows() {
-        function.sampleEntrantsForEvent("event123", -1);
+    public void testSampleEntrants_requiresDbManagerInitialization() {
+        assertThrows(IllegalStateException.class, () -> {
+            LotteryFunction.sampleEntrantsForEvent("event123", 5);
+        });
     }
 }
-

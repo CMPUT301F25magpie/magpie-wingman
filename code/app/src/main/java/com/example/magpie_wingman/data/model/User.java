@@ -26,7 +26,6 @@ public class User {
     @Nullable private String email;
     @Nullable private String phone;
     @Nullable private String deviceId;
-    @Nullable private Date birthdate;
 
     public User(String userId,
                 String name,
@@ -34,8 +33,7 @@ public class User {
                 @Nullable String profileImageUrl,
                 @Nullable String email,
                 @Nullable String phone,
-                @Nullable String deviceId,
-                @Nullable Date birthday) {
+                @Nullable String deviceId) {
         this.userId = userId;
         this.name = (name != null && !name.isEmpty()) ? name : userId;
         this.isOrganizer = isOrganizer;
@@ -43,12 +41,11 @@ public class User {
         this.email = email;
         this.phone = phone;
         this.deviceId = deviceId;
-        this.birthdate = birthday;
     }
 
     /** Minimal constructor. don't need contact/device fields at creation time. */
-    public User(String userId, String name, boolean isOrganizer) {
-        this(userId, name, isOrganizer, null, null, null, null, null);
+    public User(String userId, String name, boolean isOrganizer, @Nullable String profileImageUrl, String email, String phone, String deviceId, Date birthday) {
+        this(userId, name, isOrganizer, profileImageUrl, null, null, null);
     }
 
     /** Build from Firestore */
@@ -60,8 +57,7 @@ public class User {
         String email     = d.getString("email");
         String phone     = d.getString("phone");
         String deviceId  = d.getString("deviceId");
-        Date birthdate = d.getDate("birthdate");
-        return new User(id, name, isOrg != null && isOrg, img, email, phone, deviceId, birthdate);
+        return new User(id, name, isOrg != null && isOrg, img, email, phone, deviceId);
     }
 
     /** Map for Firestore writes to users/{userId} */
@@ -113,9 +109,4 @@ public class User {
 
     @Nullable public String getDeviceId() { return deviceId; }
     public void setDeviceId(@Nullable String deviceId) { this.deviceId = deviceId; }
-
-    @Nullable
-    public Date getBirthdate() { return birthdate; }
-
-    public void setBirthdate(@Nullable Date birthdate) { this.birthdate = birthdate; }
 }

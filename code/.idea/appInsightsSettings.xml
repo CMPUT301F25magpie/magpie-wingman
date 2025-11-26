@@ -9,10 +9,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.magpie_wingman" />
+                  <option name="mobileSdkAppId" value="1:1092696559477:android:7ca5c6f7e19c83a15b0d3c" />
+                  <option name="projectId" value="magpie-1974e" />
+                  <option name="projectNumber" value="1092696559477" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
