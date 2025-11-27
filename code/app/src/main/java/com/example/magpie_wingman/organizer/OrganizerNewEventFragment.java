@@ -2,6 +2,7 @@ package com.example.magpie_wingman.organizer;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -13,13 +14,17 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.User;
 import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
@@ -35,16 +40,35 @@ public class OrganizerNewEventFragment extends Fragment {
     private EditText eventDateField, eventTimeField;
     private EditText regStartDateField, regEndDateField;
     private Button createButton;
-
+    private Button uploadPosterButton;
+    User currentUser = MyApp.getInstance().getCurrentUser();
     private final Calendar eventCalendar = Calendar.getInstance();
     private final Calendar regStartCalendar = Calendar.getInstance();
     private final Calendar regEndCalendar = Calendar.getInstance();
 
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private Uri posterImageUri;
+    private ActivityResultLauncher<String> pickImageLauncher;
 
     public OrganizerNewEventFragment() { }
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
+        // Poster upload: launch gallery and remember selected URI
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        posterImageUri = uri;
+                        if (uploadPosterButton != null) {
+                            uploadPosterButton.setText("Poster selected");
+                        }
+                    }
+                }
+        );
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_organizer_new_event, container, false);
@@ -65,10 +89,13 @@ public class OrganizerNewEventFragment extends Fragment {
         regStartDateField = view.findViewById(R.id.edit_registration_start);
         regEndDateField = view.findViewById(R.id.edit_registration_end);
         createButton = view.findViewById(R.id.button_create);
+        uploadPosterButton = view.findViewById(R.id.button_upload_poster);
         ImageButton backBtn = view.findViewById(R.id.button_back);
 
         setupPickers();
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        createButton.setOnClickListener(v -> saveEvent(view));
+        uploadPosterButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         createButton.setOnClickListener(v -> saveEvent(view));
     }
 
@@ -98,7 +125,7 @@ public class OrganizerNewEventFragment extends Fragment {
 
         createButton.setEnabled(false);
         createButton.setText("Creating...");
-        String organizerId = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        String organizerId = currentUser.getUserId();
 
         new Thread(() -> {
             try {
@@ -107,7 +134,7 @@ public class OrganizerNewEventFragment extends Fragment {
                 );
                 if (getActivity() != null) {
                     task.addOnSuccessListener(getActivity(), aVoid -> {
-                        findLastEventAndFillDetails(title, organizerId, location, capacity, eventCalendar.getTime());
+                        findLastEventAndFillDetails(title, organizerId, location, capacity, eventCalendar.getTime(),posterImageUri);
                         Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
                         Navigation.findNavController(view).navigateUp();
                     }).addOnFailureListener(getActivity(), e -> {
@@ -127,7 +154,7 @@ public class OrganizerNewEventFragment extends Fragment {
         }).start();
     }
 
-    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, Date start) {
+    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, Date start, @Nullable Uri posterUri) {
         DbManager.getInstance().getDb().collection("events")
                 .whereEqualTo("eventName", title)
                 .whereEqualTo("organizerId", orgId)
@@ -142,6 +169,8 @@ public class OrganizerNewEventFragment extends Fragment {
                         updates.put("eventStartTime", start);
                         updates.put("waitlistCount", 0);
                         DbManager.getInstance().getDb().collection("events").document(eventId).set(updates, SetOptions.merge());
+                        if (posterUri != null) {
+                            DbManager.getInstance().uploadEventPoster(eventId, posterUri); }
                     }
                 });
     }

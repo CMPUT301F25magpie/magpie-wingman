@@ -67,8 +67,8 @@ public class EntrantEditProfileFragment extends Fragment {
         passwordEt   = v.findViewById(R.id.edit_password);
 
         // Role buttons
-        btnEntrant   = v.findViewById(R.id.button_entrant);
-        btnOrganizer = v.findViewById(R.id.button_organizer);
+//        btnEntrant   = v.findViewById(R.id.button_entrant);
+//        btnOrganizer = v.findViewById(R.id.button_organizer);
 
         // Update button
         btnUpdate    = v.findViewById(R.id.button_update);

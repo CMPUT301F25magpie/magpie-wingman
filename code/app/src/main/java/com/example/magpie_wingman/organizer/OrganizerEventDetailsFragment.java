@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.R;
@@ -77,23 +78,17 @@ public class OrganizerEventDetailsFragment extends Fragment {
             titleView.setText("Error: No Event ID Passed");
         }
 
+        NavController navController = Navigation.findNavController(view);
 
         btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
-
-
-
-        setupNavButton(view, btnWaitlist, R.id.action_organizerEventDetailsFragment_to_waitingListFragment);
-
-
-        setupNavButton(view, btnSelected, R.id.action_organizerEventDetailsFragment_to_selectedEntrantsListFragment);
-
-
-        setupNavButton(view, btnAccepted, R.id.action_organizerEventDetailsFragment_to_acceptedListFragment);
-        setupNavButton(view, btnCancelled, R.id.action_organizerEventDetailsFragment_to_cancelledListFragment);
-        setupNavButton(view, btnLottery, R.id.action_organizerEventDetailsFragment_to_organizerLotteryFragment);
-        setupNavButton(view, btnNotify, R.id.action_organizerEventDetailsFragment_to_organizerNotifyFragment);
-        setupNavButton(view, btnFinalize, R.id.action_organizerEventDetailsFragment_to_organizerFinalizedListFragment);
+        btnWaitlist.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_waitingListFragment));
+        btnSelected.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_selectedEntrantsListFragment));
+        btnAccepted.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_acceptedListFragment));
+        btnCancelled.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_cancelledListFragment));
+        btnLottery.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_organizerLotteryFragment));
+        btnNotify.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_organizerNotifyFragment));
+        btnFinalize.setOnClickListener(v -> navController.navigate(R.id.action_organizerEventDetailsFragment_to_organizerFinalizedListFragment));
     }
 
     /**

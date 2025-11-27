@@ -29,7 +29,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import android.net.Uri;
 
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * This utility class contains all of the "Helper Methods" that read from and write to the database
@@ -45,6 +49,7 @@ public class DbManager {
     private static DbManager instance;
 
     private final FirebaseFirestore db;
+    private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private final Context appContext;
     private final SecureRandom random = new SecureRandom();
 
@@ -101,6 +106,7 @@ public class DbManager {
     /**
      * Creates a new user document.
      * The userId will be generated using generateUserID and will also act as the document ID
+     * NOTE 26 related problems are due to constructor changes in instrumented tests (not material to prod) will fix later
      */
     public Task<Void> createUser(String name, String email, String phone, String password) {
         String userId = generateUserId(name);
@@ -176,7 +182,7 @@ public class DbManager {
                 // Get all events
                 QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
 
-                // Single batch (no chunking)
+
                 WriteBatch batch = db.batch();
 
                 for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
@@ -254,17 +260,17 @@ public class DbManager {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                // 1) Revoke organizer role
+                // Revoke organizer role
                 Tasks.await(changeOrgPerms(organizerId, false));
 
-                // 2) Find all events they own (your schema uses "organizerId")
+                // Find all events they own
                 QuerySnapshot organizerEvents = Tasks.await(
                         db.collection("events")
                                 .whereEqualTo("organizerId", organizerId)
                                 .get()
                 );
 
-                // 3) Delete each event (deep) using your existing helper
+                // Delete each event
                 List<Task<Void>> deletes = new ArrayList<>();
                 for (DocumentSnapshot d : organizerEvents.getDocuments()) {
                     deletes.add(deleteEvent(d.getId()));
@@ -707,6 +713,7 @@ public class DbManager {
                 });
     }
 
+
     /**
      * Gets the description of a given event.
      *
@@ -838,6 +845,12 @@ public class DbManager {
                     }
                     return users;
                 });
+    }
+
+    public Task<QuerySnapshot> getEventsByOrganizer(String organizerId) {
+        return db.collection("events")
+                .whereEqualTo("organizerId", organizerId)
+                .get();
     }
 
     /**
@@ -995,5 +1008,26 @@ public class DbManager {
                     return results;
                 });
     }
+    public Task<String> uploadEventPoster(String eventId, Uri localUri) {
+        StorageReference ref = storage
+                .getReference()
+                .child("event_posters/" + eventId + ".jpg");
+
+        return ref.putFile(localUri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+                    return ref.getDownloadUrl();
+                })
+                .continueWithTask(task -> {
+                    Uri downloadUri = task.getResult();
+                    return db.collection("events")
+                            .document(eventId)
+                            .update("eventPosterURL", downloadUri.toString())
+                            .continueWith(t -> downloadUri.toString());
+                });
+    }
+
 }
 

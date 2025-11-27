@@ -26,6 +26,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import com.bumptech.glide.Glide;
+
 /**
  * Fragment that displays the full details of a single event for entrant users.
  *
@@ -41,9 +43,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private static final String ARG_EVENT_LOCATION    = "eventLocation";
     private static final String ARG_EVENT_START_TIME  = "eventStartTime";
     private static final String ARG_EVENT_DESCRIPTION = "eventDescription";
+    private static final String ARG_EVENT_POSTER_URL = "eventPosterURL";
 
     // Event and user identifiers.
     private String eventId;
+    private String eventPosterUrl;
     private String entrantId;
 
     // Basic event details passed through arguments.
@@ -89,7 +93,8 @@ public class DetailedEventDescriptionFragment extends Fragment {
                                                                String eventName,
                                                                String eventLocation,
                                                                long eventStartTime,
-                                                               String description) {
+                                                               String description,
+                                                               @Nullable String posterUrl) {
         DetailedEventDescriptionFragment fragment = new DetailedEventDescriptionFragment();
         Bundle args = new Bundle();
         args.putString(ARG_EVENT_ID, eventId);
@@ -97,6 +102,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
         args.putString(ARG_EVENT_LOCATION, eventLocation);
         args.putLong(ARG_EVENT_START_TIME, eventStartTime);
         args.putString(ARG_EVENT_DESCRIPTION, description);
+        args.putString(ARG_EVENT_POSTER_URL, posterUrl);
         fragment.setArguments(args);
         return fragment;
     }
@@ -119,6 +125,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
             eventLocation        = args.getString(ARG_EVENT_LOCATION);
             eventStartTimeMillis = args.getLong(ARG_EVENT_START_TIME, -1L);
             eventDescription     = args.getString(ARG_EVENT_DESCRIPTION);
+            eventPosterUrl       = args.getString(ARG_EVENT_POSTER_URL);
         }
 
         // Get the current entrant user from the application singleton.
@@ -155,6 +162,17 @@ public class DetailedEventDescriptionFragment extends Fragment {
         // Bind all the views from the layout.
         ImageButton backButton   = v.findViewById(R.id.button_back);
         ImageView   posterImage  = v.findViewById(R.id.image_event_poster);
+        // Load poster image if we have a URL
+        if (!TextUtils.isEmpty(eventPosterUrl)) {
+            Glide.with(this)
+                    .load(eventPosterUrl)
+                    .placeholder(R.drawable.ic_music)   // fallback while loading
+                    .error(R.drawable.ic_music)         // fallback on error
+                    .into(posterImage);
+        } else {
+            // No URL: show default icon
+            posterImage.setImageResource(R.drawable.ic_music);
+        }
         TextView    titleText    = v.findViewById(R.id.text_event_title);
         TextView    locationText = v.findViewById(R.id.text_event_location);
         TextView    dateText     = v.findViewById(R.id.text_event_date);

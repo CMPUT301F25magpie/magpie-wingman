@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,10 @@ import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.model.User;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -50,7 +55,6 @@ public class EntrantLandingFragment extends Fragment {
     // UI references
     // -------------------------------------------------------------------------
 
-    private EditText   searchBar;
     private ImageView  btnFilter;
     private ImageView  btnInfo;
     private ImageView  btnSettings;
@@ -59,6 +63,9 @@ public class EntrantLandingFragment extends Fragment {
     private Button     btnScanQr;
     private Button     btnEventsPrimary;
     private Button     btnNotifications;
+
+    private final List<Event> eventList = new ArrayList<>();
+    private EventAdapter adapter;
 
     // Currently logged-in entrant's id (from MyApp)
     @Nullable
@@ -81,7 +88,7 @@ public class EntrantLandingFragment extends Fragment {
         super.onViewCreated(v, savedInstanceState);
 
         // Bind views from XML
-        searchBar        = v.findViewById(R.id.search_bar);
+        TextView searchBar = v.findViewById(R.id.search_bar);
         btnFilter        = v.findViewById(R.id.btn_filter);
         btnInfo          = v.findViewById(R.id.btn_info);
         btnSettings      = v.findViewById(R.id.btn_settings);
@@ -100,13 +107,7 @@ public class EntrantLandingFragment extends Fragment {
         // Resolve the currently logged-in entrant from MyApp
         User currentUser = MyApp.getInstance().getCurrentUser();
         if (currentUser != null) {
-            // Assuming User exposes getUserId()
             entrantId = currentUser.getUserId();
-        } else {
-            entrantId = null;
-            Toast.makeText(requireContext(),
-                    "No logged in user; event status may be unavailable.",
-                    Toast.LENGTH_SHORT).show();
         }
 
         // Configure the events RecyclerView and load data from Firestore
@@ -174,37 +175,18 @@ public class EntrantLandingFragment extends Fragment {
         // Use a simple vertical list layout manager
         eventsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         eventsRecycler.setHasFixedSize(true);
+        eventList.clear();
 
-        // Backing data for the adapter
-        List<Event> eventItems = new ArrayList<>();
-
-        // If we don't know the entrant id, pass an empty string;
-        // the adapter can handle this case.
         String userIdForAdapter = (entrantId != null) ? entrantId : "";
 
-        // Adapter: clicking the join/leave button should open the details screen
-        EventAdapter adapter = new EventAdapter(
-                eventItems,
+        adapter = new EventAdapter(
+                eventList,
                 userIdForAdapter,
                 this::openEventDetails
         );
         eventsRecycler.setAdapter(adapter);
 
-        // Load all events from Firestore and refresh the list when they arrive
-        DbManager.getInstance()
-                .getAllEvents()
-                .addOnSuccessListener(events -> {
-                    eventItems.clear();
-                    if (events != null) {
-                        eventItems.addAll(events);
-                    }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> Toast.makeText(
-                        requireContext(),
-                        "Failed to load events: " + e.getMessage(),
-                        Toast.LENGTH_LONG
-                ).show());
+        loadEvents();
     }
 
     /**
@@ -230,7 +212,8 @@ public class EntrantLandingFragment extends Fragment {
 
         String desc = event.getDescription();
         args.putString("eventDescription", desc != null ? desc : "");
-
+        String picUrl = event.getEventPosterURL();
+        args.putString("eventPosterURL", picUrl);
         NavController navController = Navigation.findNavController(requireView());
         navController.navigate(
                 R.id.action_entrantLandingFragment3_to_detailedEventDescriptionFragment,
@@ -242,13 +225,57 @@ public class EntrantLandingFragment extends Fragment {
     // Helper
     // -------------------------------------------------------------------------
 
+
     /**
-     * Simple null-or-whitespace check for strings.
-     *
-     * @param s string to check
-     * @return {@code true} if {@code s} is null, empty, or only whitespace.
+     * Listens for events whose registration window is currently open and
+     * keeps the local event list in sync with Firestore.
+     * Only events with registrationEnd >= now are fetched from Firestore.
+     * On the client side we further filter out events whose registrationStart
+     * is still in the future.
      */
-    private static boolean isEmpty(@Nullable String s) {
-        return s == null || s.trim().isEmpty();
+    private void loadEvents() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference eventsRef = db.collection("events");
+
+        Timestamp queryNow = Timestamp.now();
+
+        eventsRef
+                .whereGreaterThanOrEqualTo("registrationEnd", queryNow)
+                .orderBy("registrationEnd")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(getContext(),
+                                "Failed to load events", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Current time for client-side registrationStart check
+                    Timestamp now = Timestamp.now();
+
+                    // Clear existing items and rebuild list
+                    eventList.clear();
+
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            // Client-side: only keep events whose registration has started
+                            Timestamp regStart = doc.getTimestamp("registrationStart");
+                            if (regStart != null && regStart.compareTo(now) > 0) {
+                                // registrationStart is in the future → skip this event
+                                continue;
+                            }
+
+                            Event event = doc.toObject(Event.class);
+
+
+                            eventList.add(event);
+                        }
+                    }
+
+                    // updateAdapter
+                    if (adapter != null) {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
     }
+
 }

@@ -12,30 +12,48 @@ public class Event {
     private String eventName;
     private Date eventStartTime;
     private Date eventEndTime;
+    private Date registrationStart;
+    private Date registrationEnd;
     private String eventLocation;
-    private String eventDescription;
+    private String description;
     private String eventPosterURL;
     private int eventCapacity;
+
 
     private int waitlistCount;
 
     // required empty constructor for Firestore / deserialization
     public Event() {}
 
-    public Event(String eventId, String organizerId, String eventName, Date eventStartTime,
-                 Date eventEndTime, String eventLocation, String eventDescription,
-                 String eventPosterURL, int eventCapacity) {
+    public Event(String eventId,
+                 String organizerId,
+                 String eventName,
+                 Date eventStartTime,
+                 Date eventEndTime,
+                 String eventLocation,
+                 String description,
+                 String eventPosterURL,
+                 int eventCapacity) {
+
         this.eventId = eventId;
         this.organizerId = organizerId;
         this.eventName = eventName;
+
         this.eventStartTime = eventStartTime;
         this.eventEndTime = eventEndTime;
-        this.eventLocation = eventLocation;
-        this.eventDescription = eventDescription;
-        this.eventPosterURL = null;
-        this.eventCapacity = eventCapacity;
-        this.waitlistCount = 0;
 
+        this.eventLocation = eventLocation;
+
+        // IMPORTANT: match the Firestore field "description"
+        this.description = description;
+
+        // Use the parameter, not null
+        this.eventPosterURL = eventPosterURL;
+
+        this.eventCapacity = eventCapacity;
+
+        // New events start with an empty waitlist
+        this.waitlistCount = 0;
     }
 
     // --- Getters ---
@@ -49,20 +67,16 @@ public class Event {
         return eventStartTime;
     }
     public Date getEventEndTime() { return eventEndTime;  }
+    public Date getRegistrationStart() { return registrationStart; }
+    public Date getRegistrationEnd() { return registrationEnd; }
     public String getEventLocation() {
         return eventLocation;
     }
     public String getDescription() {
-        return eventDescription;
-    }
-    public String getPosterImageUrl() {
-        return eventPosterURL;
+        return description;
     }
 
     public String getOrganizerId() { return organizerId; }
-
-    public String getEventDescription() { return eventDescription; }
-
     public String getEventPosterURL() { return eventPosterURL; }
 
     public int getEventCapacity() { return eventCapacity; }
@@ -80,9 +94,12 @@ public class Event {
     public void setEventStartTime(Date eventStartTime) { this.eventStartTime = eventStartTime; }
     public void setEventEndTime(Date eventEndTime) { this.eventEndTime = eventEndTime; }
 
+    public void setRegistrationStart(Date registrationStart) { this.registrationStart = registrationStart; }
+    public void setRegistrationEnd(Date registrationEnd) { this.registrationEnd = registrationEnd; }
+
     public void setEventLocation(String eventLocation) { this.eventLocation = eventLocation; }
 
-    public void setEventDescription(String eventDescription) { this.eventDescription = eventDescription; }
+    public void setDescription(String description) { this.description = description; }
 
     public void setEventPosterURL(String eventPosterURL) { this.eventPosterURL = eventPosterURL; }
 
