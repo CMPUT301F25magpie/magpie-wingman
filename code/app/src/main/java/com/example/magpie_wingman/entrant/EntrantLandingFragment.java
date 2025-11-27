@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -87,7 +88,7 @@ public class EntrantLandingFragment extends Fragment {
         super.onViewCreated(v, savedInstanceState);
 
         // Bind views from XML
-        EditText searchBar = v.findViewById(R.id.search_bar);
+        TextView searchBar = v.findViewById(R.id.search_bar);
         btnFilter        = v.findViewById(R.id.btn_filter);
         btnInfo          = v.findViewById(R.id.btn_info);
         btnSettings      = v.findViewById(R.id.btn_settings);
