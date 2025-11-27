@@ -986,28 +986,21 @@ public class DbManager {
                     }
 
                     for (DocumentSnapshot doc : task.getResult().getDocuments()) {
-                        String eventId      = doc.getId();
-                        String organizerId  = doc.getString("organizerId");
-                        String name         = doc.getString("eventName");
-                        String description  = doc.getString("description");
+                        // Let Firestore populate the Event
+                        Event e = doc.toObject(Event.class);
+                        if (e == null) continue;
 
-                        // At the moment you only store these fields; dates/location can be added later.
-                        Event e = new Event(
-                                eventId,
-                                organizerId,
-                                name,
-                                /* eventStartTime */ null,
-                                /* eventEndTime   */ null,
-                                /* eventLocation  */ null,
-                                /* eventDescription */ description,
-                                /* eventPosterURL */ null,
-                                /* eventCapacity  */ 0
-                        );
+                        // Ensure eventId is set even if it's not stored as a field
+                        if (e.getEventId() == null || e.getEventId().isEmpty()) {
+                            e.setEventId(doc.getId());
+                        }
+
                         results.add(e);
                     }
                     return results;
                 });
     }
+
     public Task<String> uploadEventPoster(String eventId, Uri localUri) {
         StorageReference ref = storage
                 .getReference()
@@ -1028,6 +1021,54 @@ public class DbManager {
                             .continueWith(t -> downloadUri.toString());
                 });
     }
+
+    /**
+     * Removes the poster associated with an event.
+     * <p>
+     * Behaviour:
+     * <ul>
+     *     <li>If {@code posterUrl} is a Firebase Storage URL, the underlying file is deleted.</li>
+     *     <li>Regardless of storage delete success, the {@code eventPosterURL} field
+     *         in the event document is cleared (set to null).</li>
+     * </ul>
+     *
+     * @param eventId   ID of the event document in the "events" collection.
+     * @param posterUrl The current poster URL, or {@code null} / empty if missing.
+     * @return A Task that completes when the field is cleared (and storage delete attempted).
+     */
+    public Task<Void> removeEventPoster(String eventId, @Nullable String posterUrl) {
+        TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+
+        // Helper to just clear the Firestore field
+        Runnable clearField = () -> db.collection("events")
+                .document(eventId)
+                .update("eventPosterURL", null)
+                .addOnSuccessListener(unused -> tcs.setResult(null))
+                .addOnFailureListener(tcs::setException);
+
+        // No URL? Just clear the field.
+        if (posterUrl == null || posterUrl.isEmpty()) {
+            clearField.run();
+            return tcs.getTask();
+        }
+
+        StorageReference ref;
+        try {
+            ref = storage.getReferenceFromUrl(posterUrl);
+        } catch (IllegalArgumentException e) {
+            // Not a Firebase Storage URL; just clear the field.
+            clearField.run();
+            return tcs.getTask();
+        }
+
+        // Try deleting the file; regardless of success, clear the field.
+        ref.delete()
+                .addOnSuccessListener(unused -> clearField.run())
+                .addOnFailureListener(e -> clearField.run());
+
+        return tcs.getTask();
+    }
+
 
 }
 
