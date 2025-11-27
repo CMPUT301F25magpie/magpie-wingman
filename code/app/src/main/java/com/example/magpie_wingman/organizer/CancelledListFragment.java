@@ -2,11 +2,15 @@ package com.example.magpie_wingman.organizer;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import com.example.magpie_wingman.R;
 
@@ -62,5 +66,12 @@ public class CancelledListFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_cancelled_list, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ImageButton btnBack = view.findViewById(R.id.button_back);
+        btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
     }
 }

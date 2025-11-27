@@ -6,10 +6,13 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
@@ -51,7 +54,9 @@ public class OrganizerEditEventFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-//        super.onViewCreated(view, savedInstanceState);
+        super.onViewCreated(view, savedInstanceState);
+        ImageButton backBtn = view.findViewById(R.id.button_back);
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 //
 //        // Find all the views
 //        eventTitleField = view.findViewById(R.id.edit_text_event_title);
