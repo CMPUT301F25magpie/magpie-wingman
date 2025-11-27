@@ -211,7 +211,8 @@ public class EntrantLandingFragment extends Fragment {
 
         String desc = event.getDescription();
         args.putString("eventDescription", desc != null ? desc : "");
-
+        String picUrl = event.getEventPosterURL();
+        args.putString("eventPosterURL", picUrl);
         NavController navController = Navigation.findNavController(requireView());
         navController.navigate(
                 R.id.action_entrantLandingFragment3_to_detailedEventDescriptionFragment,

@@ -75,9 +75,6 @@ public class Event {
     public String getDescription() {
         return description;
     }
-    public String getPosterImageUrl() {
-        return eventPosterURL;
-    }
 
     public String getOrganizerId() { return organizerId; }
     public String getEventPosterURL() { return eventPosterURL; }

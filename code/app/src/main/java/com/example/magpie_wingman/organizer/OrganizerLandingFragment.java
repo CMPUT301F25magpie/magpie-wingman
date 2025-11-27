@@ -16,7 +16,12 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.model.Event;
+import com.example.magpie_wingman.data.model.User;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -33,6 +38,10 @@ public class OrganizerLandingFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    User currentUser = MyApp.getInstance().getCurrentUser();
+    private String organizerID = currentUser.getUserId();
+    private ArrayList<Event> organizerMyEvents;
+
 
     // UI elements
     private EditText eventSearchBar;
@@ -40,6 +49,8 @@ public class OrganizerLandingFragment extends Fragment {
     public OrganizerLandingFragment() {
         // Required empty public constructor
     }
+
+
 
     /**
      * Use this factory method to create a new instance of
