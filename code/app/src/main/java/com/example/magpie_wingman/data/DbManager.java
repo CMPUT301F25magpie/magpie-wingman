@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import android.net.Uri;
 
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -182,7 +181,6 @@ public class DbManager {
                 // Get all events
                 QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
 
-
                 WriteBatch batch = db.batch();
 
                 for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
@@ -193,6 +191,14 @@ public class DbManager {
                             evRef.collection("waitlist").whereEqualTo("userId", userId).get()
                     );
                     for (DocumentSnapshot d : wl.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+
+                    // invited
+                    QuerySnapshot inv = Tasks.await(
+                            evRef.collection("invited").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : inv.getDocuments()) {
                         batch.delete(d.getReference());
                     }
 
@@ -209,6 +215,14 @@ public class DbManager {
                             evRef.collection("registered").whereEqualTo("userId", userId).get()
                     );
                     for (DocumentSnapshot d : rd.getDocuments()) {
+                        batch.delete(d.getReference());
+                    }
+
+                    // cancelled
+                    QuerySnapshot cd = Tasks.await(
+                            evRef.collection("cancelled").whereEqualTo("userId", userId).get()
+                    );
+                    for (DocumentSnapshot d : cd.getDocuments()) {
                         batch.delete(d.getReference());
                     }
                 }
@@ -363,6 +377,13 @@ public class DbManager {
      * @param eventId The ID of the event to delete.
      * @return A Task that completes when the delete finishes. Result is {@code null} if success.)
      */
+    /**
+     * Deletes an event document and its subcollections
+     * ("waitlist", "registrable", "registered") from Firestore.
+     *
+     * @param eventId The ID of the event to delete.
+     * @return A Task that completes when the delete finishes. Result is {@code null} if success.)
+     */
     public Task<Void> deleteEvent(String eventId) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>(); //I create a custom task for methods that require multiple firestore tasks.
 
@@ -375,11 +396,17 @@ public class DbManager {
                 QuerySnapshot waitlistSnap = Tasks.await( //we await to make sure we have all of the references to the subcollection before deleting everything
                         eventRef.collection("waitlist").get()
                 );
+                QuerySnapshot invitedSnap = Tasks.await(
+                        eventRef.collection("invited").get()
+                );
                 QuerySnapshot registrableSnap = Tasks.await(
                         eventRef.collection("registrable").get()
                 );
                 QuerySnapshot registeredSnap = Tasks.await(
                         eventRef.collection("registered").get()
+                );
+                QuerySnapshot cancelledSnap = Tasks.await(
+                        eventRef.collection("cancelled").get()
                 );
 
                 WriteBatch batch = db.batch();
@@ -389,11 +416,19 @@ public class DbManager {
                     batch.delete(doc.getReference());
                 }
 
+                for (DocumentSnapshot doc : invitedSnap.getDocuments()) {
+                    batch.delete(doc.getReference());
+                }
+
                 for (DocumentSnapshot doc : registrableSnap.getDocuments()) {
                     batch.delete(doc.getReference());
                 }
 
                 for (DocumentSnapshot doc : registeredSnap.getDocuments()) {
+                    batch.delete(doc.getReference());
+                }
+
+                for (DocumentSnapshot doc : cancelledSnap.getDocuments()) {
                     batch.delete(doc.getReference());
                 }
 
@@ -412,7 +447,9 @@ public class DbManager {
 
         return tcs.getTask();
     }
-
+//---------------------------------------------------------------------------------------------------------------------------
+//                                              Entrant List flow methods
+//---------------------------------------------------------------------------------------------------------------------------
     /**
      * Adds a userID document to the event document's waitlist subcollection (creates one if it doesn't exist yet)
      * @param eventId - ID of event doc in question
@@ -431,21 +468,21 @@ public class DbManager {
                 .set(data, SetOptions.merge());
     }
 
+
     /**
      * Randomly selects count users from an event's waitlist and moves them
-     * to the "registrable" subcollection in Firestore.
+     * to the "invited" subcollection in Firestore.
      *
      * @param eventId The ID of the event to update.
      * @param count   The number of users to switch from waitlist to registrable.
      * @return A google.android.gms.tasks.Task that completes when all Firestore
      *         reads and writes are finished (result is null on success).
      */
-    public Task<Void> addUsersToRegistrable(String eventId, int count) {
+    public Task<Void> drawInvitees(String eventId, int count) {
         //create an empty task for this as its more complex. Will tell callers if and when it succeeds.
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
 
         // create a background thread so this doesn't freeze the UI (has an await).
-        // Actual method operation code is wrapped in this
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 //query the waitlist subcollection
@@ -481,16 +518,17 @@ public class DbManager {
                             .collection("waitlist")
                             .document(userId);
 
-                    DocumentReference registrableRef = db.collection("events")
+                    // winners now go into "invited" first
+                    DocumentReference invitedRef = db.collection("events")
                             .document(eventId)
-                            .collection("registrable")
+                            .collection("invited")
                             .document(userId);
 
                     Map<String, Object> regData = new HashMap<>();
                     regData.put("userId", userId);
                     regData.put("invitedAt", System.currentTimeMillis());
 
-                    batch.set(registrableRef, regData, SetOptions.merge());
+                    batch.set(invitedRef, regData, SetOptions.merge());
                     batch.delete(waitlistRef);
                 }
 
@@ -507,6 +545,39 @@ public class DbManager {
         });
         //return the task result to the caller
         return tcs.getTask();
+    }
+    /**
+     * Moves a user from the "invited" subcollection to "registrable"
+     * when they accept an invitation.
+     *
+     * @param eventId The event to update.
+     * @param userId  The user accepting the invitation.
+     * @return A Task that completes when the move finishes.
+     */
+    public Task<Void> moveUserFromInvitedToRegistrable(String eventId, String userId) {
+
+        WriteBatch batch = db.batch();
+
+        com.google.firebase.firestore.DocumentReference invitedRef =
+                db.collection("events")
+                        .document(eventId)
+                        .collection("invited")
+                        .document(userId);
+
+        com.google.firebase.firestore.DocumentReference registrableRef =
+                db.collection("events")
+                        .document(eventId)
+                        .collection("registrable")
+                        .document(userId);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("acceptedAt", System.currentTimeMillis());
+
+        batch.set(registrableRef, data, SetOptions.merge());
+        batch.delete(invitedRef);
+
+        return batch.commit();
     }
     public Task<Void> addUserToRegistered(String eventId, String userId) {
 
@@ -539,6 +610,9 @@ public class DbManager {
         return batch.commit();
     }
 
+//----------------------------------------------------------------------------------------------------------------------
+//                                                Cancels
+//----------------------------------------------------------------------------------------------------------------------
     /**
      * Removes the given user from the waitlist of the given event.
      *
@@ -554,6 +628,38 @@ public class DbManager {
                 .delete();
     }
 
+
+    /**
+     * Removes the given user from the invited subcollection of the given event,
+     * moving them into the "cancelled" subcollection.
+     *
+     * @param eventId The event to update.
+     * @param userId  The user to remove.
+     * @return A Task that completes when the move finishes.
+     */
+    public Task<Void> cancelInvited(String eventId, String userId) {
+        WriteBatch batch = db.batch();
+
+        DocumentReference invitedRef = db.collection("events")
+                .document(eventId)
+                .collection("invited")
+                .document(userId);
+
+        DocumentReference cancelledRef = db.collection("events")
+                .document(eventId)
+                .collection("cancelled")
+                .document(userId);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("cancelledAt", System.currentTimeMillis());
+        data.put("fromStatus", "invited");
+
+        batch.set(cancelledRef, data, SetOptions.merge());
+        batch.delete(invitedRef);
+
+        return batch.commit();
+    }
     /**
      * Removes the given user from the registrable of the given event.
      *
@@ -562,13 +668,28 @@ public class DbManager {
      * @return A Task that completes when the delete finishes.
      */
     public Task<Void> cancelRegistrable(String eventId, String userId) {
-        return db.collection("events")
+        WriteBatch batch = db.batch();
+
+        DocumentReference registrableRef = db.collection("events")
                 .document(eventId)
                 .collection("registrable")
-                .document(userId)
-                .delete();
-    }
+                .document(userId);
 
+        DocumentReference cancelledRef = db.collection("events")
+                .document(eventId)
+                .collection("cancelled")
+                .document(userId);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("cancelledAt", System.currentTimeMillis());
+        data.put("fromStatus", "registrable");
+
+        batch.set(cancelledRef, data, SetOptions.merge());
+        batch.delete(registrableRef);
+
+        return batch.commit();
+    }
     /**
      * Removes the given user from the registered subcollection of the given event.
      *
@@ -797,6 +918,30 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Retrieves all user IDs currently marked as invited for a given event.
+     *
+     * @param eventId The unique identifier of the event.
+     * @return A Task that resolves to a List of user IDs (Strings)
+     *         representing users in the "invited" subcollection.
+     *         Returns an empty list if the event or subcollection is missing.
+     */
+    public Task<List<String>> getEventInvited(String eventId) {
+        return db.collection("events")
+                .document(eventId)
+                .collection("invited")
+                .get()
+                .continueWith(task -> {
+                    List<String> users = new ArrayList<>();
+                    if (!task.isSuccessful() || task.getResult() == null) {
+                        return users;
+                    }
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        users.add(doc.getId());
+                    }
+                    return users;
+                });
+    }
     /**
      * Retrieves all user IDs currently marked as registrable for a given event.
      *

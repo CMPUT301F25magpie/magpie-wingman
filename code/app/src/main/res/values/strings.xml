@@ -97,6 +97,7 @@
     <string name="error_non_positive_number">Please enter a positive number.</string>
     <string name="msg_sample_success">Successfully sampled %1$d entrants!</string>
     <string name="msg_selected_notification">Congratulations! You’ve been selected to register for the event.</string>
+    <string name="msg_not_selected_notification">Unfortunately, you were not selected in the lottery for this event.</string>
     <string name="msg_notify_success">Notified all selected entrants.</string>
     <string name="error_notify_failed">Error sending notifications: %1$s</string>
     <string name="error_lottery_failed">Error running lottery: %1$s</string>

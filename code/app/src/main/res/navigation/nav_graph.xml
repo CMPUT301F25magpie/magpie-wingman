@@ -156,6 +156,9 @@
         <action
             android:id="@+id/action_entrantInvitationsFragment_to_entrantLandingFragment3"
             app:destination="@id/entrantLandingFragment3" />
+        <action
+            android:id="@+id/action_entrantInvitationsFragment_to_detailedEventDescriptionFragment"
+            app:destination="@id/detailedEventDescriptionFragment" />
     </fragment>
     <fragment
         android:id="@+id/entrantEventsFragment"
