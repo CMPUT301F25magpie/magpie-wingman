@@ -38,6 +38,7 @@ import java.util.Locale;
  */
 public class DetailedEventDescriptionFragment extends Fragment {
 
+    // Argument keys used when constructing this fragment with a Bundle.
     private static final String ARG_EVENT_ID          = "eventId";
     private static final String ARG_EVENT_NAME        = "eventName";
     private static final String ARG_EVENT_LOCATION    = "eventLocation";
@@ -45,28 +46,40 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private static final String ARG_EVENT_DESCRIPTION = "eventDescription";
     private static final String ARG_EVENT_POSTER_URL  = "eventPosterURL";
 
+    // Event and user identifiers.
     private String eventId;
     private String eventPosterUrl;
     private String entrantId;
 
+    // Basic event details passed through arguments.
     private String eventName;
     private String eventLocation;
     private long   eventStartTimeMillis = -1;
     private String eventDescription;
 
+    // UI references (Promoted to class level for async updates)
     private TextView titleText, locationText, dateText, descriptionText, textWaitingList;
     private ImageView posterImage;
     private Button   joinButton;
 
+    // Waitlist state for the current entrant.
     private boolean isOnWaitlist = false;
     private int     waitlistCount = 0;
 
+    // Formatter used to show the event date and time.
     private final SimpleDateFormat dateFormat =
             new SimpleDateFormat("MMM dd - hh:mm a", Locale.getDefault());
 
-    public DetailedEventDescriptionFragment() { }
+    public DetailedEventDescriptionFragment() {
+        // Required empty constructor
+    }
 
-    public static DetailedEventDescriptionFragment newInstance(String eventId, String eventName, String eventLocation, long eventStartTime, String description, @Nullable String posterUrl) {
+    public static DetailedEventDescriptionFragment newInstance(String eventId,
+                                                               String eventName,
+                                                               String eventLocation,
+                                                               long eventStartTime,
+                                                               String description,
+                                                               @Nullable String posterUrl) {
         DetailedEventDescriptionFragment fragment = new DetailedEventDescriptionFragment();
         Bundle args = new Bundle();
         args.putString(ARG_EVENT_ID, eventId);
@@ -82,6 +95,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Bundle args = getArguments();
         if (args != null) {
             eventId              = args.getString(ARG_EVENT_ID);
@@ -96,13 +110,16 @@ public class DetailedEventDescriptionFragment extends Fragment {
         if (current != null) {
             entrantId = current.getUserId();
         } else {
+            // Fallback for development/testing
             entrantId = "test_user_id";
         }
     }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_detailed_event_description, container, false);
     }
 
@@ -110,30 +127,38 @@ public class DetailedEventDescriptionFragment extends Fragment {
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
+        // Bind all the views from the layout.
         ImageButton backButton = v.findViewById(R.id.button_back);
-        posterImage = v.findViewById(R.id.image_event_poster);
-        titleText = v.findViewById(R.id.text_event_title);
-        locationText = v.findViewById(R.id.text_event_location);
-        dateText = v.findViewById(R.id.text_event_date);
-        textWaitingList = v.findViewById(R.id.text_waiting_list);
-        descriptionText = v.findViewById(R.id.text_event_description);
-        joinButton = v.findViewById(R.id.button_join_waitlist);
+        posterImage            = v.findViewById(R.id.image_event_poster);
+        titleText              = v.findViewById(R.id.text_event_title);
+        locationText           = v.findViewById(R.id.text_event_location);
+        dateText               = v.findViewById(R.id.text_event_date);
+        textWaitingList        = v.findViewById(R.id.text_waiting_list);
+        descriptionText        = v.findViewById(R.id.text_event_description);
+        joinButton             = v.findViewById(R.id.button_join_waitlist);
 
+        // --- 1. Load Data from Arguments (If Available) ---
         if (!TextUtils.isEmpty(eventPosterUrl)) {
-            Glide.with(this).load(eventPosterUrl).placeholder(R.drawable.ic_music).error(R.drawable.ic_music).into(posterImage);
+            posterImage.setVisibility(View.VISIBLE);
+            Glide.with(this).load(eventPosterUrl).placeholder(R.drawable.ic_music).into(posterImage);
         } else {
             posterImage.setImageResource(R.drawable.ic_music);
         }
 
         titleText.setText(!TextUtils.isEmpty(eventName) ? eventName : "Event");
         locationText.setText(!TextUtils.isEmpty(eventLocation) ? eventLocation : "Location TBD");
+
         if (eventStartTimeMillis > 0L) {
             dateText.setText(dateFormat.format(new Date(eventStartTimeMillis)));
         } else {
             dateText.setText("Date TBD");
         }
-        if (!TextUtils.isEmpty(eventDescription)) descriptionText.setText(eventDescription);
 
+        if (!TextUtils.isEmpty(eventDescription)) {
+            descriptionText.setText(eventDescription);
+        }
+
+        // --- 2. Navigation Logic ---
         backButton.setOnClickListener(view -> {
             NavController navController = Navigation.findNavController(view);
             navController.popBackStack();
@@ -141,16 +166,22 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
         if (eventId == null || entrantId == null) {
             joinButton.setEnabled(false);
+            Toast.makeText(requireContext(), "Missing info; cannot join waitlist.", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // --- FIX FOR QR SCANNER LOADING ---
+        // --- 3. QR Code Fix: Fetch Data if Arguments were Null ---
         loadEventDetailsFromFirestore();
-        loadWaitlistState();
 
+        // --- 4. Waitlist Logic ---
+        loadWaitlistState();
         joinButton.setOnClickListener(v1 -> toggleJoinLeave());
     }
 
+    /**
+     * Fetches fresh event details from Firestore using the eventId.
+     * Essential for QR Scanning flow where we only have the ID.
+     */
     private void loadEventDetailsFromFirestore() {
         if (eventId == null) return;
         DbManager.getInstance().getDb().collection("events").document(eventId)
@@ -158,14 +189,26 @@ public class DetailedEventDescriptionFragment extends Fragment {
                 .addOnSuccessListener(documentSnapshot -> {
                     Event event = documentSnapshot.toObject(Event.class);
                     if (event != null) {
-                        if (titleText != null) titleText.setText(event.getEventName());
-                        if (locationText != null) locationText.setText(event.getEventLocation());
-                        if (descriptionText != null) descriptionText.setText(event.getDescription());
-                        if (event.getEventStartTime() != null && dateText != null) {
+                        // Only update UI if the data from arguments was missing or placeholders
+                        if (titleText.getText().toString().equals("Event")) {
+                            titleText.setText(event.getEventName());
+                        }
+                        if (locationText.getText().toString().equals("Location TBD")) {
+                            locationText.setText(event.getEventLocation());
+                        }
+                        descriptionText.setText(event.getDescription());
+
+                        if (event.getEventStartTime() != null) {
                             dateText.setText(dateFormat.format(event.getEventStartTime()));
                         }
-                        if (!TextUtils.isEmpty(event.getEventPosterURL()) && posterImage != null && getContext() != null) {
-                            Glide.with(getContext()).load(event.getEventPosterURL()).placeholder(R.drawable.ic_music).into(posterImage);
+
+                        // Load Poster if missing
+                        if (!TextUtils.isEmpty(event.getEventPosterURL()) && getContext() != null) {
+                            posterImage.setVisibility(View.VISIBLE);
+                            Glide.with(getContext())
+                                    .load(event.getEventPosterURL())
+                                    .placeholder(R.drawable.ic_music)
+                                    .into(posterImage);
                         }
                     }
                 });
@@ -192,7 +235,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
                 renderWaitlistCount();
                 Toast.makeText(requireContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
                 joinButton.setEnabled(true);
-            });
+            }).addOnFailureListener(e -> joinButton.setEnabled(true));
         } else {
             DbManager.getInstance().addUserToWaitlist(eventId, entrantId).addOnSuccessListener(v -> {
                 isOnWaitlist = true;
@@ -201,7 +244,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
                 renderWaitlistCount();
                 Toast.makeText(requireContext(), "Joined waitlist", Toast.LENGTH_SHORT).show();
                 joinButton.setEnabled(true);
-            });
+            }).addOnFailureListener(e -> joinButton.setEnabled(true));
         }
     }
 
