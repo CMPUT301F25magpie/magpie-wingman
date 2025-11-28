@@ -18,7 +18,8 @@
         android:src="@drawable/ic_music"
         android:layout_marginEnd="12dp"
         android:background="@drawable/rounded_image"
-        android:clipToOutline="true" />
+        android:clipToOutline="true"
+        android:visibility="gone"/>
 
     <!-- Event Text -->
     <LinearLayout
@@ -69,17 +70,7 @@
         android:gravity="center">
 
         <ImageButton
-            android:id="@+id/button_menu"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/circle_white"
-            android:src="@drawable/ic_more"
-            android:layout_marginBottom="6dp"
-            android:contentDescription="More Options"
-            app:tint="#000000" />
-
-        <ImageButton
-            android:id="@+id/button_edit"
+            android:id="@+id/button_edit_event"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="@drawable/circle_yellow"

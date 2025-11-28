@@ -29,7 +29,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import android.net.Uri;
 
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * This utility class contains all of the "Helper Methods" that read from and write to the database
@@ -45,6 +49,7 @@ public class DbManager {
     private static DbManager instance;
 
     private final FirebaseFirestore db;
+    private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private final Context appContext;
     private final SecureRandom random = new SecureRandom();
 
@@ -101,6 +106,7 @@ public class DbManager {
     /**
      * Creates a new user document.
      * The userId will be generated using generateUserID and will also act as the document ID
+     * NOTE 26 related problems are due to constructor changes in instrumented tests (not material to prod) will fix later
      */
     public Task<Void> createUser(String name, String email, String phone, String password) {
         String userId = generateUserId(name);
@@ -176,7 +182,7 @@ public class DbManager {
                 // Get all events
                 QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
 
-                // Single batch (no chunking)
+
                 WriteBatch batch = db.batch();
 
                 for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
@@ -254,17 +260,17 @@ public class DbManager {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
-                // 1) Revoke organizer role
+                // Revoke organizer role
                 Tasks.await(changeOrgPerms(organizerId, false));
 
-                // 2) Find all events they own (your schema uses "organizerId")
+                // Find all events they own
                 QuerySnapshot organizerEvents = Tasks.await(
                         db.collection("events")
                                 .whereEqualTo("organizerId", organizerId)
                                 .get()
                 );
 
-                // 3) Delete each event (deep) using your existing helper
+                // Delete each event
                 List<Task<Void>> deletes = new ArrayList<>();
                 for (DocumentSnapshot d : organizerEvents.getDocuments()) {
                     deletes.add(deleteEvent(d.getId()));
@@ -707,6 +713,7 @@ public class DbManager {
                 });
     }
 
+
     /**
      * Gets the description of a given event.
      *
@@ -838,6 +845,12 @@ public class DbManager {
                     }
                     return users;
                 });
+    }
+
+    public Task<QuerySnapshot> getEventsByOrganizer(String organizerId) {
+        return db.collection("events")
+                .whereEqualTo("organizerId", organizerId)
+                .get();
     }
 
     /**
@@ -973,27 +986,89 @@ public class DbManager {
                     }
 
                     for (DocumentSnapshot doc : task.getResult().getDocuments()) {
-                        String eventId      = doc.getId();
-                        String organizerId  = doc.getString("organizerId");
-                        String name         = doc.getString("eventName");
-                        String description  = doc.getString("description");
+                        // Let Firestore populate the Event
+                        Event e = doc.toObject(Event.class);
+                        if (e == null) continue;
 
-                        // At the moment you only store these fields; dates/location can be added later.
-                        Event e = new Event(
-                                eventId,
-                                organizerId,
-                                name,
-                                /* eventStartTime */ null,
-                                /* eventEndTime   */ null,
-                                /* eventLocation  */ null,
-                                /* eventDescription */ description,
-                                /* eventPosterURL */ null,
-                                /* eventCapacity  */ 0
-                        );
+                        // Ensure eventId is set even if it's not stored as a field
+                        if (e.getEventId() == null || e.getEventId().isEmpty()) {
+                            e.setEventId(doc.getId());
+                        }
+
                         results.add(e);
                     }
                     return results;
                 });
     }
+
+    public Task<String> uploadEventPoster(String eventId, Uri localUri) {
+        StorageReference ref = storage
+                .getReference()
+                .child("event_posters/" + eventId + ".jpg");
+
+        return ref.putFile(localUri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        throw task.getException();
+                    }
+                    return ref.getDownloadUrl();
+                })
+                .continueWithTask(task -> {
+                    Uri downloadUri = task.getResult();
+                    return db.collection("events")
+                            .document(eventId)
+                            .update("eventPosterURL", downloadUri.toString())
+                            .continueWith(t -> downloadUri.toString());
+                });
+    }
+
+    /**
+     * Removes the poster associated with an event.
+     * <p>
+     * Behaviour:
+     * <ul>
+     *     <li>If {@code posterUrl} is a Firebase Storage URL, the underlying file is deleted.</li>
+     *     <li>Regardless of storage delete success, the {@code eventPosterURL} field
+     *         in the event document is cleared (set to null).</li>
+     * </ul>
+     *
+     * @param eventId   ID of the event document in the "events" collection.
+     * @param posterUrl The current poster URL, or {@code null} / empty if missing.
+     * @return A Task that completes when the field is cleared (and storage delete attempted).
+     */
+    public Task<Void> removeEventPoster(String eventId, @Nullable String posterUrl) {
+        TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
+
+        // Helper to just clear the Firestore field
+        Runnable clearField = () -> db.collection("events")
+                .document(eventId)
+                .update("eventPosterURL", null)
+                .addOnSuccessListener(unused -> tcs.setResult(null))
+                .addOnFailureListener(tcs::setException);
+
+        // No URL? Just clear the field.
+        if (posterUrl == null || posterUrl.isEmpty()) {
+            clearField.run();
+            return tcs.getTask();
+        }
+
+        StorageReference ref;
+        try {
+            ref = storage.getReferenceFromUrl(posterUrl);
+        } catch (IllegalArgumentException e) {
+            // Not a Firebase Storage URL; just clear the field.
+            clearField.run();
+            return tcs.getTask();
+        }
+
+        // Try deleting the file; regardless of success, clear the field.
+        ref.delete()
+                .addOnSuccessListener(unused -> clearField.run())
+                .addOnFailureListener(e -> clearField.run());
+
+        return tcs.getTask();
+    }
+
+
 }
 
