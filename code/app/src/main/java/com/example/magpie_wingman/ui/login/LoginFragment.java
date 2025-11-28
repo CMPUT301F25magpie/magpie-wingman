@@ -148,13 +148,13 @@ public class LoginFragment extends Fragment {
         });
 
         // ---- Bottom test buttons (unchanged) ----
-        btnEntrant.setOnClickListener(v ->
-                navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
-
-        btnOrganizer.setOnClickListener(v ->
-                navController.navigate(R.id.action_loginFragment_to_organizerLandingFragment2));
-
-        btnAdmin.setOnClickListener(v ->
-                navController.navigate(R.id.action_loginFragment_to_adminLandingFragment22));
+//        btnEntrant.setOnClickListener(v ->
+//                navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
+//
+//        btnOrganizer.setOnClickListener(v ->
+//                navController.navigate(R.id.action_loginFragment_to_organizerLandingFragment2));
+//
+//        btnAdmin.setOnClickListener(v ->
+//                navController.navigate(R.id.action_loginFragment_to_adminLandingFragment22));
     }
 }
