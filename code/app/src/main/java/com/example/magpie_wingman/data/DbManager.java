@@ -6,6 +6,7 @@ import android.provider.Settings;
 import androidx.annotation.Nullable;
 
 import com.example.magpie_wingman.data.model.Event;
+import com.example.magpie_wingman.data.model.Notification;
 import com.example.magpie_wingman.data.model.User;
 import com.example.magpie_wingman.data.model.UserProfile;
 import com.example.magpie_wingman.data.model.UserRole;
@@ -1068,6 +1069,39 @@ public class DbManager {
 
         return tcs.getTask();
     }
+
+    /**
+     * Fetches all notifications sent to entrants, across all users.
+     *
+     * Notifications live under:
+     *   users/{userId}/notifications/{notificationId}
+     *
+     * Uses a collection group query on "notifications".
+     */
+    public Task<java.util.List<Notification>> getAllNotifications() {
+        return db.collectionGroup("notifications")
+//                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .continueWith(task -> {
+                    if (!task.isSuccessful()) {
+                        // surface the real error to the caller
+                        throw task.getException() != null
+                                ? task.getException()
+                                : new Exception("Failed to fetch notifications");
+                    }
+
+                    java.util.List<Notification> out = new java.util.ArrayList<>();
+                    if (task.getResult() == null) {
+                        return out;
+                    }
+
+                    for (DocumentSnapshot d : task.getResult().getDocuments()) {
+                        out.add(Notification.from(d));
+                    }
+                    return out;
+                });
+    }
+
 
 
 }

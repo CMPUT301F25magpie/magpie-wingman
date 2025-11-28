@@ -24,7 +24,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         final TextView message;
         VH(View itemView) {
             super(itemView);
-            title = itemView.findViewById(R.id.text_title);
+            title = itemView.findViewById(R.id.text_notification_title);
             message = itemView.findViewById(R.id.text_message);
         }
     }
