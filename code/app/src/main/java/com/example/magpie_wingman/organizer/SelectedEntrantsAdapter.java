@@ -14,6 +14,10 @@ import com.example.magpie_wingman.data.model.UserProfile;
 
 import java.util.List;
 
+/**
+ * RecyclerView Adapter for displaying a list of selected entrants (UserProfile objects).
+ * Handles the view binding for each row and the click listener for the remove button.
+ */
 public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntrantsAdapter.ViewHolder> {
 
     public interface OnEntrantRemoveListener {
@@ -58,6 +62,7 @@ public class SelectedEntrantsAdapter extends RecyclerView.Adapter<SelectedEntran
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Ensure these IDs match list_item_selected_entrant.xml
             name = itemView.findViewById(R.id.text_view_name);
             removeBtn = itemView.findViewById(R.id.id_close);
         }
