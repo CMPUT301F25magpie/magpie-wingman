@@ -69,6 +69,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
     // Waitlist state for the current entrant.
     private boolean isOnWaitlist = false;
     private int     waitlistCount = 0;
+    private int waitlistCapacity = 0;
 
     // Formatter used to show the event date and time.
     private final SimpleDateFormat dateFormat =
@@ -167,7 +168,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
         }
 
         // fetch fresh details from Firestore by eventId
-        loadEventDetailsFromFirestore();
+        loadEventDetails();
 
         // toggle behavior
         loadWaitlistState();
@@ -221,7 +222,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
      * Fetches fresh event details from Firestore using the eventId.
      * This is important when we navigated here by QR and only had the ID.
      */
-    private void loadEventDetailsFromFirestore() {
+    private void loadEventDetails() {
         if (TextUtils.isEmpty(eventId)) return;
 
         DbManager.getInstance()
@@ -259,6 +260,8 @@ public class DetailedEventDescriptionFragment extends Fragment {
                     if (!TextUtils.isEmpty(eventDescription)) {
                         descriptionText.setText(eventDescription);
                     }
+                    waitlistCapacity = event.getEventCapacity();
+                    renderWaitlistCount();
 
                     // Poster: if we didn't get one from args, use Firestore value
                     if (TextUtils.isEmpty(eventPosterUrl)) {
@@ -341,8 +344,14 @@ public class DetailedEventDescriptionFragment extends Fragment {
     }
 
     private void renderWaitlistCount() {
-        if (textWaitingList != null) {
-            textWaitingList.setText("waiting list: " + waitlistCount);
+        if (textWaitingList == null) return;
+
+        if (waitlistCapacity > 0) {
+            // Show "current / capacity"
+            textWaitingList.setText("Waiting list: " + waitlistCount + " / " + waitlistCapacity);
+        } else {
+            // No capacity set on this event → just show the current size
+            textWaitingList.setText("Waiting list: " + waitlistCount);
         }
     }
 }
