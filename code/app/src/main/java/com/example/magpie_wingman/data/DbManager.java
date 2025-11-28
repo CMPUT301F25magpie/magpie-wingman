@@ -13,6 +13,7 @@ import com.example.magpie_wingman.data.model.UserRole;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -1102,6 +1103,72 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Cancels all entrants who did not sign up (US 02.06.04):
+     * - Moves all docs from "waitlist" and "registrable" into "cancelled"
+     * - Removes them from those subcollections.
+     *
+     * @param eventId the event to update.
+     * @return Task that completes when all writes are done.
+     */
+    public Task<Void> cancelNonRegisteredEntrants(String eventId) {
+        FirebaseFirestore db = getDb();
+        DocumentReference eventRef = db.collection("events").document(eventId);
+
+        CollectionReference waitlistRef   = eventRef.collection("waitlist");
+        CollectionReference registrableRef= eventRef.collection("registrable");
+        CollectionReference cancelledRef  = eventRef.collection("cancelled");
+
+        Task<QuerySnapshot> wTask = waitlistRef.get();
+        Task<QuerySnapshot> rTask = registrableRef.get();
+
+        return Tasks.whenAllSuccess(wTask, rTask)
+                .onSuccessTask(list -> {
+                    List<Task<Void>> writes = new ArrayList<>();
+
+                    QuerySnapshot waitlist = wTask.getResult();
+                    QuerySnapshot registrable = rTask.getResult();
+
+                    if (waitlist != null) {
+                        for (DocumentSnapshot d : waitlist.getDocuments()) {
+                            writes.add(cancelledRef.document(d.getId()).set(d.getData()));
+                            writes.add(waitlistRef.document(d.getId()).delete());
+                        }
+                    }
+                    if (registrable != null) {
+                        for (DocumentSnapshot d : registrable.getDocuments()) {
+                            writes.add(cancelledRef.document(d.getId()).set(d.getData()));
+                            writes.add(registrableRef.document(d.getId()).delete());
+                        }
+                    }
+
+                    return Tasks.whenAll(writes);
+                });
+    }
+
+    /**
+     * Retrieves all user IDs currently in the "cancelled" subcollection of a given event.
+     *
+     * @param eventId The unique identifier of the event.
+     * @return A Task that resolves to a List of user IDs (Strings)
+     *         representing users in the "cancelled" subcollection.
+     */
+    public Task<List<String>> getEventCancelled(String eventId) {
+        return db.collection("events")
+                .document(eventId)
+                .collection("cancelled")
+                .get()
+                .continueWith(task -> {
+                    List<String> users = new ArrayList<>();
+                    if (!task.isSuccessful() || task.getResult() == null) {
+                        return users;
+                    }
+                    for (DocumentSnapshot doc : task.getResult().getDocuments()) {
+                        users.add(doc.getId());
+                    }
+                    return users;
+                });
+    }
 
 
 }

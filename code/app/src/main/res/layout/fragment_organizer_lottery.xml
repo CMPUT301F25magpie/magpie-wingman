@@ -61,7 +61,7 @@
         android:background="@drawable/rounded_white"
         android:gravity="center"
         android:inputType="number"
-        android:text="e.g. 10"
+        android:hint="e.g. 10"
         android:textColor="#000000"
         android:textSize="16sp"/>
 
