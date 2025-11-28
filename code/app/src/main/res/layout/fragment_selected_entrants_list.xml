@@ -8,7 +8,6 @@
     android:background="#0B0B18"
     tools:context=".organizer.SelectedEntrantsListFragment">
 
-    <!-- Header Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -39,20 +38,34 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="Selected Entrants List"
+            android:text="Selected Entrants"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="#000000" />
     </LinearLayout>
 
-    <!-- RecyclerView Content -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_selected_entrants"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="16dp"
-        tools:listitem="@layout/list_item_selected_entrant" />
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_selected_entrants"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:clipToPadding="false"
+            tools:listitem="@layout/list_item_selected_entrant" />
+
+        <TextView
+            android:id="@+id/text_empty_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="No entrants selected yet.\nRun the lottery to pick entrants."
+            android:textColor="#888888"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:visibility="gone"/>
+    </FrameLayout>
+
 </LinearLayout>
-
-
