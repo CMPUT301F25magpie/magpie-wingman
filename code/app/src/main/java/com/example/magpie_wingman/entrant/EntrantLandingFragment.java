@@ -232,24 +232,19 @@ public class EntrantLandingFragment extends Fragment {
                 .orderBy("registrationEnd")
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
-                        if (getContext() != null) {
-                            Toast.makeText(getContext(), "Failed to load events", Toast.LENGTH_SHORT).show();
-                        }
+                        Toast.makeText(getContext(),
+                                "Failed to load events", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    Timestamp now = Timestamp.now();
-
-                    // Clear master list before rebuilding
                     masterEventList.clear();
+                    Timestamp now = Timestamp.now();
 
                     if (snapshot != null) {
                         for (QueryDocumentSnapshot doc : snapshot) {
-                            // Client-side: only keep events whose registration has started
                             Timestamp regStart = doc.getTimestamp("registrationStart");
                             if (regStart != null && regStart.compareTo(now) > 0) {
-                                // registrationStart is in the future → skip this event
-                                continue;
+                                continue; // skip
                             }
 
                             Event event = doc.toObject(Event.class);
@@ -257,7 +252,7 @@ public class EntrantLandingFragment extends Fragment {
                         }
                     }
 
-                    // Apply active filters to update the display list (eventList)
+                    // Now rebuild the filtered list & refresh the adapter
                     applyFilters();
                 });
     }
