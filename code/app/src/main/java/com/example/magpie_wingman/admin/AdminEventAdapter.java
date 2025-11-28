@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.model.Event;
 
@@ -75,7 +76,7 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ev
         String title = e.getEventName() != null ? e.getEventName() : "Untitled event";
         holder.titleText.setText(title);
 
-        // Date / time line (shown in text_event_details)
+        // Date / time line (null-safe)
         Date start = e.getEventStartTime();
         Date end = e.getEventEndTime();
         if (start != null && end != null) {
@@ -84,8 +85,10 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ev
             );
         } else if (start != null) {
             holder.detailsText.setText(dateFormat.format(start));
+        } else if (end != null) {
+            holder.detailsText.setText(dateFormat.format(end));
         } else {
-            holder.detailsText.setText(""); // nothing known
+            holder.detailsText.setText("");
         }
 
         // Location
@@ -98,11 +101,23 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ev
                 e.getDescription() != null ? e.getDescription() : ""
         );
 
-        // Waitlist count (if you are tracking it in Event)
+        // Waitlist count
         int waitlistCount = e.getWaitlistCount();
         holder.waitlistText.setText("waiting list: " + waitlistCount);
 
-        // TODO: POSTER IMAGE
+        // Poster image
+        String posterUrl = e.getEventPosterURL();
+        if (posterUrl != null && !posterUrl.trim().isEmpty()) {
+            holder.posterImage.setVisibility(View.VISIBLE);
+            Glide.with(holder.posterImage.getContext())
+                    .load(posterUrl)
+                    .centerCrop()
+                    .into(holder.posterImage);
+        } else {
+            // Either hide the image or show a default placeholder so recycled views don't show old posters
+            holder.posterImage.setVisibility(View.VISIBLE); // or GONE if you prefer
+            holder.posterImage.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
 
         // Remove button
         holder.removeButton.setOnClickListener(v -> {

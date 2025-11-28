@@ -46,9 +46,6 @@ public class LoginFragment extends Fragment {
         CheckBox rememberMe    = view.findViewById(R.id.rememberMe);
         Button loginButton     = view.findViewById(R.id.login);
 
-        Button btnEntrant      = view.findViewById(R.id.btn_test_entrant);
-        Button btnOrganizer    = view.findViewById(R.id.btn_test_organizer);
-        Button btnAdmin        = view.findViewById(R.id.btn_test_admin);
         TextView btnSignUpText = view.findViewById(R.id.signUpText);
 
         DbManager dbManager = DbManager.getInstance();
