@@ -162,17 +162,19 @@ public class DetailedEventDescriptionFragment extends Fragment {
         // Bind all the views from the layout.
         ImageButton backButton   = v.findViewById(R.id.button_back);
         ImageView   posterImage  = v.findViewById(R.id.image_event_poster);
-        // Load poster image if we have a URL
+
+        // Poster handling:
         if (!TextUtils.isEmpty(eventPosterUrl)) {
+            // If poster exists
+            posterImage.setVisibility(View.VISIBLE);
             Glide.with(this)
                     .load(eventPosterUrl)
-                    .placeholder(R.drawable.ic_music)   // fallback while loading
-                    .error(R.drawable.ic_music)         // fallback on error
                     .into(posterImage);
         } else {
-            // No URL: show default icon
-            posterImage.setImageResource(R.drawable.ic_music);
+            // No poster URL
+            posterImage.setVisibility(View.GONE);
         }
+
         TextView    titleText    = v.findViewById(R.id.text_event_title);
         TextView    locationText = v.findViewById(R.id.text_event_location);
         TextView    dateText     = v.findViewById(R.id.text_event_date);
@@ -196,13 +198,13 @@ public class DetailedEventDescriptionFragment extends Fragment {
             descriptionText.setText(eventDescription);
         }
 
-        // Back button simply pops this fragment off the back stack.
+        // Back button
         backButton.setOnClickListener(view -> {
             NavController navController = Navigation.findNavController(view);
             navController.popBackStack();
         });
 
-        // If we are missing event or user information, disable joining.
+        // If missing event or user information disable joining.
         if (eventId == null || entrantId == null) {
             joinButton.setEnabled(false);
             Toast.makeText(
@@ -213,7 +215,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
             return;
         }
 
-        // Load the current waitlist state from Firestore (my status + total count).
+        // Load the waitlist state from Firestore
         loadWaitlistState();
 
         // Tapping the button should toggle between join and leave on the waitlist.

@@ -34,7 +34,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
+import android.widget.ImageView;
+import com.bumptech.glide.Glide;
 /**
  * Organizer landing screen.
  *
@@ -270,6 +271,16 @@ public class OrganizerLandingFragment extends Fragment {
             } else {
                 holder.dateText.setText("Date TBD");
             }
+            String posterUrl = event.getEventPosterURL();
+            if (!TextUtils.isEmpty(posterUrl)) {
+                holder.posterImage.setVisibility(View.VISIBLE);
+                Glide.with(holder.posterImage.getContext())
+                        .load(posterUrl)
+                        .centerCrop()
+                        .into(holder.posterImage);
+            } else {
+                holder.posterImage.setVisibility(View.GONE);
+            }
 
             // Card click -> details
             holder.itemView.setOnClickListener(v -> cardClickListener.onEventClick(event));
@@ -287,14 +298,15 @@ public class OrganizerLandingFragment extends Fragment {
             TextView titleText;
             TextView locationText;
             TextView dateText;
-            ImageButton   editButton;
-
+            ImageButton editButton;
+            ImageView posterImage;
             EventViewHolder(@NonNull View itemView) {
                 super(itemView);
                 titleText    = itemView.findViewById(R.id.text_event_title);
                 locationText = itemView.findViewById(R.id.text_event_location);
                 dateText     = itemView.findViewById(R.id.text_event_date);
                 editButton   = itemView.findViewById(R.id.button_edit_event);
+                posterImage  = itemView.findViewById(R.id.image_event);
             }
         }
     }

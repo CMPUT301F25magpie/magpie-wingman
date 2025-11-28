@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -18,7 +19,7 @@ import com.google.android.material.imageview.ShapeableImageView;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
-
+import com.bumptech.glide.Glide;
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
 
     public interface OnJoinClick {
@@ -50,7 +51,16 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH h, int position) {
         Event e = events.get(position);
-
+        String posterUrl = e.getEventPosterURL();
+        if (posterUrl != null && !posterUrl.trim().isEmpty()) {
+            h.poster.setVisibility(View.VISIBLE);
+            Glide.with(h.poster.getContext())
+                    .load(posterUrl)
+                    .centerCrop()
+                    .into(h.poster);
+        } else {
+            h.poster.setVisibility(View.GONE);
+        }
         h.name.setText(e.getEventName());
         h.location.setText(e.getEventLocation() != null ? e.getEventLocation() : "TBD");
 
@@ -100,7 +110,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
     }
 
     static class VH extends RecyclerView.ViewHolder {
-        ShapeableImageView poster;
+        ImageView poster;
         TextView name, date, location, description, waitlistCount, joinText;
         LinearLayout joinContainer;
 
