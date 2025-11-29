@@ -1396,5 +1396,18 @@ public class DbManager {
         return tcs.getTask();
     }
 
+    public Task<Void> updateNotificationPrefs(String userId,
+                                              @Nullable Boolean notifAdmin,
+                                              @Nullable Boolean notifOrg) {
+        Map<String, Object> updates = new HashMap<>();
+        if (notifAdmin != null) {
+            updates.put("notifAdmin", notifAdmin);
+        }
+        if (notifOrg != null) {
+            updates.put("notifOrganizer", notifOrg);
+        }
+        return db.collection("users").document(userId).update(updates);
+    }
+
 }
 
