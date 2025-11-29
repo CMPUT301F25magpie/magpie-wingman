@@ -2,6 +2,7 @@ package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
@@ -67,7 +70,7 @@ public class EntrantInvitationsFragment extends Fragment {
 
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
-        db.collectionGroup("registrable")
+        db.collectionGroup("invited")
                 .whereEqualTo("userId", userId)
                 .get()
                 .addOnSuccessListener(snaps -> {
@@ -78,8 +81,8 @@ public class EntrantInvitationsFragment extends Fragment {
                     }
 
                     final int[] pending = {snaps.size()};
-                    for (DocumentSnapshot registrableDoc : snaps) {
-                        DocumentReference eventDoc = registrableDoc.getReference().getParent().getParent();
+                    for (DocumentSnapshot invitedDoc : snaps) {
+                        DocumentReference eventDoc = invitedDoc.getReference().getParent().getParent();
                         if (eventDoc == null) {
                             if (--pending[0] == 0) {
                                 out.sort((a, b) -> Long.compare(b.getInvitedAt(), a.getInvitedAt()));
@@ -97,7 +100,7 @@ public class EntrantInvitationsFragment extends Fragment {
                                 String datetime = formatRange(ev.get("registrationStart"),
                                         ev.get("registrationEnd"));
 
-                                long invitedAt = readInvitedAt(registrableDoc);
+                                long invitedAt = readInvitedAt(invitedDoc);
 
                                 out.add(new Invitation(eventId, name, datetime, location, desc, invitedAt));
                             }
@@ -115,11 +118,14 @@ public class EntrantInvitationsFragment extends Fragment {
                         });
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(),
-                                "Failed to load invitations: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show()
-                );
+                .addOnFailureListener(e -> {
+                    Log.e("Invitations", "Failed to load invitations: " + e.getMessage());
+                    Toast.makeText(
+                            requireContext(),
+                            "Failed to load invitations: " + e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                });
     }
 
     private void applyInvitations(List<Invitation> newItems) {
@@ -169,11 +175,23 @@ public class EntrantInvitationsFragment extends Fragment {
         if (TextUtils.isEmpty(userId)) return;
 
         DbManager.getInstance()
-                .addUserToRegistered(inv.getEventId(), userId)
+                .moveUserFromInvitedToRegistrable(inv.getEventId(), userId)
                 .addOnSuccessListener(_v -> {
                     removeInvitationAt(position);
                     Toast.makeText(requireContext(),
-                            "Invitation accepted.", Toast.LENGTH_SHORT).show();
+                            "Invitation accepted. You can now register.",
+                            Toast.LENGTH_SHORT).show();
+
+                    // Navigate to event details so user can complete registration
+                    Bundle args = new Bundle();
+                    args.putString("eventId", inv.getEventId());
+                    args.putString("eventName", inv.getEventName());
+                    args.putString("eventLocation", inv.getLocation());
+                    args.putString("eventDescription", inv.getDescription());
+                    // Start time will be reloaded from Firestore
+
+                    NavController navController = Navigation.findNavController(requireView());
+                    navController.navigate(R.id.detailedEventDescriptionFragment, args);
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(),
@@ -186,7 +204,7 @@ public class EntrantInvitationsFragment extends Fragment {
         if (TextUtils.isEmpty(userId)) return;
 
         DbManager.getInstance()
-                .cancelRegistrable(inv.getEventId(), userId)
+                .cancelInvited(inv.getEventId(), userId)
                 .addOnSuccessListener(_v -> {
                     removeInvitationAt(position);
                     Toast.makeText(requireContext(),

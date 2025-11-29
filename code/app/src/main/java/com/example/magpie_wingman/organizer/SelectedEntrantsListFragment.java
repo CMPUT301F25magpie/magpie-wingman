@@ -78,10 +78,10 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     }
 
     /**
-     * Fetches users from the 'registrable' subcollection of the event.
+     * Fetches users from the 'invited' subcollection of the event.
      */
     private void loadEntrants() {
-        DbManager.getInstance().getEventRegistrable(eventId)
+        DbManager.getInstance().getEventInvited(eventId)
                 .addOnSuccessListener(userIds -> {
                     selectedEntrantsList.clear();
 

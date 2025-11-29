@@ -19,7 +19,8 @@ import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.NotificationFunction;
 
 /**
- * US 02.05.01, US 02.07.01, US 02.07.02 and US 02.07.03 (first three done)
+ * Organizer sends notifications to waitlist / registrable / cancelled entrants.
+ * Covers US 02.05.01, US 02.07.01, US 02.07.02, US 02.07.03.
  */
 public class OrganizerNotifyFragment extends Fragment {
 

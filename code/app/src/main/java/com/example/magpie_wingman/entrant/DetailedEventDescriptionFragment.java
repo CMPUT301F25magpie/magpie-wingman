@@ -23,6 +23,7 @@ import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.model.User;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,10 +32,10 @@ import java.util.Locale;
 /**
  * Fragment that displays the full details of a single event for entrant users.
  *
- * This version merges:
- *  - Poster hero image (only show when URL exists, otherwise hide)
- *  - QR flow: if we only have eventId, fetch full details from Firestore
- *  - Waitlist join/leave logic
+ *  Implemented functionality
+ *  - Poster image only show when URL exists, otherwise hide
+ *  - QR flow
+ *  - Waitlist / invitation / registration logic
  */
 public class DetailedEventDescriptionFragment extends Fragment {
 
@@ -45,6 +46,15 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private static final String ARG_EVENT_START_TIME  = "eventStartTime";
     private static final String ARG_EVENT_DESCRIPTION = "eventDescription";
     private static final String ARG_EVENT_POSTER_URL  = "eventPosterURL";
+
+    // Membership states for the current entrant
+    private enum MembershipState {
+        NONE,          // not in any list
+        WAITLIST,      // in waitlist
+        INVITED,       // in invited
+        REGISTRABLE,   // in registrable
+        REGISTERED     // in registered
+    }
 
     // Event and user identifiers.
     private String eventId;
@@ -66,10 +76,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private ImageView posterImage;
     private Button   joinButton;
 
-    // Waitlist state for the current entrant.
-    private boolean isOnWaitlist = false;
-    private int     waitlistCount = 0;
-    private int waitlistCapacity = 0;
+    // Membership + waitlist info
+    private MembershipState membershipState = MembershipState.NONE;
+    private int waitlistCount = 0;
 
     // Formatter used to show the event date and time.
     private final SimpleDateFormat dateFormat =
@@ -161,17 +170,19 @@ public class DetailedEventDescriptionFragment extends Fragment {
             joinButton.setEnabled(false);
             Toast.makeText(
                     requireContext(),
-                    "Missing event or user information; cannot join waitlist.",
+                    "Missing event or user information; cannot join.",
                     Toast.LENGTH_LONG
             ).show();
             return;
         }
 
         // fetch fresh details from Firestore by eventId
-        loadEventDetails();
+        loadEventDetailsFromFirestore();
 
-        // toggle behavior
-        loadWaitlistState();
+        // load membership & waitlist info
+        loadMembershipStateAndCount();
+
+        // main button behavior
         joinButton.setOnClickListener(v1 -> toggleJoinLeave());
     }
 
@@ -222,7 +233,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
      * Fetches fresh event details from Firestore using the eventId.
      * This is important when we navigated here by QR and only had the ID.
      */
-    private void loadEventDetails() {
+    private void loadEventDetailsFromFirestore() {
         if (TextUtils.isEmpty(eventId)) return;
 
         DbManager.getInstance()
@@ -260,8 +271,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
                     if (!TextUtils.isEmpty(eventDescription)) {
                         descriptionText.setText(eventDescription);
                     }
-                    waitlistCapacity = event.getEventCapacity();
-                    renderWaitlistCount();
 
                     // Poster: if we didn't get one from args, use Firestore value
                     if (TextUtils.isEmpty(eventPosterUrl)) {
@@ -281,19 +290,18 @@ public class DetailedEventDescriptionFragment extends Fragment {
     }
 
     // -------------------------------------------------------------------------
-    // Waitlist logic
+    // Membership + waitlist logic
     // -------------------------------------------------------------------------
 
-    private void loadWaitlistState() {
-        // Check if this entrant is already on the waitlist.
-        DbManager.getInstance()
-                .isUserInWaitlist(eventId, entrantId)
-                .addOnSuccessListener(isIn -> {
-                    isOnWaitlist = Boolean.TRUE.equals(isIn);
-                    renderJoinButton();
-                });
+    /**
+     * Loads:
+     *  - which list the user is in (waitlist, invited, registrable, registered)
+     *  - the current waitlist count
+     */
+    private void loadMembershipStateAndCount() {
+        refreshMembershipState();
 
-        // Fetch the full waitlist and compute its size.
+        // Waitlist size for display
         DbManager.getInstance()
                 .getEventWaitlist(eventId)
                 .addOnSuccessListener(users -> {
@@ -302,56 +310,196 @@ public class DetailedEventDescriptionFragment extends Fragment {
                 });
     }
 
+    private void refreshMembershipState() {
+        if (TextUtils.isEmpty(eventId) || TextUtils.isEmpty(entrantId)) return;
+
+        FirebaseFirestore db = DbManager.getInstance().getDb();
+
+        // Highest priority: registered
+        db.collection("events")
+                .document(eventId)
+                .collection("registered")
+                .document(entrantId)
+                .get()
+                .addOnSuccessListener(regDoc -> {
+                    if (regDoc.exists()) {
+                        membershipState = MembershipState.REGISTERED;
+                        renderJoinButton();
+                    } else {
+                        // Next: registrable
+                        checkRegistrable(db);
+                    }
+                });
+    }
+
+    private void checkRegistrable(FirebaseFirestore db) {
+        db.collection("events")
+                .document(eventId)
+                .collection("registrable")
+                .document(entrantId)
+                .get()
+                .addOnSuccessListener(regableDoc -> {
+                    if (regableDoc.exists()) {
+                        membershipState = MembershipState.REGISTRABLE;
+                        renderJoinButton();
+                    } else {
+                        // Next: invited
+                        checkInvited(db);
+                    }
+                });
+    }
+
+    private void checkInvited(FirebaseFirestore db) {
+        db.collection("events")
+                .document(eventId)
+                .collection("invited")
+                .document(entrantId)
+                .get()
+                .addOnSuccessListener(invitedDoc -> {
+                    if (invitedDoc.exists()) {
+                        membershipState = MembershipState.INVITED;
+                        renderJoinButton();
+                    } else {
+                        // Finally: waitlist
+                        DbManager.getInstance()
+                                .isUserInWaitlist(eventId, entrantId)
+                                .addOnSuccessListener(isIn -> {
+                                    membershipState = Boolean.TRUE.equals(isIn)
+                                            ? MembershipState.WAITLIST
+                                            : MembershipState.NONE;
+                                    renderJoinButton();
+                                });
+                    }
+                });
+    }
+
+    /**
+     * Main button behavior depending on membershipState:
+     *  - NONE        -> join waitlist
+     *  - WAITLIST    -> leave waitlist
+     *  - INVITED     -> accept invitation (invited -> registrable)
+     *  - REGISTRABLE -> register (registrable -> registered)
+     *  - REGISTERED  -> no-op
+     */
     private void toggleJoinLeave() {
+        if (joinButton == null) return;
         joinButton.setEnabled(false);
 
-        if (isOnWaitlist) {
-            // Leave waitlist
-            DbManager.getInstance()
-                    .cancelWaitlist(eventId, entrantId)
-                    .addOnSuccessListener(v -> {
-                        isOnWaitlist = false;
-                        if (waitlistCount > 0) waitlistCount--;
-                        renderJoinButton();
-                        renderWaitlistCount();
-                        Toast.makeText(requireContext(),
-                                "Left waitlist", Toast.LENGTH_SHORT).show();
-                        joinButton.setEnabled(true);
-                    })
-                    .addOnFailureListener(e -> joinButton.setEnabled(true));
-        } else {
-            // Join waitlist
-            DbManager.getInstance()
-                    .addUserToWaitlist(eventId, entrantId)
-                    .addOnSuccessListener(v -> {
-                        isOnWaitlist = true;
-                        waitlistCount++;
-                        renderJoinButton();
-                        renderWaitlistCount();
-                        Toast.makeText(requireContext(),
-                                "Joined waitlist", Toast.LENGTH_SHORT).show();
-                        joinButton.setEnabled(true);
-                    })
-                    .addOnFailureListener(e -> joinButton.setEnabled(true));
+        switch (membershipState) {
+            case NONE:
+                // Join waitlist
+                DbManager.getInstance()
+                        .addUserToWaitlist(eventId, entrantId)
+                        .addOnSuccessListener(v -> {
+                            membershipState = MembershipState.WAITLIST;
+                            waitlistCount++;
+                            renderJoinButton();
+                            renderWaitlistCount();
+                            Toast.makeText(requireContext(),
+                                    "Joined waitlist", Toast.LENGTH_SHORT).show();
+                            joinButton.setEnabled(true);
+                        })
+                        .addOnFailureListener(e -> joinButton.setEnabled(true));
+                break;
+
+            case WAITLIST:
+                // Leave waitlist
+                DbManager.getInstance()
+                        .cancelWaitlist(eventId, entrantId)
+                        .addOnSuccessListener(v -> {
+                            membershipState = MembershipState.NONE;
+                            if (waitlistCount > 0) waitlistCount--;
+                            renderJoinButton();
+                            renderWaitlistCount();
+                            Toast.makeText(requireContext(),
+                                    "Left waitlist", Toast.LENGTH_SHORT).show();
+                            joinButton.setEnabled(true);
+                        })
+                        .addOnFailureListener(e -> joinButton.setEnabled(true));
+                break;
+
+            case INVITED:
+                // Accept invitation: invited -> registrable
+                DbManager.getInstance()
+                        .moveUserFromInvitedToRegistrable(eventId, entrantId)
+                        .addOnSuccessListener(v -> {
+                            membershipState = MembershipState.REGISTRABLE;
+                            renderJoinButton();
+                            Toast.makeText(requireContext(),
+                                    "Invitation accepted. You can now register.",
+                                    Toast.LENGTH_SHORT).show();
+                            joinButton.setEnabled(true);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(requireContext(),
+                                    "Failed to accept invitation: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                            joinButton.setEnabled(true);
+                        });
+                break;
+
+            case REGISTRABLE:
+                // Register: registrable -> registered
+                DbManager.getInstance()
+                        .addUserToRegistered(eventId, entrantId)
+                        .addOnSuccessListener(v -> {
+                            membershipState = MembershipState.REGISTERED;
+                            renderJoinButton();
+                            Toast.makeText(requireContext(),
+                                    "You are now registered.", Toast.LENGTH_SHORT).show();
+                            // keep disabled
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(requireContext(),
+                                    "Failed to register: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                            joinButton.setEnabled(true);
+                        });
+                break;
+
+            case REGISTERED:
+                // Nothing to do; already registered
+                Toast.makeText(requireContext(),
+                        "You are already registered.", Toast.LENGTH_SHORT).show();
+                joinButton.setEnabled(false);
+                break;
         }
     }
 
     private void renderJoinButton() {
         if (joinButton == null) return;
-        joinButton.setText(
-                isOnWaitlist ? R.string.leave_waitlist : R.string.join_waitlist
-        );
+
+        switch (membershipState) {
+            case NONE:
+                joinButton.setEnabled(true);
+                joinButton.setText(R.string.join_waitlist);
+                break;
+
+            case WAITLIST:
+                joinButton.setEnabled(true);
+                joinButton.setText(R.string.leave_waitlist);
+                break;
+
+            case INVITED:
+                joinButton.setEnabled(true);
+                joinButton.setText("Accept invitation");
+                break;
+
+            case REGISTRABLE:
+                joinButton.setEnabled(true);
+                joinButton.setText("Register");
+                break;
+
+            case REGISTERED:
+                joinButton.setEnabled(false);
+                joinButton.setText("Registered");
+                break;
+        }
     }
 
     private void renderWaitlistCount() {
-        if (textWaitingList == null) return;
-
-        if (waitlistCapacity > 0) {
-            // Show "current / capacity"
-            textWaitingList.setText("Waiting list: " + waitlistCount + " / " + waitlistCapacity);
-        } else {
-            // No capacity set on this event → just show the current size
-            textWaitingList.setText("Waiting list: " + waitlistCount);
+        if (textWaitingList != null) {
+            textWaitingList.setText("waiting list: " + waitlistCount);
         }
     }
 }
