@@ -12,7 +12,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- HEADER BAR -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
@@ -47,7 +46,6 @@
                 android:textSize="18sp"
                 android:layout_marginStart="8dp" />
 
-            <!-- Spacer pushes info button to the right -->
             <View
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -64,7 +62,6 @@
                 app:tint="#000000" />
         </LinearLayout>
 
-        <!-- EVENT TITLE -->
         <EditText
             android:id="@+id/edit_event_title"
             android:layout_width="match_parent"
@@ -76,13 +73,23 @@
             android:textColor="#000000"
             android:textColorHint="#888888" />
 
-        <!-- LIMIT AND OPTIONS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:weightSum="3">
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/edit_capacity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:hint="Max Capacity"
+                android:inputType="number"
+                android:background="@drawable/edittext_white"
+                android:padding="12dp"
+                android:textColor="#000000" />
 
             <EditText
                 android:id="@+id/edit_limit"
@@ -90,45 +97,47 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:hint="Limit"
+                android:hint="Waitlist Limit"
                 android:inputType="number"
                 android:background="@drawable/edittext_white"
                 android:padding="12dp"
                 android:textColor="#000000" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
 
             <CheckBox
                 android:id="@+id/checkbox_geo"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="GEO"
+                android:text="Geo-Location"
                 android:textColor="#FFFFFF"
                 android:buttonTint="#2E5BFF"
-                android:gravity="center" />
+                android:layout_marginEnd="16dp"/>
 
             <CheckBox
                 android:id="@+id/checkbox_qr"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="QR"
+                android:text="Generate QR"
                 android:textColor="#FFFFFF"
-                android:buttonTint="#2E5BFF"
-                android:gravity="center" />
+                android:buttonTint="#2E5BFF"/>
         </LinearLayout>
 
-        <!-- POSTER UPLOAD -->
         <Button
             android:id="@+id/button_upload_poster"
             android:layout_width="match_parent"
             android:layout_height="150dp"
             android:layout_marginTop="8dp"
-            android:text="+ Upload Poster"
+            android:text="+ Re-upload Poster"
             android:textColor="#000000"
             android:background="@drawable/edittext_white"
             android:textStyle="bold" />
 
-        <!-- LOCATION INPUTS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -169,7 +178,6 @@
                 android:textColor="#000000" />
         </LinearLayout>
 
-        <!-- DESCRIPTION -->
         <EditText
             android:id="@+id/edit_description"
             android:layout_width="match_parent"
@@ -181,7 +189,6 @@
             android:padding="12dp"
             android:textColor="#000000" />
 
-        <!-- DATE & TIME -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -213,7 +220,6 @@
                 android:textColor="#000000" />
         </LinearLayout>
 
-        <!-- REGISTRATION DATES -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -242,7 +248,6 @@
                 android:textColor="#000000" />
         </LinearLayout>
 
-        <!-- FILTER ICONS -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -300,7 +305,6 @@
                 android:contentDescription="Other" />
         </LinearLayout>
 
-        <!-- BUTTONS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -324,7 +328,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="CREATE"
+                android:text="SAVE"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"
                 android:background="@drawable/blue_button_bg"
@@ -332,4 +336,3 @@
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
-
