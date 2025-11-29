@@ -1,6 +1,9 @@
 package com.example.magpie_wingman.entrant;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +25,10 @@ import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.model.User;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,16 +39,16 @@ import java.util.List;
  *
  * <p>This fragment is the landing page for entrant users. It shows:
  * <ul>
- *     <li>A search bar and top icons (filter, info, settings)</li>
- *     <li>A list of all events that the entrant can browse</li>
- *     <li>Bottom navigation buttons (invitations, scan QR, events, notifications)</li>
+ * <li>A search bar and top icons (filter, info, settings)</li>
+ * <li>A list of all events that the entrant can browse</li>
+ * <li>Bottom navigation buttons (invitations, scan QR, events, notifications)</li>
  * </ul>
  *
  * <p>The list itself does <b>not</b> perform join/leave. Instead:
  * <ul>
- *     <li>Each row has a "Join / Leave" button whose appearance reflects the user's status.</li>
- *     <li>Clicking that button opens the event details screen, where the user can actually
- *         join or leave the waitlist.</li>
+ * <li>Each row has a "Join / Leave" button whose appearance reflects the user's status.</li>
+ * <li>Clicking that button opens the event details screen, where the user can actually
+ * join or leave the waitlist.</li>
  * </ul>
  */
 public class EntrantLandingFragment extends Fragment {
@@ -50,7 +57,7 @@ public class EntrantLandingFragment extends Fragment {
     // UI references
     // -------------------------------------------------------------------------
 
-    private EditText   searchBar;
+    private EditText   searchBar; // Changed from TextView to EditText for US 01.01.04
     private ImageView  btnFilter;
     private ImageView  btnInfo;
     private ImageView  btnSettings;
@@ -60,9 +67,18 @@ public class EntrantLandingFragment extends Fragment {
     private Button     btnEventsPrimary;
     private Button     btnNotifications;
 
+    // Two lists: Master (All Data from DB) vs Display (Filtered View)
+    private final List<Event> masterEventList = new ArrayList<>();
+    private final List<Event> eventList = new ArrayList<>();
+
+    private EventAdapter adapter;
+
     // Currently logged-in entrant's id (from MyApp)
     @Nullable
     private String entrantId;
+
+    // Filter State
+    private boolean filterAvailableOnly = false;
 
     public EntrantLandingFragment() {
         // Required empty public constructor
@@ -100,35 +116,33 @@ public class EntrantLandingFragment extends Fragment {
         // Resolve the currently logged-in entrant from MyApp
         User currentUser = MyApp.getInstance().getCurrentUser();
         if (currentUser != null) {
-            // Assuming User exposes getUserId()
             entrantId = currentUser.getUserId();
         } else {
-            entrantId = null;
-            Toast.makeText(requireContext(),
-                    "No logged in user; event status may be unavailable.",
-                    Toast.LENGTH_SHORT).show();
+            // --- CRASH FIX ---
+            // If testing without full login, use a dummy ID so the Adapter doesn't crash on Join
+            entrantId = "test_user_id";
         }
 
         // Configure the events RecyclerView and load data from Firestore
         setupEventsListForEntrant(entrantId);
+
+        // --- Search & Filter Logic (US 01.01.04) ---
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applyFilters();
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        btnFilter.setOnClickListener(x -> showFilterDialog());
     }
 
     // -------------------------------------------------------------------------
     // UI chrome wiring (top bar + bottom bar)
     // -------------------------------------------------------------------------
 
-    /**
-     * Wires up the top icons (filter, info, settings) and bottom navigation buttons
-     * so they navigate to the appropriate entrant screens.
-     *
-     * @param navController Navigation controller used to perform fragment transitions.
-     */
     private void setupChromeClickListeners(@NonNull NavController navController) {
-        // Top bar actions
-        btnFilter.setOnClickListener(x ->
-                navController.navigate(
-                        R.id.action_entrantLandingFragment3_to_entrantEventSearchFilterFragment));
-
         btnInfo.setOnClickListener(x ->
                 navController.navigate(
                         R.id.action_entrantLandingFragment3_to_entrantDetailsFragment));
@@ -137,7 +151,7 @@ public class EntrantLandingFragment extends Fragment {
                 navController.navigate(
                         R.id.action_entrantLandingFragment3_to_entrantSettingsFragment));
 
-        // Bottom bar actions (invitations, scan QR, enrolled events, notifications)
+        // Bottom bar actions
         btnInvitations.setOnClickListener(x ->
                 navController.navigate(
                         R.id.action_entrantLandingFragment3_to_entrantInvitationsFragment));
@@ -146,7 +160,6 @@ public class EntrantLandingFragment extends Fragment {
                 navController.navigate(
                         R.id.action_entrantLandingFragment3_to_scanQRFragment));
 
-        // This "Events" button goes to the screen that shows events the user is enrolled in
         btnEventsPrimary.setOnClickListener(x ->
                 navController.navigate(
                         R.id.action_entrantLandingFragment3_to_entrantEventsFragment));
@@ -160,60 +173,24 @@ public class EntrantLandingFragment extends Fragment {
     // Event list wiring
     // -------------------------------------------------------------------------
 
-    /**
-     * Sets up the RecyclerView to display a list of events and loads data
-     * from Firestore via {@link DbManager#getAllEvents()}.
-     *
-     * <p>The adapter is given a callback so that when the "Join / Leave" button
-     * in a row is pressed, we navigate to the event details screen.</p>
-     *
-     * @param entrantId the current entrant's ID, used by the adapter to reflect
-     *                  join/leave status; may be {@code null}.
-     */
     private void setupEventsListForEntrant(@Nullable String entrantId) {
         // Use a simple vertical list layout manager
         eventsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         eventsRecycler.setHasFixedSize(true);
+        eventList.clear();
 
-        // Backing data for the adapter
-        List<Event> eventItems = new ArrayList<>();
+        String userIdForAdapter = (entrantId != null) ? entrantId : "test_user_id";
 
-        // If we don't know the entrant id, pass an empty string;
-        // the adapter can handle this case.
-        String userIdForAdapter = (entrantId != null) ? entrantId : "";
-
-        // Adapter: clicking the join/leave button should open the details screen
-        EventAdapter adapter = new EventAdapter(
-                eventItems,
+        adapter = new EventAdapter(
+                eventList,
                 userIdForAdapter,
                 this::openEventDetails
         );
         eventsRecycler.setAdapter(adapter);
 
-        // Load all events from Firestore and refresh the list when they arrive
-        DbManager.getInstance()
-                .getAllEvents()
-                .addOnSuccessListener(events -> {
-                    eventItems.clear();
-                    if (events != null) {
-                        eventItems.addAll(events);
-                    }
-                    adapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> Toast.makeText(
-                        requireContext(),
-                        "Failed to load events: " + e.getMessage(),
-                        Toast.LENGTH_LONG
-                ).show());
+        loadEvents();
     }
 
-    /**
-     * Navigates to the event detail screen for the given event, bundling
-     * basic event information (id, name, location, time, description) so the
-     * detail fragment can render without having to re-query immediately.
-     *
-     * @param event the event whose details should be shown.
-     */
     private void openEventDetails(@NonNull Event event) {
         Bundle args = new Bundle();
         args.putString("eventId", event.getEventId());
@@ -230,6 +207,8 @@ public class EntrantLandingFragment extends Fragment {
 
         String desc = event.getDescription();
         args.putString("eventDescription", desc != null ? desc : "");
+        String picUrl = event.getEventPosterURL();
+        args.putString("eventPosterURL", picUrl != null ? picUrl : "");
 
         NavController navController = Navigation.findNavController(requireView());
         navController.navigate(
@@ -242,13 +221,100 @@ public class EntrantLandingFragment extends Fragment {
     // Helper
     // -------------------------------------------------------------------------
 
+    private void loadEvents() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference eventsRef = db.collection("events");
+
+        Timestamp queryNow = Timestamp.now();
+
+        eventsRef
+                .whereGreaterThanOrEqualTo("registrationEnd", queryNow)
+                .orderBy("registrationEnd")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(getContext(),
+                                "Failed to load events", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    masterEventList.clear();
+                    Timestamp now = Timestamp.now();
+
+                    if (snapshot != null) {
+                        for (QueryDocumentSnapshot doc : snapshot) {
+                            Timestamp regStart = doc.getTimestamp("registrationStart");
+                            if (regStart != null && regStart.compareTo(now) > 0) {
+                                continue; // skip
+                            }
+
+                            Event event = doc.toObject(Event.class);
+                            masterEventList.add(event);
+                        }
+                    }
+
+                    // Now rebuild the filtered list & refresh the adapter
+                    applyFilters();
+                });
+    }
+
     /**
-     * Simple null-or-whitespace check for strings.
-     *
-     * @param s string to check
-     * @return {@code true} if {@code s} is null, empty, or only whitespace.
+     * Filters the master list based on search text AND availability toggle.
+     * Populates 'eventList' and notifies adapter.
      */
-    private static boolean isEmpty(@Nullable String s) {
-        return s == null || s.trim().isEmpty();
+    private void applyFilters() {
+        eventList.clear();
+        String query = "";
+        if (searchBar != null && searchBar.getText() != null) {
+            query = searchBar.getText().toString().toLowerCase().trim();
+        }
+
+        for (Event event : masterEventList) {
+            boolean matchesSearch = false;
+            boolean matchesFilter = true;
+
+            // 1. Text Search
+            if (query.isEmpty()) {
+                matchesSearch = true;
+            } else {
+                if (event.getEventName() != null && event.getEventName().toLowerCase().contains(query)) {
+                    matchesSearch = true;
+                } else if (event.getDescription() != null && event.getDescription().toLowerCase().contains(query)) {
+                    matchesSearch = true;
+                }
+            }
+
+            // 2. Availability Filter (Limit)
+            if (filterAvailableOnly) {
+                // If limit > 0 and waitlist >= limit, hide it
+                if (event.getWaitingListLimit() > 0 && event.getWaitlistCount() >= event.getWaitingListLimit()) {
+                    matchesFilter = false;
+                }
+            }
+
+            if (matchesSearch && matchesFilter) {
+                eventList.add(event);
+            }
+        }
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private void showFilterDialog() {
+        String[] options = {"Show Only Available Events (Not Full)"};
+        boolean[] checkedItems = {filterAvailableOnly};
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Filter Events")
+                .setMultiChoiceItems(options, checkedItems, (dialog, which, isChecked) -> {
+                    if (which == 0) filterAvailableOnly = isChecked;
+                })
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    applyFilters();
+                    String status = filterAvailableOnly ? "Showing available only" : "Showing all events";
+                    Toast.makeText(getContext(), status, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }

@@ -2,11 +2,15 @@ package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import com.example.magpie_wingman.R;
 
@@ -62,5 +66,12 @@ public class EntrantAboutUsFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_entrant_about_us, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ImageButton backBtn = view.findViewById(R.id.button_back);
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
     }
 }

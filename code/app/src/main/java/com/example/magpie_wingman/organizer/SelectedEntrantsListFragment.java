@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,14 +24,22 @@ import com.example.magpie_wingman.data.model.UserRole;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment that displays the list of entrants who have been "Selected" (Invited to Apply).
+ * This corresponds to the 'registrable' subcollection in Firestore.
+ * The Organizer can view this list and manually remove entrants if needed.
+ */
 public class SelectedEntrantsListFragment extends Fragment implements SelectedEntrantsAdapter.OnEntrantRemoveListener {
 
     private RecyclerView recyclerView;
+    private TextView emptyStateText;
     private SelectedEntrantsAdapter adapter;
     private List<UserProfile> selectedEntrantsList;
     private String eventId;
 
-    public SelectedEntrantsListFragment() { }
+    public SelectedEntrantsListFragment() {
+        // Required empty public constructor
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,6 +62,8 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
+        emptyStateText = view.findViewById(R.id.text_empty_state); // Bind the new text view
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         selectedEntrantsList = new ArrayList<>();
@@ -61,19 +72,31 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
         if (eventId != null) {
             loadEntrants();
+        } else {
+            Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
         }
     }
 
+    /**
+     * Fetches users from the 'invited' subcollection of the event.
+     */
     private void loadEntrants() {
-        DbManager.getInstance().getEventRegistrable(eventId)
+        DbManager.getInstance().getEventInvited(eventId)
                 .addOnSuccessListener(userIds -> {
                     selectedEntrantsList.clear();
+
+                    // Handle Empty State
                     if (userIds.isEmpty()) {
                         adapter.notifyDataSetChanged();
+                        toggleEmptyState(true);
                         return;
                     }
+                    toggleEmptyState(false);
+
+                    // Fetch names for each ID
                     for (String uid : userIds) {
                         DbManager.getInstance().getUserName(uid).addOnSuccessListener(name -> {
+                            // Using UserProfile model for display
                             UserProfile profile = new UserProfile(uid, name, UserRole.ENTRANT);
                             selectedEntrantsList.add(profile);
                             adapter.notifyItemInserted(selectedEntrantsList.size() - 1);
@@ -83,13 +106,30 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                 .addOnFailureListener(e -> Log.e("SelectedEntrants", "Error loading list", e));
     }
 
+    private void toggleEmptyState(boolean isEmpty) {
+        if (isEmpty) {
+            recyclerView.setVisibility(View.GONE);
+            emptyStateText.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyStateText.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     public void onRemoveClicked(int position, UserProfile user) {
+        // Remove from 'registrable' collection in Firestore
         DbManager.getInstance().cancelRegistrable(eventId, user.getUserId())
                 .addOnSuccessListener(aVoid -> {
                     selectedEntrantsList.remove(position);
                     adapter.notifyItemRemoved(position);
                     adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+
+                    // Check if list became empty after removal
+                    if (selectedEntrantsList.isEmpty()) {
+                        toggleEmptyState(true);
+                    }
+
                     Toast.makeText(getContext(), "Removed " + user.getName(), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to remove", Toast.LENGTH_SHORT).show());

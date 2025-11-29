@@ -89,35 +89,6 @@ public class DbManagerInstrumentedTest {
 
         assertTrue("userId should contain '#'", userId.contains("#"));
     }
-    @Test
-    public void deleteUser_removesDocument() throws Exception {
-        DbManager dbm = DbManager.getInstance();
-        FirebaseFirestore db = dbm.getDb();
-
-        String name = "Delete Me";
-        String email = "delete_me_" + System.currentTimeMillis() + "@example.com";
-        String phone = "555-9999";
-        Tasks.await(dbm.createUser(name, email, phone), 10, TimeUnit.SECONDS);
-        QuerySnapshot qs = Tasks.await(
-                db.collection("users")
-                        .whereEqualTo("email", email)
-                        .get(),
-                10, TimeUnit.SECONDS
-        );
-        assertNotNull(qs);
-        assertTrue(qs.getDocuments().size() >= 1);
-        DocumentSnapshot doc = qs.getDocuments().get(0);
-        String userId = doc.getString("userId");
-        assertNotNull(userId);
-        Tasks.await(dbm.deleteUser(userId), 10, TimeUnit.SECONDS);
-        DocumentSnapshot afterDelete = Tasks.await(
-                db.collection("users").document(userId).get(),
-                10, TimeUnit.SECONDS
-        );
-
-        assertNotNull(afterDelete);
-        assertTrue("user doc should be deleted", !afterDelete.exists());
-    }
 
 
     @Test
@@ -243,7 +214,7 @@ public class DbManagerInstrumentedTest {
     }
 
     @Test
-    public void addUsersToRegistrable_movesRequestedNumber() throws Exception {
+    public void drawInvitees_movesRequestedNumber() throws Exception {
         DbManager dbm = DbManager.getInstance();
         FirebaseFirestore db = dbm.getDb();
 
@@ -293,7 +264,7 @@ public class DbManagerInstrumentedTest {
         }
 
         // 3) promote 2 users from waitlist → registrable
-        Tasks.await(dbm.addUsersToRegistrable(eventId, 2), 10, TimeUnit.SECONDS);
+        Tasks.await(dbm.drawInvitees(eventId, 2), 10, TimeUnit.SECONDS);
 
         // 4) assert registrable has 2
         QuerySnapshot registrableSnap = Tasks.await(

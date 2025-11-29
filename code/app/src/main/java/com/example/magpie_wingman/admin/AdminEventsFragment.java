@@ -1,67 +1,147 @@
-
 package com.example.magpie_wingman.admin;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.Event;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link AdminEventsFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * Admin screen for viewing all events and removing them (US 03.01.01).
+ *
+ * This fragment loads every event from Firestore and shows them in a list.
+ * The admin can tap the "X" button beside an event to permanently delete it.
  */
-public class AdminEventsFragment extends Fragment {
+public class AdminEventsFragment extends Fragment
+        implements AdminEventAdapter.OnEventRemoveClickListener {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView recyclerView;
+    private AdminEventAdapter adapter;
+    private final List<Event> eventList = new ArrayList<>();
 
     public AdminEventsFragment() {
         // Required empty public constructor
     }
 
     /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AdminEventsFragment.
+     * Called when the fragment needs its UI.
+     * Inflates the layout that contains the header bar and the RecyclerView.
      */
-    // TODO: Rename and change types and number of parameters
-    public static AdminEventsFragment newInstance(String param1, String param2) {
-        AdminEventsFragment fragment = new AdminEventsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_admin_events, container, false);
+    }
+
+    /**
+     * Called after the view is created.
+     * Sets up the back button, the RecyclerView, and starts loading events from Firestore.
+     */
+    @Override
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Back arrow
+        ImageButton backBtn = view.findViewById(R.id.button_back);
+        backBtn.setOnClickListener(v ->
+                Navigation.findNavController(view).navigateUp()
+        );
+
+        // Event list
+        recyclerView = view.findViewById(R.id.recycler_view_admin_events);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+
+        adapter = new AdminEventAdapter(eventList, this);
+        recyclerView.setAdapter(adapter);
+
+        // Load events from Firestore
+        loadEvents();
+    }
+
+    /**
+     * Loads all events from Firestore using DbManager and displays them.
+     * This is a one-time fetch; if events change on the server,
+     * the admin can refresh by leaving and re-entering this screen.
+     */
+    private void loadEvents() {
+        DbManager.getInstance()
+                .getAllEvents()
+                .addOnSuccessListener(events -> {
+                    eventList.clear();
+                    eventList.addAll(events);
+                    adapter.notifyDataSetChanged();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(requireContext(),
+                                "Failed to load events: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show());
+    }
+
+    /**
+     * Called when the remove button for a row is tapped.
+     * Shows a confirmation dialog. If the admin confirms, deletes the event
+     * and its sub-collections from Firestore and removes it from the list.
+     *
+     * @param position index of the event row that was clicked.
+     */
+    @Override
+    public void onRemoveEventClicked(int position) {
+        if (position < 0 || position >= eventList.size()) {
+            return;
+        }
+
+        Event target = eventList.get(position);
+        String eventId = target.getEventId();
+        String eventName = target.getEventName() != null
+                ? target.getEventName()
+                : "this event";
+
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(requireContext(),
+                    "Missing event ID – cannot remove this event.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Remove " + eventName + "?")
+                .setMessage("This will delete the event and all related data. "
+                        + "This action cannot be undone.")
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton("Remove", (d, w) -> {
+                    DbManager.getInstance()
+                            .deleteEvent(eventId)
+                            .addOnSuccessListener(v -> {
+                                eventList.remove(position);
+                                adapter.notifyItemRemoved(position);
+                                adapter.notifyItemRangeChanged(position, eventList.size());
+                                Toast.makeText(requireContext(),
+                                        "Event removed.",
+                                        Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(requireContext(),
+                                            "Remove failed: " + e.getMessage(),
+                                            Toast.LENGTH_LONG).show());
+                })
+                .show();
     }
 }

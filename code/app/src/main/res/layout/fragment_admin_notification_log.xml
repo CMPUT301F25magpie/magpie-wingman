@@ -54,5 +54,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="12dp"
-        tools:listitem="@layout/list_item_admin_notification" />
+        tools:listitem="@layout/item_notification" />
 </LinearLayout>
+

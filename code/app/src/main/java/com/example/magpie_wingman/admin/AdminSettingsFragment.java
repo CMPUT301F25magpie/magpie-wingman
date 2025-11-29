@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -31,9 +32,11 @@ public class AdminSettingsFragment extends Fragment {
 
         NavController navController = Navigation.findNavController(view);
 
+        ImageButton backBtn = view.findViewById(R.id.button_back);
         Button btnLogOut = view.findViewById(R.id.button_logout);
         ImageView btnEditProfile = view.findViewById(R.id.btn_edit_profile);
 
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
         btnEditProfile.setOnClickListener(v -> navController.navigate(R.id.action_adminSettingsFragment_to_adminEditProfileFragment));
         btnLogOut.setOnClickListener(v -> navController.navigate(R.id.action_adminSettingsFragment_to_loginFragment));
     }

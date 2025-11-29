@@ -2,24 +2,29 @@ package com.example.magpie_wingman.organizer;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
+import com.example.magpie_wingman.data.model.User;
 import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
@@ -32,18 +37,32 @@ import java.util.Map;
 public class OrganizerNewEventFragment extends Fragment {
 
     private EditText eventTitleField, eventLimitField, eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
-    private EditText eventDateField, eventTimeField;
-    private EditText regStartDateField, regEndDateField;
-    private Button createButton;
+    private EditText eventDateField, eventTimeField, regStartDateField, regEndDateField;
+    private CheckBox qrCheckBox;
+    private Button createButton, uploadPosterButton;
 
+    User currentUser = MyApp.getInstance().getCurrentUser();
     private final Calendar eventCalendar = Calendar.getInstance();
     private final Calendar regStartCalendar = Calendar.getInstance();
     private final Calendar regEndCalendar = Calendar.getInstance();
-
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
+    private Uri posterImageUri;
+    private ActivityResultLauncher<String> pickImageLauncher;
+
     public OrganizerNewEventFragment() { }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                posterImageUri = uri;
+                if (uploadPosterButton != null) uploadPosterButton.setText("Poster selected");
+            }
+        });
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -64,23 +83,15 @@ public class OrganizerNewEventFragment extends Fragment {
         eventTimeField = view.findViewById(R.id.edit_time);
         regStartDateField = view.findViewById(R.id.edit_registration_start);
         regEndDateField = view.findViewById(R.id.edit_registration_end);
+        qrCheckBox = view.findViewById(R.id.checkbox_qr);
         createButton = view.findViewById(R.id.button_create);
+        uploadPosterButton = view.findViewById(R.id.button_upload_poster);
         ImageButton backBtn = view.findViewById(R.id.button_back);
 
         setupPickers();
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        uploadPosterButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         createButton.setOnClickListener(v -> saveEvent(view));
-    }
-
-    private void setupPickers() {
-        makeReadOnly(eventDateField);
-        makeReadOnly(eventTimeField);
-        makeReadOnly(regStartDateField);
-        makeReadOnly(regEndDateField);
-        eventDateField.setOnClickListener(v -> showDate(eventCalendar, eventDateField));
-        eventTimeField.setOnClickListener(v -> showTime(eventCalendar, eventTimeField));
-        regStartDateField.setOnClickListener(v -> showDate(regStartCalendar, regStartDateField));
-        regEndDateField.setOnClickListener(v -> showDate(regEndCalendar, regEndDateField));
     }
 
     private void saveEvent(View view) {
@@ -93,12 +104,13 @@ public class OrganizerNewEventFragment extends Fragment {
             return;
         }
 
-        int capacity = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
+        int waitlistLimit = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
+        int capacity = 100;
         String location = eventAddressField.getText().toString() + ", " + eventCityField.getText().toString();
+        String organizerId = (currentUser != null) ? currentUser.getUserId() : "unknown";
 
         createButton.setEnabled(false);
         createButton.setText("Creating...");
-        String organizerId = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
         new Thread(() -> {
             try {
@@ -107,31 +119,23 @@ public class OrganizerNewEventFragment extends Fragment {
                 );
                 if (getActivity() != null) {
                     task.addOnSuccessListener(getActivity(), aVoid -> {
-                        findLastEventAndFillDetails(title, organizerId, location, capacity, eventCalendar.getTime());
+                        findLastEventAndFillDetails(title, organizerId, location, capacity, waitlistLimit, eventCalendar.getTime(), posterImageUri);
                         Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
                         Navigation.findNavController(view).navigateUp();
                     }).addOnFailureListener(getActivity(), e -> {
                         createButton.setEnabled(true);
                         createButton.setText("CREATE");
-                        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception e) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        createButton.setEnabled(true);
-                        createButton.setText("CREATE");
-                    });
-                }
+                // ignore
             }
         }).start();
     }
 
-    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, Date start) {
+    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, int wlLimit, Date start, @Nullable Uri posterUri) {
         DbManager.getInstance().getDb().collection("events")
-                .whereEqualTo("eventName", title)
-                .whereEqualTo("organizerId", orgId)
-                .limit(1)
+                .whereEqualTo("eventName", title).whereEqualTo("organizerId", orgId).limit(1)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     if (!snapshots.isEmpty()) {
@@ -141,30 +145,34 @@ public class OrganizerNewEventFragment extends Fragment {
                         updates.put("eventCapacity", cap);
                         updates.put("eventStartTime", start);
                         updates.put("waitlistCount", 0);
+                        updates.put("waitingListLimit", wlLimit);
+                        if (qrCheckBox.isChecked()) updates.put("qrCodeHash", eventId);
+
                         DbManager.getInstance().getDb().collection("events").document(eventId).set(updates, SetOptions.merge());
+
+                        if (posterUri != null) DbManager.getInstance().uploadEventPoster(eventId, posterUri);
                     }
                 });
     }
 
-    private void makeReadOnly(EditText et) {
-        et.setFocusable(false);
-        et.setClickable(true);
-        et.setLongClickable(false);
+    private void setupPickers() {
+        makeReadOnly(eventDateField); makeReadOnly(eventTimeField);
+        makeReadOnly(regStartDateField); makeReadOnly(regEndDateField);
+        eventDateField.setOnClickListener(v -> showDate(eventCalendar, eventDateField));
+        eventTimeField.setOnClickListener(v -> showTime(eventCalendar, eventTimeField));
+        regStartDateField.setOnClickListener(v -> showDate(regStartCalendar, regStartDateField));
+        regEndDateField.setOnClickListener(v -> showDate(regEndCalendar, regEndDateField));
     }
-
+    private void makeReadOnly(EditText et) { et.setFocusable(false); et.setClickable(true); }
     private void showDate(Calendar cal, EditText et) {
-        new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
-            cal.set(Calendar.YEAR, year);
-            cal.set(Calendar.MONTH, month);
-            cal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        new DatePickerDialog(getContext(), (v, y, m, d) -> {
+            cal.set(Calendar.YEAR, y); cal.set(Calendar.MONTH, m); cal.set(Calendar.DAY_OF_MONTH, d);
             et.setText(dateFmt.format(cal.getTime()));
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
     }
-
     private void showTime(Calendar cal, EditText et) {
-        new TimePickerDialog(getContext(), (view, hourOfDay, minute) -> {
-            cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            cal.set(Calendar.MINUTE, minute);
+        new TimePickerDialog(getContext(), (v, h, m) -> {
+            cal.set(Calendar.HOUR_OF_DAY, h); cal.set(Calendar.MINUTE, m);
             et.setText(timeFmt.format(cal.getTime()));
         }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show();
     }
