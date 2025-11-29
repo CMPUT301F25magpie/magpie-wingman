@@ -12,7 +12,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -38,15 +37,14 @@ import java.util.Map;
 
 /**
  * Allows an organizer to edit an existing event.
- *
- * Expects "eventId" in the fragment arguments bundle.
- * Loads the event from Firestore, pre-fills the form, and saves updates back.
+ * Handles loading data, updating fields (including Capacity/Limit), and saving changes.
  */
 public class OrganizerEditEventFragment extends Fragment {
 
-    // UI components (must match your XML ids)
+    // UI components
     private EditText eventTitleField;
-    private EditText eventLimitField;
+    private EditText eventLimitField;    // Waitlist Limit
+    private EditText eventCapacityField; // Max Attendees (Capacity)
     private CheckBox geoCheckBox;
     private CheckBox qrCheckBox;
     private Button uploadPosterButton;
@@ -64,32 +62,23 @@ public class OrganizerEditEventFragment extends Fragment {
     private Button resetButton;
     private Button saveButton;
 
-    // Date/time handling
+
     private final Calendar eventCalendar = Calendar.getInstance();
     private final Calendar regStartCalendar = Calendar.getInstance();
     private final Calendar regEndCalendar = Calendar.getInstance();
-    private final SimpleDateFormat dateFmt =
-            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-    private final SimpleDateFormat timeFmt =
-            new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+    private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-    // Poster
-    private Uri posterImageUri;           // new selected image (if any)
-    private String existingPosterUrl;     // existing URL from Firestore (for info only)
+    private Uri posterImageUri;
+    private String existingPosterUrl;
     private ActivityResultLauncher<String> pickImageLauncher;
-
-    // Event id to edit
     private String eventId;
 
-    public OrganizerEditEventFragment() {
-        // Required empty public constructor
-    }
+    public OrganizerEditEventFragment() { }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // image picker for replacing poster
         pickImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -104,35 +93,40 @@ public class OrganizerEditEventFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_organizer_edit_event, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- Header buttons ---
+        // prevent null pointer
         ImageButton backBtn = view.findViewById(R.id.button_back);
-        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        if (backBtn != null) backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
         ImageButton infoBtn = view.findViewById(R.id.button_info);
         if (infoBtn != null) {
-            infoBtn.setOnClickListener(v ->
-                    Toast.makeText(getContext(),
-                            "Edit your event details and tap SAVE.",
-                            Toast.LENGTH_SHORT).show()
-            );
+            infoBtn.setOnClickListener(v -> Toast.makeText(getContext(), "Edit details and tap SAVE.", Toast.LENGTH_SHORT).show());
         }
 
-        // --- Bind all views ---
+
         eventTitleField      = view.findViewById(R.id.edit_event_title);
         eventLimitField      = view.findViewById(R.id.edit_limit);
+        eventCapacityField   = view.findViewById(R.id.edit_capacity);
+
         geoCheckBox          = view.findViewById(R.id.checkbox_geo);
         qrCheckBox           = view.findViewById(R.id.checkbox_qr);
+
+
         uploadPosterButton   = view.findViewById(R.id.button_upload_poster);
+        resetButton          = view.findViewById(R.id.button_reset);
+
+
+        saveButton = view.findViewById(R.id.button_save);
+        if (saveButton == null) {
+            saveButton = view.findViewById(R.id.button_create);
+        }
 
         eventAddressField    = view.findViewById(R.id.edit_address);
         eventCityField       = view.findViewById(R.id.edit_city);
@@ -144,296 +138,172 @@ public class OrganizerEditEventFragment extends Fragment {
         regStartDateField    = view.findViewById(R.id.edit_registration_start);
         regEndDateField      = view.findViewById(R.id.edit_registration_end);
 
-        resetButton          = view.findViewById(R.id.button_reset);
-        saveButton           = view.findViewById(R.id.button_create);
 
-        // Change label from CREATE -> SAVE for this screen
-        saveButton.setText("SAVE");
-
-        // Date/time pickers
         setupPickers();
 
-        // Poster picker
-        uploadPosterButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        if (uploadPosterButton != null) {
+            uploadPosterButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        }
 
-        // Get eventId from arguments
+        if (saveButton != null) {
+            saveButton.setText("SAVE");
+            saveButton.setOnClickListener(v -> saveChanges());
+        }
+
+        if (resetButton != null) {
+            resetButton.setOnClickListener(v -> loadEvent(eventId));
+        }
+
+        // --- 3. LOAD DATA ---
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
         }
 
         if (TextUtils.isEmpty(eventId)) {
-            Toast.makeText(getContext(),
-                    "Missing eventId for editing",
-                    Toast.LENGTH_LONG).show();
-            Navigation.findNavController(view).navigateUp();
+            Toast.makeText(getContext(), "Missing eventId", Toast.LENGTH_LONG).show();
             return;
         }
 
-        // Load event and prefill fields
         loadEvent(eventId);
-
-        // Buttons
-        resetButton.setOnClickListener(v -> loadEvent(eventId));   // reload from Firestore
-        saveButton.setOnClickListener(v -> saveChanges());
     }
 
-    /**
-     * Loads the event document from Firestore and fills the form.
-     */
     private void loadEvent(String eventId) {
-        DbManager.getInstance().getDb()
-                .collection("events")
-                .document(eventId)
-                .get()
+        DbManager.getInstance().getDb().collection("events").document(eventId).get()
                 .addOnSuccessListener(this::applyEventSnapshot)
-                .addOnFailureListener(e -> {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(),
-                                "Failed to load event: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
+                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to load event", Toast.LENGTH_SHORT).show());
     }
 
-    /**
-     * Apply Firestore snapshot into UI fields + calendars.
-     */
     private void applyEventSnapshot(DocumentSnapshot doc) {
-        if (!doc.exists()) {
-            if (getContext() != null) {
-                Toast.makeText(getContext(),
-                        "Event not found.",
-                        Toast.LENGTH_LONG).show();
-            }
-            return;
+        if (!doc.exists()) return;
+
+        if (eventTitleField != null) eventTitleField.setText(doc.getString("eventName"));
+        if (eventDescriptionField != null) eventDescriptionField.setText(doc.getString("description"));
+
+        Long capacity = doc.getLong("eventCapacity");
+        if (eventCapacityField != null) eventCapacityField.setText(capacity != null ? String.valueOf(capacity) : "");
+
+        Long limit = doc.getLong("waitingListLimit");
+        if (eventLimitField != null) eventLimitField.setText(limit != null ? String.valueOf(limit) : "");
+
+        // Location splitting logic...
+        String location = doc.getString("eventLocation");
+        if (location != null && eventAddressField != null) {
+            eventAddressField.setText(location);
         }
 
-        String title       = doc.getString("eventName");
-        String description = doc.getString("description");
-        String location    = doc.getString("eventLocation");
-        Long   capacity    = doc.getLong("eventCapacity");
-        Long   waitLimit   = doc.getLong("waitingListLimit");
-        String qrHash      = doc.getString("qrCodeHash");
-        existingPosterUrl  = doc.getString("eventPosterURL");
-
-        // Title
-        if (title != null) eventTitleField.setText(title);
-        else eventTitleField.setText("");
-
-        // Description
-        if (description != null) eventDescriptionField.setText(description);
-        else eventDescriptionField.setText("");
-
-        // Capacity / waitlist limit
-        if (waitLimit != null) {
-            eventLimitField.setText(String.valueOf(waitLimit));
-        } else {
-            eventLimitField.setText("");
+        if (qrCheckBox != null) {
+            String qrHash = doc.getString("qrCodeHash");
+            qrCheckBox.setChecked(qrHash != null && !qrHash.isEmpty());
         }
 
-        // Location: we originally stored "address, city". Try to split.
-        if (location != null) {
-            String addr = location;
-            String city = "";
-            int comma = location.indexOf(',');
-            if (comma >= 0) {
-                addr = location.substring(0, comma).trim();
-                city = location.substring(comma + 1).trim();
-            }
-            eventAddressField.setText(addr);
-            eventCityField.setText(city);
-        } else {
-            eventAddressField.setText("");
-            eventCityField.setText("");
-        }
-        // Province wasn't stored separately; leave empty
-        eventProvinceField.setText("");
+        // Dates
+        setCalendarFromDoc(doc, "eventStartTime", eventCalendar, eventDateField, eventTimeField);
+        setCalendarFromDoc(doc, "registrationStart", regStartCalendar, regStartDateField, null);
+        setCalendarFromDoc(doc, "registrationEnd", regEndCalendar, regEndDateField, null);
+    }
 
-        // QR checkbox
-        qrCheckBox.setChecked(qrHash != null && !qrHash.isEmpty());
+    private void setCalendarFromDoc(DocumentSnapshot doc, String field, Calendar cal, EditText dateField, EditText timeField) {
+        Object obj = doc.get(field);
+        Date date = null;
+        if (obj instanceof Timestamp) date = ((Timestamp) obj).toDate();
+        else if (obj instanceof Date) date = (Date) obj;
 
-        // Poster button text
-        if (existingPosterUrl != null && !existingPosterUrl.isEmpty()) {
-            uploadPosterButton.setText("Change poster");
-        } else {
-            uploadPosterButton.setText("+ Upload Poster");
-        }
-
-        // Event start time
-        Object startObj = doc.get("eventStartTime");
-        Date startDate = null;
-        if (startObj instanceof Timestamp) {
-            startDate = ((Timestamp) startObj).toDate();
-        } else if (startObj instanceof Date) {
-            startDate = (Date) startObj;
-        }
-        if (startDate != null) {
-            eventCalendar.setTime(startDate);
-            eventDateField.setText(dateFmt.format(startDate));
-            eventTimeField.setText(timeFmt.format(startDate));
-        } else {
-            eventDateField.setText("");
-            eventTimeField.setText("");
-        }
-
-        // Registration start
-        Object rsObj = doc.get("registrationStart");
-        Date rsDate = null;
-        if (rsObj instanceof Timestamp) {
-            rsDate = ((Timestamp) rsObj).toDate();
-        } else if (rsObj instanceof Date) {
-            rsDate = (Date) rsObj;
-        }
-        if (rsDate != null) {
-            regStartCalendar.setTime(rsDate);
-            regStartDateField.setText(dateFmt.format(rsDate));
-        } else {
-            regStartDateField.setText("");
-        }
-
-        // Registration end
-        Object reObj = doc.get("registrationEnd");
-        Date reDate = null;
-        if (reObj instanceof Timestamp) {
-            reDate = ((Timestamp) reObj).toDate();
-        } else if (reObj instanceof Date) {
-            reDate = (Date) reObj;
-        }
-        if (reDate != null) {
-            regEndCalendar.setTime(reDate);
-            regEndDateField.setText(dateFmt.format(reDate));
-        } else {
-            regEndDateField.setText("");
+        if (date != null) {
+            cal.setTime(date);
+            if (dateField != null) dateField.setText(dateFmt.format(date));
+            if (timeField != null) timeField.setText(timeFmt.format(date));
         }
     }
 
-    /**
-     * Saves edited values back into the same event document.
-     */
     private void saveChanges() {
         if (TextUtils.isEmpty(eventId)) return;
 
-        String title = eventTitleField.getText().toString().trim();
+        String title = (eventTitleField != null) ? eventTitleField.getText().toString().trim() : "";
         if (title.isEmpty()) {
-            Toast.makeText(getContext(),
-                    "Title is required",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String desc = eventDescriptionField.getText().toString().trim();
-        String limitStr = eventLimitField.getText().toString().trim();
-        int waitlistLimit = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
 
-        String address = eventAddressField.getText().toString().trim();
-        String city = eventCityField.getText().toString().trim();
-        String province = eventProvinceField.getText().toString().trim();
-
-        String combinedLocation;
-        if (!city.isEmpty()) {
-            combinedLocation = address + ", " + city;
-        } else {
-            combinedLocation = address;
+        int capacity = 0;
+        if (eventCapacityField != null) {
+            String s = eventCapacityField.getText().toString().trim();
+            if (!s.isEmpty()) capacity = Integer.parseInt(s);
         }
-        // Province not yet stored in schema; you can append if desired:
-        // if (!province.isEmpty()) combinedLocation += ", " + province;
 
-        // Use an arbitrary capacity for now (schema already uses eventCapacity = 100 in create)
-        // If you later add a capacity field to the UI, wire it in here.
-        int capacity = 100;
+        int limit = 0;
+        if (eventLimitField != null) {
+            String s = eventLimitField.getText().toString().trim();
+            if (!s.isEmpty()) limit = Integer.parseInt(s);
+        }
 
-        saveButton.setEnabled(false);
-        saveButton.setText("Saving...");
+        String desc = (eventDescriptionField != null) ? eventDescriptionField.getText().toString().trim() : "";
+        String location = (eventAddressField != null) ? eventAddressField.getText().toString().trim() : "";
+
+        if (saveButton != null) {
+            saveButton.setEnabled(false);
+            saveButton.setText("Saving...");
+        }
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("eventName", title);
         updates.put("description", desc);
-        updates.put("eventLocation", combinedLocation);
+        updates.put("eventLocation", location);
         updates.put("eventCapacity", capacity);
-        updates.put("waitingListLimit", waitlistLimit);
+        updates.put("waitingListLimit", limit);
         updates.put("eventStartTime", eventCalendar.getTime());
         updates.put("registrationStart", regStartCalendar.getTime());
         updates.put("registrationEnd", regEndCalendar.getTime());
 
-        if (qrCheckBox.isChecked()) {
-            updates.put("qrCodeHash", eventId);
-        } else {
-            // remove QR or set null; here we clear it
-            updates.put("qrCodeHash", null);
+        if (qrCheckBox != null) {
+            updates.put("qrCodeHash", qrCheckBox.isChecked() ? eventId : null);
         }
 
-        Task<Void> updateTask = DbManager.getInstance()
-                .getDb()
-                .collection("events")
-                .document(eventId)
-                .set(updates, SetOptions.merge());
-
-        updateTask
+        DbManager.getInstance().getDb().collection("events").document(eventId)
+                .set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
-                    // If a new poster was chosen, upload it
                     if (posterImageUri != null) {
                         DbManager.getInstance().uploadEventPoster(eventId, posterImageUri);
                     }
-
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(),
-                                "Event updated",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                    if (getView() != null) {
-                        Navigation.findNavController(getView()).navigateUp();
-                    }
+                    Toast.makeText(getContext(), "Event updated", Toast.LENGTH_SHORT).show();
+                    if (getView() != null) Navigation.findNavController(getView()).navigateUp();
                 })
                 .addOnFailureListener(e -> {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(),
-                                "Failed to save changes: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();
+                    if (saveButton != null) {
+                        saveButton.setEnabled(true);
+                        saveButton.setText("SAVE");
                     }
-                    saveButton.setEnabled(true);
-                    saveButton.setText("SAVE");
+                    Toast.makeText(getContext(), "Failed to save", Toast.LENGTH_SHORT).show();
                 });
     }
 
-    // ------------------------------------------------------------
-    // Date/time pickers + helpers
-    // ------------------------------------------------------------
-
     private void setupPickers() {
-        makeReadOnly(eventDateField);
-        makeReadOnly(eventTimeField);
-        makeReadOnly(regStartDateField);
-        makeReadOnly(regEndDateField);
-
-        eventDateField.setOnClickListener(v -> showDate(eventCalendar, eventDateField));
-        eventTimeField.setOnClickListener(v -> showTime(eventCalendar, eventTimeField));
-        regStartDateField.setOnClickListener(v -> showDate(regStartCalendar, regStartDateField));
-        regEndDateField.setOnClickListener(v -> showDate(regEndCalendar, regEndDateField));
+        setupDatePicker(eventDateField, eventCalendar);
+        setupTimePicker(eventTimeField, eventCalendar);
+        setupDatePicker(regStartDateField, regStartCalendar);
+        setupDatePicker(regEndDateField, regEndCalendar);
     }
 
-    private void makeReadOnly(EditText et) {
+    private void setupDatePicker(EditText et, Calendar cal) {
+        if (et == null) return;
         et.setFocusable(false);
         et.setClickable(true);
-    }
-
-    private void showDate(Calendar cal, EditText et) {
-        new DatePickerDialog(getContext(), (picker, y, m, d) -> {
+        et.setOnClickListener(v -> new DatePickerDialog(getContext(), (view, y, m, d) -> {
             cal.set(Calendar.YEAR, y);
             cal.set(Calendar.MONTH, m);
             cal.set(Calendar.DAY_OF_MONTH, d);
             et.setText(dateFmt.format(cal.getTime()));
-        }, cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)).show();
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show());
     }
 
-    private void showTime(Calendar cal, EditText et) {
-        new TimePickerDialog(getContext(), (picker, h, min) -> {
+    private void setupTimePicker(EditText et, Calendar cal) {
+        if (et == null) return;
+        et.setFocusable(false);
+        et.setClickable(true);
+        et.setOnClickListener(v -> new TimePickerDialog(getContext(), (view, h, m) -> {
             cal.set(Calendar.HOUR_OF_DAY, h);
-            cal.set(Calendar.MINUTE, min);
+            cal.set(Calendar.MINUTE, m);
             et.setText(timeFmt.format(cal.getTime()));
-        }, cal.get(Calendar.HOUR_OF_DAY),
-                cal.get(Calendar.MINUTE),
-                true).show();
+        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show());
     }
 }
