@@ -4,6 +4,7 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,7 +37,8 @@ import java.util.Map;
 
 public class OrganizerNewEventFragment extends Fragment {
 
-    private EditText eventTitleField, eventLimitField, eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
+    // Added eventCapacityField to the list
+    private EditText eventTitleField, eventLimitField, eventCapacityField, eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
     private EditText eventDateField, eventTimeField, regStartDateField, regEndDateField;
     private CheckBox qrCheckBox;
     private Button createButton, uploadPosterButton;
@@ -74,15 +76,19 @@ public class OrganizerNewEventFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         eventTitleField = view.findViewById(R.id.edit_event_title);
-        eventLimitField = view.findViewById(R.id.edit_limit);
+        eventCapacityField = view.findViewById(R.id.edit_capacity); // Bind the Capacity box
+        eventLimitField = view.findViewById(R.id.edit_limit);       // Bind the Waitlist Limit box
+
         eventAddressField = view.findViewById(R.id.edit_address);
         eventCityField = view.findViewById(R.id.edit_city);
         eventProvinceField = view.findViewById(R.id.edit_province);
         eventDescriptionField = view.findViewById(R.id.edit_description);
+
         eventDateField = view.findViewById(R.id.edit_date);
         eventTimeField = view.findViewById(R.id.edit_time);
         regStartDateField = view.findViewById(R.id.edit_registration_start);
         regEndDateField = view.findViewById(R.id.edit_registration_end);
+
         qrCheckBox = view.findViewById(R.id.checkbox_qr);
         createButton = view.findViewById(R.id.button_create);
         uploadPosterButton = view.findViewById(R.id.button_upload_poster);
@@ -97,15 +103,20 @@ public class OrganizerNewEventFragment extends Fragment {
     private void saveEvent(View view) {
         String title = eventTitleField.getText().toString().trim();
         String desc = eventDescriptionField.getText().toString().trim();
+
+        // 1. Get Capacity (Attendees)
+        String capStr = eventCapacityField.getText().toString().trim();
+        int capacity = capStr.isEmpty() ? 0 : Integer.parseInt(capStr);
+
+        // 2. Get Waitlist Limit (Queue)
         String limitStr = eventLimitField.getText().toString().trim();
+        int waitlistLimit = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
 
         if (TextUtils.isEmpty(title)) {
             Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        int waitlistLimit = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
-        int capacity = 100;
         String location = eventAddressField.getText().toString() + ", " + eventCityField.getText().toString();
         String organizerId = (currentUser != null) ? currentUser.getUserId() : "unknown";
 
@@ -119,38 +130,52 @@ public class OrganizerNewEventFragment extends Fragment {
                 );
                 if (getActivity() != null) {
                     task.addOnSuccessListener(getActivity(), aVoid -> {
+                        // Pass both distinct numbers: capacity AND waitlistLimit
                         findLastEventAndFillDetails(title, organizerId, location, capacity, waitlistLimit, eventCalendar.getTime(), posterImageUri);
                         Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
                         Navigation.findNavController(view).navigateUp();
                     }).addOnFailureListener(getActivity(), e -> {
                         createButton.setEnabled(true);
                         createButton.setText("CREATE");
+                        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception e) {
-                // ignore
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        createButton.setEnabled(true);
+                        createButton.setText("CREATE");
+                    });
+                }
             }
         }).start();
     }
 
     private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, int wlLimit, Date start, @Nullable Uri posterUri) {
         DbManager.getInstance().getDb().collection("events")
-                .whereEqualTo("eventName", title).whereEqualTo("organizerId", orgId).limit(1)
+                .whereEqualTo("eventName", title)
+                .whereEqualTo("organizerId", orgId)
+                .limit(1)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     if (!snapshots.isEmpty()) {
                         String eventId = snapshots.getDocuments().get(0).getId();
                         Map<String, Object> updates = new HashMap<>();
                         updates.put("eventLocation", loc);
-                        updates.put("eventCapacity", cap);
+                        updates.put("eventCapacity", cap);        // Saved as eventCapacity
+                        updates.put("waitingListLimit", wlLimit); // Saved as waitingListLimit (Your Story)
                         updates.put("eventStartTime", start);
                         updates.put("waitlistCount", 0);
-                        updates.put("waitingListLimit", wlLimit);
-                        if (qrCheckBox.isChecked()) updates.put("qrCodeHash", eventId);
+
+                        if (qrCheckBox.isChecked()) {
+                            updates.put("qrCodeHash", eventId);
+                        }
 
                         DbManager.getInstance().getDb().collection("events").document(eventId).set(updates, SetOptions.merge());
 
-                        if (posterUri != null) DbManager.getInstance().uploadEventPoster(eventId, posterUri);
+                        if (posterUri != null) {
+                            DbManager.getInstance().uploadEventPoster(eventId, posterUri);
+                        }
                     }
                 });
     }
