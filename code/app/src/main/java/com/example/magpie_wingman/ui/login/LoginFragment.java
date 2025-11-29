@@ -46,9 +46,6 @@ public class LoginFragment extends Fragment {
         CheckBox rememberMe    = view.findViewById(R.id.rememberMe);
         Button loginButton     = view.findViewById(R.id.login);
 
-        Button btnEntrant      = view.findViewById(R.id.btn_test_entrant);
-        Button btnOrganizer    = view.findViewById(R.id.btn_test_organizer);
-        Button btnAdmin        = view.findViewById(R.id.btn_test_admin);
         TextView btnSignUpText = view.findViewById(R.id.signUpText);
 
         DbManager dbManager = DbManager.getInstance();
@@ -148,13 +145,13 @@ public class LoginFragment extends Fragment {
         });
 
         // ---- Bottom test buttons (unchanged) ----
-        btnEntrant.setOnClickListener(v ->
-                navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
-
-        btnOrganizer.setOnClickListener(v ->
-                navController.navigate(R.id.action_loginFragment_to_organizerLandingFragment2));
-
-        btnAdmin.setOnClickListener(v ->
-                navController.navigate(R.id.action_loginFragment_to_adminLandingFragment22));
+//        btnEntrant.setOnClickListener(v ->
+//                navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
+//
+//        btnOrganizer.setOnClickListener(v ->
+//                navController.navigate(R.id.action_loginFragment_to_organizerLandingFragment2));
+//
+//        btnAdmin.setOnClickListener(v ->
+//                navController.navigate(R.id.action_loginFragment_to_adminLandingFragment22));
     }
 }

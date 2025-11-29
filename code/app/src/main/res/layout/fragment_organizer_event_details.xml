@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -56,6 +57,7 @@
             android:orientation="horizontal"
             android:padding="12dp"
             android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"
             android:gravity="center_vertical">
 
             <LinearLayout
@@ -133,7 +135,8 @@
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#3A5BFF"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"/>
 
         <Button
             android:id="@+id/btn_selected_list"
@@ -143,7 +146,8 @@
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#3A5BFF"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="16dp"/>
 
         <Button
             android:id="@+id/btn_accepted_list"
@@ -153,7 +157,8 @@
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#3A5BFF"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="16dp"/>
 
         <Button
             android:id="@+id/btn_cancelled_list"
@@ -163,15 +168,17 @@
             android:textSize="16sp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#3A5BFF"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="16dp"/>
 
-        <!-- LOTTERY / NOTIFY / FINALIZE ROW -->
+        <!-- LOTTERY / NOTIFY / CANCEL ROW -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="12dp"
-            android:gravity="center">
+            android:gravity="center"
+            android:layout_marginHorizontal="16dp">
 
             <Button
                 android:id="@+id/btn_lottery"
@@ -193,13 +200,30 @@
                 android:layout_marginHorizontal="8dp"/>
 
             <Button
-                android:id="@+id/btn_finalize"
+                android:id="@+id/btn_cancel_non_registered"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Finalize"
+                android:text="Cancel"
                 android:textColor="#FFFFFF"
-                android:backgroundTint="#3A5BFF"/>
+                android:backgroundTint="#E53935"/>
         </LinearLayout>
+
+        <!-- FINALIZE ON ITS OWN LINE -->
+        <Button
+            android:id="@+id/btn_finalize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Finalize"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#3A5BFF"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="16dp"/>
+
+        <!-- bottom spacing -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
     </LinearLayout>
 </ScrollView>
+
