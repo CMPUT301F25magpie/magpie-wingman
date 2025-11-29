@@ -74,7 +74,6 @@ public class EntrantLandingFragment extends Fragment {
     private EventAdapter adapter;
 
     // Currently logged-in entrant's id (from MyApp)
-    @Nullable
     private String entrantId;
 
     // Filter State
@@ -115,13 +114,8 @@ public class EntrantLandingFragment extends Fragment {
 
         // Resolve the currently logged-in entrant from MyApp
         User currentUser = MyApp.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            entrantId = currentUser.getUserId();
-        } else {
-            // --- CRASH FIX ---
-            // If testing without full login, use a dummy ID so the Adapter doesn't crash on Join
-            entrantId = "test_user_id";
-        }
+        entrantId = currentUser.getUserId();
+
 
         // Configure the events RecyclerView and load data from Firestore
         setupEventsListForEntrant(entrantId);

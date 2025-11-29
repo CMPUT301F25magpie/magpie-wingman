@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import android.net.Uri;
 
@@ -1322,6 +1323,78 @@ public class DbManager {
                 });
     }
 
+
+    /**
+     * Returns all events that the given user has signed up for
+     * used in Entrant Event Fragment
+     *
+     * @param User ID of the entrant user
+     * @return Task resolving to a List of Event models.
+     */
+    public Task<List<Event>> getEntrantEventHistory(String userId)  {
+        TaskCompletionSource<List<Event>> tcs = new TaskCompletionSource<>();
+        Executors.newSingleThreadExecutor().execute(() ->{
+            try {
+                // Get all events once
+                QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
+
+                List<Event> history = new ArrayList<>();
+
+                for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
+                    DocumentReference evRef = ev.getReference();
+
+                    boolean hasRegistration = false;
+
+                    // Check waitlist
+                    QuerySnapshot wl = Tasks.await(evRef.collection("waitlist")
+                                            .whereEqualTo("userId", userId)
+                                            .get()
+                            );
+                    if (!wl.isEmpty()) {
+                        hasRegistration = true;
+                    } else {
+                        // Check registrable
+                        QuerySnapshot rg =
+                                Tasks.await(
+                                        evRef.collection("registrable")
+                                                .whereEqualTo("userId", userId)
+                                                .get()
+                                );
+                        if (!rg.isEmpty()) {
+                            hasRegistration = true;
+                        } else {
+                            // Check registered
+                            QuerySnapshot rd =
+                                    Tasks.await(evRef.collection("registered")
+                                                    .whereEqualTo("userId", userId)
+                                                    .get()
+                                    );
+                            if (!rd.isEmpty()) {
+                                hasRegistration = true;
+                            }
+                        }
+                    }
+
+                    if (hasRegistration) {
+                        Event e = ev.toObject(Event.class);
+                        if (e != null) {
+                            // Ensure eventId is set even if it isn't a field in the doc
+                            if (e.getEventId() == null || e.getEventId().isEmpty()) {
+                                e.setEventId(ev.getId());
+                            }
+                            history.add(e);
+                        }
+                    }
+                }
+
+                tcs.setResult(history);
+            } catch (Exception e) {
+                tcs.setException(e);
+            }
+        });
+
+        return tcs.getTask();
+    }
 
 }
 
