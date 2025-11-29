@@ -66,8 +66,7 @@
             android:layout_height="40dp"
             android:background="@drawable/rounded_white"
             android:paddingHorizontal="8dp"
-            android:spinnerMode="dropdown"
-            android:entries="@array/sample_persons" />
+            android:spinnerMode="dropdown" />
     </LinearLayout>
 
     <!-- MAP VIEW -->
