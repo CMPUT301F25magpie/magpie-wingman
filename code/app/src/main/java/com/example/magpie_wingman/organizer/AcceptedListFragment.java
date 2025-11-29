@@ -37,7 +37,6 @@ public class AcceptedListFragment extends Fragment {
     private List<String> registeredNames;
     private String eventId;
 
-    // Default for testing; real value should come from navigation args
 
     public AcceptedListFragment() {}
 
@@ -177,7 +176,6 @@ public class AcceptedListFragment extends Fragment {
             String name = entrantList.get(position);
             holder.nameText.setText(name);
 
-            // For now, simple click behavior – you can change this later
             holder.locationButton.setOnClickListener(v ->
                     Toast.makeText(v.getContext(),
                             "Show location for " + name,
@@ -198,7 +196,6 @@ public class AcceptedListFragment extends Fragment {
                 super(itemView);
                 nameText = itemView.findViewById(R.id.text_person_name);
                 locationButton = itemView.findViewById(R.id.button_location);
-                // registered list lives on a light card in accepted_list layout, so:
                 nameText.setTextColor(Color.BLACK);
             }
         }
