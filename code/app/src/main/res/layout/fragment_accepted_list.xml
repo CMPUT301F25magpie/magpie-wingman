@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -10,6 +11,7 @@
 
     <!-- HEADER BAR -->
     <LinearLayout
+        android:id="@+id/toolbar_accepted"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
@@ -37,74 +39,41 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Accepted List"
+            android:text="Signed-up Entrants"
             android:textColor="#000000"
             android:textStyle="bold"
             android:textSize="18sp"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 
-    <!-- LIST CONTAINER -->
-    <ScrollView
+    <!-- PROGRESS + EMPTY STATE -->
+    <ProgressBar
+        android:id="@+id/accepted_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/accepted_empty_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No entrants have signed up yet."
+        android:textColor="#FFFFFF"
+        android:visibility="gone"
+        android:layout_gravity="center_horizontal"
+        android:padding="8dp"/>
+
+    <!-- ACTUAL LIST (driven by AcceptedListFragment + adapter) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_accepted"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="16dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"
+        android:clipToPadding="false"
+        tools:listitem="@layout/item_waiting_person"
+        android:visibility="gone" />
 
-        <LinearLayout
-            android:id="@+id/accepted_list_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/rounded_white"
-            android:padding="12dp">
-
-            <!-- Example rows (replace with RecyclerView or dynamic list) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="6dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_person"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="Entrant"
-                    app:tint="#000000" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Jane Doe"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="6dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_person"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="Entrant"
-                    app:tint="#000000" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="John Doe"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-        </LinearLayout>
-    </ScrollView>
 </LinearLayout>
