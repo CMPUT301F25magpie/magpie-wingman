@@ -196,6 +196,11 @@ public class OrganizerEditEventFragment extends Fragment {
             qrCheckBox.setChecked(qrHash != null && !qrHash.isEmpty());
         }
 
+        Boolean geoRequired = doc.getBoolean("geolocationRequired");
+        if (geoCheckBox != null) {
+            geoCheckBox.setChecked(geoRequired != null && geoRequired);
+        }
+
         // Dates
         setCalendarFromDoc(doc, "eventStartTime", eventCalendar, eventDateField, eventTimeField);
         setCalendarFromDoc(doc, "registrationStart", regStartCalendar, regStartDateField, null);
@@ -257,6 +262,9 @@ public class OrganizerEditEventFragment extends Fragment {
 
         if (qrCheckBox != null) {
             updates.put("qrCodeHash", qrCheckBox.isChecked() ? eventId : null);
+        }
+        if (geoCheckBox != null) {
+            updates.put("geolocationRequired", geoCheckBox.isChecked());
         }
 
         DbManager.getInstance().getDb().collection("events").document(eventId)

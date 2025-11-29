@@ -30,6 +30,9 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class DbManagerInstrumentedTest {
+    private static final Double TEST_LAT = 53.5461;
+    private static final Double TEST_LNG = -113.4938;
+
 
     @Test
     public void dbManager_initializes() {
@@ -194,7 +197,7 @@ public class DbManagerInstrumentedTest {
 
         // 3) add user to waitlist
         Tasks.await(
-                dbm.addUserToWaitlist(eventId, userId),
+                dbm.addUserToWaitlist(eventId, userId, TEST_LAT, TEST_LNG),
                 10, TimeUnit.SECONDS
         );
 
@@ -260,7 +263,7 @@ public class DbManagerInstrumentedTest {
             userIds.add(userId);
 
             // add to waitlist
-            Tasks.await(dbm.addUserToWaitlist(eventId, userId), 10, TimeUnit.SECONDS);
+            Tasks.await(dbm.addUserToWaitlist(eventId, userId,TEST_LAT, TEST_LNG), 10, TimeUnit.SECONDS);
         }
 
         // 3) promote 2 users from waitlist → registrable
@@ -417,7 +420,7 @@ public class DbManagerInstrumentedTest {
         assertNotNull(userId);
 
         // add to waitlist
-        Tasks.await(dbm.addUserToWaitlist(eventId, userId), 10, TimeUnit.SECONDS);
+        Tasks.await(dbm.addUserToWaitlist(eventId, userId, TEST_LAT, TEST_LNG), 10, TimeUnit.SECONDS);
 
         // add to registrable (direct write)
         Map<String, Object> regData = new HashMap<>();
@@ -508,7 +511,7 @@ public class DbManagerInstrumentedTest {
         String userId = uQs.getDocuments().get(0).getString("userId");
 
         // add to waitlist
-        Tasks.await(dbm.addUserToWaitlist(eventId, userId), 10, TimeUnit.SECONDS);
+        Tasks.await(dbm.addUserToWaitlist(eventId, userId, TEST_LAT, TEST_LNG), 10, TimeUnit.SECONDS);
 
         // cancel
         Tasks.await(dbm.cancelWaitlist(eventId, userId), 10, TimeUnit.SECONDS);
@@ -1039,8 +1042,8 @@ public class DbManagerInstrumentedTest {
         String userId2 = u2.getString("userId");
 
         // add both to waitlist
-        Tasks.await(dbm.addUserToWaitlist(eventId, userId1));
-        Tasks.await(dbm.addUserToWaitlist(eventId, userId2));
+        Tasks.await(dbm.addUserToWaitlist(eventId, userId1, TEST_LAT, TEST_LNG));
+        Tasks.await(dbm.addUserToWaitlist(eventId, userId2, TEST_LAT, TEST_LNG));
 
         // now get waitlist
         List<String> waitlist = Tasks.await(

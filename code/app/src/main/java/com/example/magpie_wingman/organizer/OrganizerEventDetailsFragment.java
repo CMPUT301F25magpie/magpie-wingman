@@ -83,6 +83,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         Button btnNotify            = view.findViewById(R.id.btn_notify);
         Button btnCancelNonReg      = view.findViewById(R.id.btn_cancel_non_registered);
         Button btnFinalize          = view.findViewById(R.id.btn_finalize);
+        Button btnGeolocation       = view.findViewById(R.id.btn_geolocation);
 
         if (eventId != null && !eventId.isEmpty()) {
             loadEventDetails();
@@ -99,6 +100,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         setupNavButton(view, btnLottery, R.id.action_organizerEventDetailsFragment_to_organizerLotteryFragment);
         setupNavButton(view, btnNotify, R.id.action_organizerEventDetailsFragment_to_organizerNotifyFragment);
         setupNavButton(view, btnFinalize, R.id.action_organizerEventDetailsFragment_to_organizerFinalizedListFragment);
+        setupNavButton(view, btnGeolocation, R.id.action_organizerEventDetailsFragment_to_organizerGeolocationFragment);
 
         btnCancelNonReg.setOnClickListener(v -> confirmCancelNonRegistered());
     }

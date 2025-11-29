@@ -454,14 +454,21 @@ public class DbManager {
 //---------------------------------------------------------------------------------------------------------------------------
     /**
      * Adds a userID document to the event document's waitlist subcollection (creates one if it doesn't exist yet)
+     * If lat/lng are provided for location they will be stored as well
      * @param eventId - ID of event doc in question
      * @param userId - ID of the user
+     * @param lat - optional lat
+     * @param lng - optional lng
      * @return
      */
-    public Task<Void> addUserToWaitlist(String eventId, String userId) {
+    public Task<Void> addUserToWaitlist(String eventId, String userId, @Nullable Double lat, @Nullable Double lng) {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
         data.put("addedAt", System.currentTimeMillis());  // simple timestamp
+        if (lat != null && lng != null) {
+            data.put("latitude", lat);
+            data.put("longitude", lng);
+        }
 
         return db.collection("events")
                 .document(eventId)
