@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Outer frame -->
+    <path
+        android:fillColor="#DD3333"
+        android:pathData="M3,3h18v18h-18z" />
+
+    <!-- Zigzag broken line -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,15l3,-3 3,3 3,-3 3,3v3h-12z" />
+
+    <!-- Broken top shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,6h4l2,2 2,-2h6v6l-3,-3 -3,3 -3,-3 -3,3z" />
+
+</vector>

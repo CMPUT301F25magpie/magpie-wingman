@@ -1,6 +1,5 @@
 package com.example.magpie_wingman.data;
 
-import com.example.magpie_wingman.data.DbManager;
 import com.google.android.gms.tasks.Task;
 
 public class LotteryFunction {
@@ -19,6 +18,6 @@ public class LotteryFunction {
             throw new IllegalArgumentException("Sample count must be non-negative");
         }
         DbManager dbManager = DbManager.getInstance();
-        return dbManager.addUsersToRegistrable(eventId, sampleCount);
+        return dbManager.drawInvitees(eventId, sampleCount);
     }
 }

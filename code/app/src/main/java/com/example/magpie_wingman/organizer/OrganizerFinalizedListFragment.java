@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
@@ -66,7 +67,8 @@ public class OrganizerFinalizedListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         listContainer = view.findViewById(R.id.finalized_list_container);
         exportBtn = view.findViewById(R.id.button_export_csv);
-        backBtn = view.findViewById(R.id.button_back);
+        ImageButton btnBack = view.findViewById(R.id.button_back);
+        btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
         String eventId = getArguments() != null ? getArguments().getString(ARG_EVENT_ID) : null;
         if (eventId == null || eventId.isEmpty()) {
@@ -74,7 +76,6 @@ public class OrganizerFinalizedListFragment extends Fragment {
             return;
         }
 
-        backBtn.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
         exportBtn.setOnClickListener(v -> {
             if (entrants.isEmpty()) {
                 Toast.makeText(requireContext(), "No entrants to export.", Toast.LENGTH_SHORT).show();
