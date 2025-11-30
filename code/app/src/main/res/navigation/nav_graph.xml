@@ -257,6 +257,9 @@
         <action
             android:id="@+id/action_organizerEventDetailsFragment_to_cancelledListFragment"
             app:destination="@id/cancelledListFragment" />
+        <action
+            android:id="@+id/action_organizerEventDetailsFragment_to_organizerGeolocationFragment"
+            app:destination="@id/organizerGeolocationFragment" />
     </fragment>
     <fragment
         android:id="@+id/organizerLotteryFragment"

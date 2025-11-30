@@ -1,5 +1,8 @@
 package com.example.magpie_wingman.entrant;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -10,9 +13,12 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.location.Location;
+import android.annotation.SuppressLint;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -24,6 +30,8 @@ import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.model.User;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -46,6 +54,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private static final String ARG_EVENT_START_TIME  = "eventStartTime";
     private static final String ARG_EVENT_DESCRIPTION = "eventDescription";
     private static final String ARG_EVENT_POSTER_URL  = "eventPosterURL";
+    private static final int REQ_LOCATION_PERMISSION = 1001;
+    private FusedLocationProviderClient fusedLocationClient;
+    private boolean geolocationRequired = false;
 
     // Membership states for the current entrant
     private enum MembershipState {
@@ -161,6 +172,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
         // Use whatever data we already have from arguments
         bindStaticDetailsFromArgs();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
         // back navigation
         backButton.setOnClickListener(view -> {
@@ -247,6 +259,10 @@ public class DetailedEventDescriptionFragment extends Fragment {
                 .addOnSuccessListener(documentSnapshot -> {
                     Event event = documentSnapshot.toObject(Event.class);
                     if (event == null) return;
+
+                    // check if geo required
+                    Boolean geo = documentSnapshot.getBoolean("geolocationRequired");
+                    geolocationRequired = Boolean.TRUE.equals(geo);
 
                     // Update fields only if missing or generic placeholders
                     if (TextUtils.isEmpty(eventName) ||
@@ -408,18 +424,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
         switch (membershipState) {
             case NONE:
                 // Join waitlist
-                DbManager.getInstance()
-                        .addUserToWaitlist(eventId, entrantId)
-                        .addOnSuccessListener(v -> {
-                            membershipState = MembershipState.WAITLIST;
-                            waitlistCount++;
-                            renderJoinButton();
-                            renderWaitlistCount();
-                            Toast.makeText(requireContext(),
-                                    "Joined waitlist", Toast.LENGTH_SHORT).show();
-                            joinButton.setEnabled(true);
-                        })
-                        .addOnFailureListener(e -> joinButton.setEnabled(true));
+                if (geolocationRequired) {
+                    captureLocationIfAllowed();
+                } else {
+                    joinWithoutLocation();
+                }
                 break;
 
             case WAITLIST:
@@ -536,6 +545,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
     }
 
     private void renderWaitlistCount() {
+        if (textWaitingList == null) return;
         if (waitingListLimit > 0) {
             // Show "current / capacity"
             textWaitingList.setText("Waiting list: " + waitlistCount + " / " + waitingListLimit);
@@ -544,4 +554,83 @@ public class DetailedEventDescriptionFragment extends Fragment {
             textWaitingList.setText("Waiting list: " + waitlistCount);
         }
     }
+
+    private void joinWithoutLocation() {
+        DbManager.getInstance().addUserToWaitlist(eventId, entrantId).addOnSuccessListener(v -> {
+                    membershipState = MembershipState.WAITLIST;
+                    waitlistCount++;
+                    renderJoinButton();
+                    renderWaitlistCount();
+                    Toast.makeText(requireContext(),
+                            "Joined waitlist", Toast.LENGTH_SHORT).show();
+                    joinButton.setEnabled(true);
+                })
+                .addOnFailureListener(e -> joinButton.setEnabled(true));
+    }
+
+    private void captureLocationIfAllowed() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(
+                    new String[]{ Manifest.permission.ACCESS_FINE_LOCATION },
+                    REQ_LOCATION_PERMISSION
+            );
+            return;   // wait for user’s answer
+        }
+        requestLocationAndJoin();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestLocationAndJoin() {
+        if (fusedLocationClient == null) {
+            performJoinWithLocation(null, null);
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    Double lat = null, lng = null;
+                    if (location != null) {
+                        lat = location.getLatitude();
+                        lng = location.getLongitude();
+                    }
+                    performJoinWithLocation(lat, lng);
+                })
+                .addOnFailureListener(e -> {
+                    //still allow joining without location
+                    performJoinWithLocation(null, null);
+                });
+    }
+
+    private void performJoinWithLocation(@Nullable Double lat, @Nullable Double lng) {
+        DbManager.getInstance()
+                .addUserToWaitlist(eventId, entrantId, lat, lng)
+                .addOnSuccessListener(v -> {
+                    membershipState = MembershipState.WAITLIST;
+                    waitlistCount++;
+                    renderJoinButton();
+                    renderWaitlistCount();
+                    Toast.makeText(requireContext(),
+                            "Joined waitlist", Toast.LENGTH_SHORT).show();
+                    joinButton.setEnabled(true);
+                })
+                .addOnFailureListener(e -> joinButton.setEnabled(true));
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQ_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                requestLocationAndJoin();
+            } else {
+                // permission denied, still allow join but without location
+                performJoinWithLocation(null, null);
+            }
+        }
+    }
+
 }

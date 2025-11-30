@@ -458,6 +458,21 @@ public class DbManager {
      * @param userId - ID of the user
      * @return
      */
+    public Task<Void> addUserToWaitlist(String eventId, String userId, @Nullable Double lat, @Nullable Double lng) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("addedAt", System.currentTimeMillis());
+        if (lat != null && lng != null) {
+            data.put("latitude", lat);
+            data.put("longitude", lng);
+        }
+
+        return db.collection("events")
+                .document(eventId)
+                .collection("waitlist")
+                .document(userId)
+                .set(data, SetOptions.merge());
+    }
     public Task<Void> addUserToWaitlist(String eventId, String userId) {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
