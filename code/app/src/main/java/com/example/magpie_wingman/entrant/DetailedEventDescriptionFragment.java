@@ -68,6 +68,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private String eventLocation;
     private long   eventStartTimeMillis = -1L;
     private String eventDescription;
+    private int waitingListLimit;
 
     // UI references.
     private TextView titleText;
@@ -273,6 +274,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
                     if (!TextUtils.isEmpty(eventDescription)) {
                         descriptionText.setText(eventDescription);
                     }
+
+                    waitingListLimit = event.getWaitingListLimit();
+                    renderWaitlistCount();
 
                     // Poster: if we didn't get one from args, use Firestore value
                     if (TextUtils.isEmpty(eventPosterUrl)) {
@@ -532,8 +536,12 @@ public class DetailedEventDescriptionFragment extends Fragment {
     }
 
     private void renderWaitlistCount() {
-        if (textWaitingList != null) {
-            textWaitingList.setText("waiting list: " + waitlistCount);
+        if (waitingListLimit > 0) {
+            // Show "current / capacity"
+            textWaitingList.setText("Waiting list: " + waitlistCount + " / " + waitingListLimit);
+        } else {
+            // No capacity set on this event → just show the current size
+            textWaitingList.setText("Waiting list: " + waitlistCount);
         }
     }
 }
