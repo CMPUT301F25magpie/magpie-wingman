@@ -73,9 +73,6 @@ public class EntrantSettingsFragment extends Fragment {
         if (TextUtils.isEmpty(entrantId)) {
             entrantId = loadUserIdFromPrefs();
         }
-
-        User currentUser = MyApp.getInstance().getCurrentUser();
-        entrantId = currentUser.getUserId();
     }
 
     @Nullable
@@ -179,101 +176,18 @@ public class EntrantSettingsFragment extends Fragment {
     }
 
     private void initNotificationSwitches() {
-        if (TextUtils.isEmpty(entrantId)) {
-            adminNotificationsSwitch.setEnabled(false);
-            organizerNotificationsSwitch.setEnabled(false);
-            return;
-        }
+        boolean adminsOn = getPrefs().getBoolean(KEY_NOTIFY_ADMINS, false);
+        boolean organizersOn = getPrefs().getBoolean(KEY_NOTIFY_ORGANIZERS, true);
 
-        adminNotificationsSwitch.setEnabled(false);
-        organizerNotificationsSwitch.setEnabled(false);
+        adminNotificationsSwitch.setChecked(adminsOn);
+        organizerNotificationsSwitch.setChecked(organizersOn);
 
-        DbManager dbManager = DbManager.getInstance();
+        adminNotificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                getPrefs().edit().putBoolean(KEY_NOTIFY_ADMINS, isChecked).apply());
 
-        dbManager.getDb()
-                .collection("users")
-                .document(entrantId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    // Read values from Firestore
-                    Boolean notifAdmin = doc.getBoolean("notifAdmin");
-                    Boolean notifOrg   = doc.getBoolean("notifOrganizer");
-
-                    // If fields don't exist yet, use local defaults/prefs
-                    boolean adminsOn = (notifAdmin != null)
-                            ? notifAdmin
-                            : getPrefs().getBoolean(KEY_NOTIFY_ADMINS, false);
-
-                    boolean organizersOn = (notifOrg != null)
-                            ? notifOrg
-                            : getPrefs().getBoolean(KEY_NOTIFY_ORGANIZERS, true);
-
-                    // Set initial state
-                    adminNotificationsSwitch.setChecked(adminsOn);
-                    organizerNotificationsSwitch.setChecked(organizersOn);
-
-                    // Keep prefs in sync
-                    getPrefs().edit()
-                            .putBoolean(KEY_NOTIFY_ADMINS, adminsOn)
-                            .putBoolean(KEY_NOTIFY_ORGANIZERS, organizersOn)
-                            .apply();
-
-                    // Now attach listeners that write back to Firestore
-                    attachNotificationListeners();
-
-                    adminNotificationsSwitch.setEnabled(true);
-                    organizerNotificationsSwitch.setEnabled(true);
-                })
-                .addOnFailureListener(e -> {
-                    // If Firestore read fails, fall back to prefs
-                    boolean adminsOn = getPrefs().getBoolean(KEY_NOTIFY_ADMINS, false);
-                    boolean organizersOn = getPrefs().getBoolean(KEY_NOTIFY_ORGANIZERS, true);
-
-                    adminNotificationsSwitch.setChecked(adminsOn);
-                    organizerNotificationsSwitch.setChecked(organizersOn);
-
-                    attachNotificationListeners();
-
-                    adminNotificationsSwitch.setEnabled(true);
-                    organizerNotificationsSwitch.setEnabled(true);
-
-                    Toast.makeText(requireContext(),
-                            "Failed to load notification settings; using last saved values.",
-                            Toast.LENGTH_SHORT).show();
-                });
+        organizerNotificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                getPrefs().edit().putBoolean(KEY_NOTIFY_ORGANIZERS, isChecked).apply());
     }
-
-    private void attachNotificationListeners() {
-        adminNotificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            DbManager.getInstance()
-                    .updateNotificationPrefs(entrantId, isChecked, null)
-                    .addOnSuccessListener(v -> {
-                        getPrefs().edit().putBoolean(KEY_NOTIFY_ADMINS, isChecked).apply();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(requireContext(),
-                                "Failed to update admin notifications: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                        // revert switch
-                        adminNotificationsSwitch.setChecked(!isChecked);
-                    });
-        });
-
-        organizerNotificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            DbManager.getInstance()
-                    .updateNotificationPrefs(entrantId, null, isChecked)
-                    .addOnSuccessListener(v -> {
-                        getPrefs().edit().putBoolean(KEY_NOTIFY_ORGANIZERS, isChecked).apply();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(requireContext(),
-                                "Failed to update organizer notifications: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                        organizerNotificationsSwitch.setChecked(!isChecked);
-                    });
-        });
-    }
-
 
     private void confirmAndDeleteProfile() {
         new AlertDialog.Builder(requireContext())

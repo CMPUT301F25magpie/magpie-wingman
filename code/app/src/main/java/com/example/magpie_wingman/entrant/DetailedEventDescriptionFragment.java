@@ -1,5 +1,8 @@
 package com.example.magpie_wingman.entrant;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -10,16 +13,15 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.location.Location;
+import android.annotation.SuppressLint;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.magpie_wingman.MyApp;
@@ -28,17 +30,12 @@ import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.Event;
 import com.example.magpie_wingman.data.model.User;
 import com.google.firebase.firestore.FirebaseFirestore;
-import android.location.Location;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Fragment that displays the full details of a single event for entrant users.
@@ -46,7 +43,6 @@ import java.util.Map;
  *  Implemented functionality
  *  - Poster image only show when URL exists, otherwise hide
  *  - QR flow
- *  - Location request for waitlist entries
  *  - Waitlist / invitation / registration logic
  */
 public class DetailedEventDescriptionFragment extends Fragment {
@@ -58,6 +54,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private static final String ARG_EVENT_START_TIME  = "eventStartTime";
     private static final String ARG_EVENT_DESCRIPTION = "eventDescription";
     private static final String ARG_EVENT_POSTER_URL  = "eventPosterURL";
+    private static final int REQ_LOCATION_PERMISSION = 1001;
+    private FusedLocationProviderClient fusedLocationClient;
+    private boolean geolocationRequired = false;
 
     // Membership states for the current entrant
     private enum MembershipState {
@@ -65,7 +64,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
         WAITLIST,      // in waitlist
         INVITED,       // in invited
         REGISTRABLE,   // in registrable
-        REGISTERED     // in registered
+        REGISTERED,     // in registered
+        CANCELLED // in cancelled
+
     }
 
     // Event and user identifiers.
@@ -78,6 +79,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private String eventLocation;
     private long   eventStartTimeMillis = -1L;
     private String eventDescription;
+    private int waitingListLimit;
 
     // UI references.
     private TextView titleText;
@@ -87,10 +89,6 @@ public class DetailedEventDescriptionFragment extends Fragment {
     private TextView textWaitingList;
     private ImageView posterImage;
     private Button   joinButton;
-
-    // Location
-    private static final int REQ_LOCATION_PERMISSION = 1001;
-    private FusedLocationProviderClient fusedLocationClient;
 
     // Membership + waitlist info
     private MembershipState membershipState = MembershipState.NONE;
@@ -172,10 +170,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
         descriptionText        = v.findViewById(R.id.text_event_description);
         joinButton             = v.findViewById(R.id.button_join_waitlist);
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
         // Use whatever data we already have from arguments
         bindStaticDetailsFromArgs();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
         // back navigation
         backButton.setOnClickListener(view -> {
@@ -263,6 +260,10 @@ public class DetailedEventDescriptionFragment extends Fragment {
                     Event event = documentSnapshot.toObject(Event.class);
                     if (event == null) return;
 
+                    // check if geo required
+                    Boolean geo = documentSnapshot.getBoolean("geolocationRequired");
+                    geolocationRequired = Boolean.TRUE.equals(geo);
+
                     // Update fields only if missing or generic placeholders
                     if (TextUtils.isEmpty(eventName) ||
                             "Event".contentEquals(titleText.getText())) {
@@ -289,6 +290,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
                     if (!TextUtils.isEmpty(eventDescription)) {
                         descriptionText.setText(eventDescription);
                     }
+
+                    waitingListLimit = event.getWaitingListLimit();
+                    renderWaitlistCount();
 
                     // Poster: if we didn't get one from args, use Firestore value
                     if (TextUtils.isEmpty(eventPosterUrl)) {
@@ -333,19 +337,32 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
-        // Highest priority: registered
+        // Check canceled
         db.collection("events")
                 .document(eventId)
-                .collection("registered")
+                .collection("cancelled")
                 .document(entrantId)
                 .get()
-                .addOnSuccessListener(regDoc -> {
-                    if (regDoc.exists()) {
-                        membershipState = MembershipState.REGISTERED;
+                .addOnSuccessListener(cancelDoc -> {
+                    if (cancelDoc.exists()) {
+                        membershipState = MembershipState.CANCELLED;
                         renderJoinButton();
                     } else {
-                        // Next: registrable
-                        checkRegistrable(db);
+                        // Next check registered
+                        db.collection("events")
+                                .document(eventId)
+                                .collection("registered")
+                                .document(entrantId)
+                                .get()
+                                .addOnSuccessListener(regDoc -> {
+                                    if (regDoc.exists()) {
+                                        membershipState = MembershipState.REGISTERED;
+                                        renderJoinButton();
+                                    } else {
+                                        // Next registrable
+                                        checkRegistrable(db);
+                                    }
+                                });
                     }
                 });
     }
@@ -361,7 +378,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         membershipState = MembershipState.REGISTRABLE;
                         renderJoinButton();
                     } else {
-                        // Next: invited
+                        // Next check invited
                         checkInvited(db);
                     }
                 });
@@ -378,7 +395,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         membershipState = MembershipState.INVITED;
                         renderJoinButton();
                     } else {
-                        // Finally: waitlist
+                        // If still nothing check waitlist
                         DbManager.getInstance()
                                 .isUserInWaitlist(eventId, entrantId)
                                 .addOnSuccessListener(isIn -> {
@@ -393,11 +410,12 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
     /**
      * Main button behavior depending on membershipState:
-     *  - NONE        -> join waitlist
-     *  - WAITLIST    -> leave waitlist
-     *  - INVITED     -> accept invitation (invited -> registrable)
+     *  - NONE -> join waitlist
+     *  - WAITLIST -> leave waitlist
+     *  - INVITED -> accept invitation (invited -> registrable)
      *  - REGISTRABLE -> register (registrable -> registered)
-     *  - REGISTERED  -> no-op
+     *  - REGISTERED -> nothing
+     *  - CANCELED -> also nothing
      */
     private void toggleJoinLeave() {
         if (joinButton == null) return;
@@ -405,18 +423,12 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
         switch (membershipState) {
             case NONE:
-                // Join waitlist with geo permission
-                DbManager.getInstance().getDb().collection("events").document(eventId).get().addOnSuccessListener(snapshot -> {
-                            Boolean geoRequired = snapshot.getBoolean("geolocationRequired");
-
-                            if (geoRequired != null && geoRequired) {
-                                //organizer needs geolocation
-                                captureLocationIfAllowed(); //will block if no permission/location
-                            } else {
-                                //no geolocation required
-                                performJoinWithLocation(null, null);
-                            }
-                        });
+                // Join waitlist
+                if (geolocationRequired) {
+                    captureLocationIfAllowed();
+                } else {
+                    joinWithoutLocation();
+                }
                 break;
 
             case WAITLIST:
@@ -480,6 +492,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         "You are already registered.", Toast.LENGTH_SHORT).show();
                 joinButton.setEnabled(false);
                 break;
+            case CANCELLED:
+                Toast.makeText(requireContext(),
+                        "You have been removed from this event.", Toast.LENGTH_SHORT).show();
+                joinButton.setEnabled(false);
+                break;
         }
     }
 
@@ -510,21 +527,50 @@ public class DetailedEventDescriptionFragment extends Fragment {
             case REGISTERED:
                 joinButton.setEnabled(false);
                 joinButton.setText("Registered");
+                joinButton.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(0xFFCCCCCC) // light gray
+                );
+                joinButton.setTextColor(0xFF000000); // black text
+                break;
+
+            case CANCELLED:
+                joinButton.setEnabled(false);
+                joinButton.setText("You have been removed from this event");
+                joinButton.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(0xFFCCCCCC)
+                );
+                joinButton.setTextColor(0xFF000000);
                 break;
         }
     }
 
     private void renderWaitlistCount() {
-        if (textWaitingList != null) {
-            textWaitingList.setText("waiting list: " + waitlistCount);
+        if (textWaitingList == null) return;
+        if (waitingListLimit > 0) {
+            // Show "current / capacity"
+            textWaitingList.setText("Waiting list: " + waitlistCount + " / " + waitingListLimit);
+        } else {
+            // No capacity set on this event → just show the current size
+            textWaitingList.setText("Waiting list: " + waitlistCount);
         }
     }
+
+    private void joinWithoutLocation() {
+        DbManager.getInstance().addUserToWaitlist(eventId, entrantId).addOnSuccessListener(v -> {
+                    membershipState = MembershipState.WAITLIST;
+                    waitlistCount++;
+                    renderJoinButton();
+                    renderWaitlistCount();
+                    Toast.makeText(requireContext(),
+                            "Joined waitlist", Toast.LENGTH_SHORT).show();
+                    joinButton.setEnabled(true);
+                })
+                .addOnFailureListener(e -> joinButton.setEnabled(true));
+    }
+
     private void captureLocationIfAllowed() {
-        //check permission
         if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED) {
+                requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             requestPermissions(
                     new String[]{ Manifest.permission.ACCESS_FINE_LOCATION },
@@ -534,15 +580,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
         }
         requestLocationAndJoin();
     }
+
+    @SuppressLint("MissingPermission")
     private void requestLocationAndJoin() {
         if (fusedLocationClient == null) {
-            //join without location
             performJoinWithLocation(null, null);
-            return;
-        }
-
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
@@ -556,20 +598,12 @@ public class DetailedEventDescriptionFragment extends Fragment {
                     performJoinWithLocation(lat, lng);
                 })
                 .addOnFailureListener(e -> {
-                    //still allow joining without location for now
+                    //still allow joining without location
                     performJoinWithLocation(null, null);
                 });
     }
 
     private void performJoinWithLocation(@Nullable Double lat, @Nullable Double lng) {
-        if (lat == null || lng == null) {
-            Toast.makeText(requireContext(),
-                    "Location required to join this event.",
-                    Toast.LENGTH_LONG).show();
-            joinButton.setEnabled(true);
-            return;
-        }
-
         DbManager.getInstance()
                 .addUserToWaitlist(eventId, entrantId, lat, lng)
                 .addOnSuccessListener(v -> {
@@ -589,11 +623,14 @@ public class DetailedEventDescriptionFragment extends Fragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == REQ_LOCATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                requestLocationAndJoin(); //permission granted
+            if (grantResults.length > 0 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                requestLocationAndJoin();
             } else {
-                performJoinWithLocation(null, null); //permission denied, proceed with no location
+                // permission denied, still allow join but without location
+                performJoinWithLocation(null, null);
             }
         }
     }
+
 }

@@ -22,8 +22,9 @@ import com.example.magpie_wingman.data.model.UserProfile;
 import com.example.magpie_wingman.data.model.UserRole;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-
+import java.util.Set;
 /**
  * Fragment that displays the list of entrants who have been "Selected" (Invited to Apply).
  * This corresponds to the 'registrable' subcollection in Firestore.
@@ -34,11 +35,27 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private RecyclerView recyclerView;
     private TextView emptyStateText;
     private SelectedEntrantsAdapter adapter;
-    private List<UserProfile> selectedEntrantsList;
+
+    // now holds user + status (invited / registrable)
+    private List<SelectedEntrantRow> selectedEntrantsList;
     private String eventId;
 
-    public SelectedEntrantsListFragment() {
-        // Required empty public constructor
+    public SelectedEntrantsListFragment() {}
+
+    // status for each row
+    enum SelectedStatus {
+        INVITED,       // "undecided"
+        REGISTRABLE    // "accepted"
+    }
+
+    static class SelectedEntrantRow {
+        final UserProfile profile;
+        final SelectedStatus status;
+
+        SelectedEntrantRow(UserProfile profile, SelectedStatus status) {
+            this.profile = profile;
+            this.status = status;
+        }
     }
 
     @Override
@@ -62,7 +79,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
         recyclerView = view.findViewById(R.id.recycler_view_selected_entrants);
-        emptyStateText = view.findViewById(R.id.text_empty_state); // Bind the new text view
+        emptyStateText = view.findViewById(R.id.text_empty_state);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -78,32 +95,53 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     }
 
     /**
-     * Fetches users from the 'invited' subcollection of the event.
+     * Loads all users from both 'invited' and 'registrable' subcollections.
+     * This subset = all users who have received an invite, but haven't yet declined or registered.
      */
     private void loadEntrants() {
-        DbManager.getInstance().getEventInvited(eventId)
-                .addOnSuccessListener(userIds -> {
-                    selectedEntrantsList.clear();
+        DbManager db = DbManager.getInstance();
 
-                    // Handle Empty State
-                    if (userIds.isEmpty()) {
-                        adapter.notifyDataSetChanged();
-                        toggleEmptyState(true);
-                        return;
-                    }
-                    toggleEmptyState(false);
+        db.getEventInvited(eventId)
+                .addOnSuccessListener(invitedIds ->
+                        db.getEventRegistrable(eventId)
+                                .addOnSuccessListener(registrableIds -> {
+                                    selectedEntrantsList.clear();
 
-                    // Fetch names for each ID
-                    for (String uid : userIds) {
-                        DbManager.getInstance().getUserName(uid).addOnSuccessListener(name -> {
-                            // Using UserProfile model for display
-                            UserProfile profile = new UserProfile(uid, name, UserRole.ENTRANT);
-                            selectedEntrantsList.add(profile);
-                            adapter.notifyItemInserted(selectedEntrantsList.size() - 1);
-                        });
-                    }
-                })
-                .addOnFailureListener(e -> Log.e("SelectedEntrants", "Error loading list", e));
+                                    if (invitedIds.isEmpty() && registrableIds.isEmpty()) {
+                                        adapter.notifyDataSetChanged();
+                                        toggleEmptyState(true);
+                                        return;
+                                    }
+                                    toggleEmptyState(false);
+
+                                    Set<String> seen = new HashSet<>();
+
+                                    // invited -> "undecided"
+                                    for (String uid : invitedIds) {
+                                        if (!seen.add(uid)) continue;
+                                        db.getUserName(uid).addOnSuccessListener(name -> {
+                                            UserProfile profile = new UserProfile(uid, name, UserRole.ENTRANT);
+                                            selectedEntrantsList.add(
+                                                    new SelectedEntrantRow(profile, SelectedStatus.INVITED));
+                                            adapter.notifyItemInserted(selectedEntrantsList.size() - 1);
+                                        });
+                                    }
+
+                                    // registrable -> "accepted"
+                                    for (String uid : registrableIds) {
+                                        if (!seen.add(uid)) continue;
+                                        db.getUserName(uid).addOnSuccessListener(name -> {
+                                            UserProfile profile = new UserProfile(uid, name, UserRole.ENTRANT);
+                                            selectedEntrantsList.add(
+                                                    new SelectedEntrantRow(profile, SelectedStatus.REGISTRABLE));
+                                            adapter.notifyItemInserted(selectedEntrantsList.size() - 1);
+                                        });
+                                    }
+                                })
+                                .addOnFailureListener(e ->
+                                        Log.e("SelectedEntrants", "Error loading registrable list", e)))
+                .addOnFailureListener(e ->
+                        Log.e("SelectedEntrants", "Error loading invited list", e));
     }
 
     private void toggleEmptyState(boolean isEmpty) {
@@ -118,20 +156,43 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
     @Override
     public void onRemoveClicked(int position, UserProfile user) {
-        // Remove from 'registrable' collection in Firestore
-        DbManager.getInstance().cancelRegistrable(eventId, user.getUserId())
-                .addOnSuccessListener(aVoid -> {
-                    selectedEntrantsList.remove(position);
-                    adapter.notifyItemRemoved(position);
-                    adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+        if (position < 0 || position >= selectedEntrantsList.size()) return;
 
-                    // Check if list became empty after removal
-                    if (selectedEntrantsList.isEmpty()) {
-                        toggleEmptyState(true);
-                    }
+        SelectedEntrantRow row = selectedEntrantsList.get(position);
+        boolean isRegistrable = (row.status == SelectedStatus.REGISTRABLE);
 
-                    Toast.makeText(getContext(), "Removed " + user.getName(), Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Failed to remove", Toast.LENGTH_SHORT).show());
+        if (isRegistrable) {
+            DbManager.getInstance()
+                    .cancelRegistrable(eventId, user.getUserId())
+                    .addOnSuccessListener(aVoid -> {
+                        selectedEntrantsList.remove(position);
+                        adapter.notifyItemRemoved(position);
+                        adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+                        if (selectedEntrantsList.isEmpty()) {
+                            toggleEmptyState(true);
+                        }
+                        Toast.makeText(getContext(),
+                                "Removed " + user.getName(), Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(),
+                                    "Failed to remove", Toast.LENGTH_SHORT).show());
+        } else {
+            DbManager.getInstance()
+                    .cancelInvited(eventId, user.getUserId())
+                    .addOnSuccessListener(aVoid -> {
+                        selectedEntrantsList.remove(position);
+                        adapter.notifyItemRemoved(position);
+                        adapter.notifyItemRangeChanged(position, selectedEntrantsList.size());
+                        if (selectedEntrantsList.isEmpty()) {
+                            toggleEmptyState(true);
+                        }
+                        Toast.makeText(getContext(),
+                                "Removed " + user.getName(), Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(),
+                                    "Failed to remove", Toast.LENGTH_SHORT).show());
+        }
     }
 }

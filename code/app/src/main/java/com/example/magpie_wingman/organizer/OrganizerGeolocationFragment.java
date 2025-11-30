@@ -49,7 +49,6 @@ public class OrganizerGeolocationFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
-
         if (mapFragment != null) {
             mapFragment.getMapAsync(googleMap -> {
                 map = googleMap;
@@ -64,16 +63,16 @@ public class OrganizerGeolocationFragment extends Fragment {
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
         db.collection("events").document(eventId).get().addOnSuccessListener(eventSnap -> {
-                    Boolean geoRequired = eventSnap.getBoolean("geolocationRequired");
+            Boolean geoRequired = eventSnap.getBoolean("geolocationRequired");
 
-                    if (geoRequired == null || !geoRequired) {
-                        Toast.makeText(requireContext(),
-                                "Geolocation was not enabled for this event.",
-                                Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    loadEntrantLocations();
-                });
+            if (geoRequired == null || !geoRequired) {
+                Toast.makeText(requireContext(),
+                        "Geolocation was not enabled for this event.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+            loadEntrantLocations();
+        });
     }
 
     /**
@@ -89,8 +88,8 @@ public class OrganizerGeolocationFragment extends Fragment {
                     boolean hasMarkers = false;
 
                     for (DocumentSnapshot doc : snapshot) {
-                        Double lat = doc.getDouble("lat");
-                        Double lng = doc.getDouble("lng");
+                        Double lat = doc.getDouble("latitude");
+                        Double lng = doc.getDouble("longitude");
                         String userId = doc.getId();
 
                         if (lat != null && lng != null) {
@@ -117,5 +116,5 @@ public class OrganizerGeolocationFragment extends Fragment {
                                 "Failed to load entrant locations.",
                                 Toast.LENGTH_SHORT).show()
                 );
-    }
+        }
 }

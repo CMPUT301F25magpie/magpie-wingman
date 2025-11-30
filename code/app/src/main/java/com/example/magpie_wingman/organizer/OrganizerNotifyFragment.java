@@ -26,6 +26,7 @@ public class OrganizerNotifyFragment extends Fragment {
 
     private EditText titleInput, messageInput;
     private CheckBox waitlistCheck, registrableCheck, cancelledCheck;
+    private Button sendButton;
     private String eventId;
 
     private final NotificationFunction notificationFunction = new NotificationFunction();
@@ -47,7 +48,7 @@ public class OrganizerNotifyFragment extends Fragment {
         waitlistCheck = view.findViewById(R.id.checkbox_waiting);
         registrableCheck = view.findViewById(R.id.checkbox_selected);
         cancelledCheck = view.findViewById(R.id.checkbox_cancelled);
-        Button sendButton = view.findViewById(R.id.button_send_notification);
+        sendButton = view.findViewById(R.id.button_send_notification);
 
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");

@@ -23,6 +23,7 @@ public class Event {
 
     private int waitingListLimit;
     private String qrCodeHash;
+    private boolean geolocationRequired;
 
 
     public Event() {}
@@ -99,4 +100,8 @@ public class Event {
 
     public String getQrCodeHash() { return qrCodeHash; }
     public void setQrCodeHash(String qrCodeHash) { this.qrCodeHash = qrCodeHash; }
+    public boolean isGeolocationRequired() { return geolocationRequired; }
+    public void setGeolocationRequired(boolean geolocationRequired) {
+        this.geolocationRequired = geolocationRequired;
+    }
 }

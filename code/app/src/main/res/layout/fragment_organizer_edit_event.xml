@@ -29,6 +29,14 @@
                 android:contentDescription="Back"
                 app:tint="#000000" />
 
+            <ImageView
+                android:id="@+id/image_logo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/wingman_logo"
+                android:contentDescription="Logo"
+                android:layout_marginStart="8dp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -37,6 +45,21 @@
                 android:textStyle="bold"
                 android:textSize="18sp"
                 android:layout_marginStart="8dp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/button_info"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="Info"
+                android:src="@drawable/ic_info"
+                android:gravity="end"
+                app:tint="#000000" />
         </LinearLayout>
 
         <EditText
@@ -47,7 +70,8 @@
             android:layout_marginTop="16dp"
             android:background="@drawable/edittext_white"
             android:padding="12dp"
-            android:textColor="#000000" />
+            android:textColor="#000000"
+            android:textColorHint="#888888" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -86,11 +110,69 @@
             android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/edit_location"
-                android:layout_width="match_parent"
+            <CheckBox
+                android:id="@+id/checkbox_geo"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Location (Full Address)"
+                android:text="Geo-Location"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#2E5BFF"
+                android:layout_marginEnd="16dp"/>
+
+            <CheckBox
+                android:id="@+id/checkbox_qr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Generate QR"
+                android:textColor="#FFFFFF"
+                android:buttonTint="#2E5BFF"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/button_upload_poster"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_marginTop="8dp"
+            android:text="+ Re-upload Poster"
+            android:textColor="#000000"
+            android:background="@drawable/edittext_white"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <EditText
+                android:id="@+id/edit_address"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:hint="Address"
+                android:background="@drawable/edittext_white"
+                android:padding="12dp"
+                android:textColor="#000000" />
+
+            <EditText
+                android:id="@+id/edit_city"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:hint="City"
+                android:background="@drawable/edittext_white"
+                android:padding="12dp"
+                android:textColor="#000000" />
+
+            <EditText
+                android:id="@+id/edit_province"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Province"
                 android:background="@drawable/edittext_white"
                 android:padding="12dp"
                 android:textColor="#000000" />
@@ -111,7 +193,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            android:weightSum="2">
 
             <EditText
                 android:id="@+id/edit_date"
@@ -119,9 +202,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:hint="Date"
-                android:focusable="false"
-                android:clickable="true"
+                android:hint="Event Date"
+                android:drawableStart="@drawable/ic_calendar"
                 android:background="@drawable/edittext_white"
                 android:padding="12dp"
                 android:textColor="#000000" />
@@ -131,9 +213,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Time"
-                android:focusable="false"
-                android:clickable="true"
+                android:hint="Event Time"
+                android:drawableStart="@drawable/ic_clock"
                 android:background="@drawable/edittext_white"
                 android:padding="12dp"
                 android:textColor="#000000" />
@@ -151,9 +232,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:hint="Reg Start"
-                android:focusable="false"
-                android:clickable="true"
+                android:hint="Registration Start"
                 android:background="@drawable/edittext_white"
                 android:padding="12dp"
                 android:textColor="#000000" />
@@ -163,57 +242,97 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Reg End"
-                android:focusable="false"
-                android:clickable="true"
+                android:hint="Registration End"
                 android:background="@drawable/edittext_white"
                 android:padding="12dp"
                 android:textColor="#000000" />
         </LinearLayout>
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Select Filters"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
-            <CheckBox
-                android:id="@+id/checkbox_geo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Require Geo-Location"
-                android:textColor="#FFFFFF"
-                android:buttonTint="#2E5BFF"
-                android:layout_marginEnd="16dp"/>
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_sports"
+                android:background="@drawable/circle_white"
+                android:contentDescription="Sports" />
 
-            <CheckBox
-                android:id="@+id/checkbox_qr"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Generate QR"
-                android:textColor="#FFFFFF"
-                android:buttonTint="#2E5BFF"/>
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_music"
+                android:background="@drawable/circle_white"
+                android:contentDescription="Music" />
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_art"
+                android:background="@drawable/circle_white"
+                android:contentDescription="Art" />
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_food"
+                android:background="@drawable/circle_white"
+                android:contentDescription="Food" />
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_more"
+                android:background="@drawable/circle_white"
+                android:contentDescription="Other" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/button_upload_poster"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="8dp"
-            android:text="+ Change Poster"
-            android:textColor="#000000"
-            android:background="@drawable/edittext_white"
-            android:textStyle="bold" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp">
 
-        <Button
-            android:id="@+id/button_save"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="24dp"
-            android:text="SAVE CHANGES"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:backgroundTint="#3A5BFF" />
+            <Button
+                android:id="@+id/button_reset"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="RESET"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:background="@drawable/white_button_bg" />
 
+            <Button
+                android:id="@+id/button_create"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="SAVE"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/blue_button_bg"
+                android:backgroundTint="@null" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

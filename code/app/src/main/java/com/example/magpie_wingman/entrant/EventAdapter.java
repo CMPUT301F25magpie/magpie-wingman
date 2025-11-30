@@ -73,7 +73,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.VH> {
         }
 
         h.description.setText(e.getDescription());
-        h.waitlistCount.setText("Waiting List: " + e.getWaitlistCount());
+        if (e.getWaitingListLimit() > 0) {
+            h.waitlistCount.setText("Waiting List: " + e.getWaitlistCount() + "/" + e.getWaitingListLimit());
+        }else{
+            h.waitlistCount.setText("Waiting List: " + e.getWaitlistCount());
+        }
 
         // Default until Firestore returns
         setButtonState(h, false);

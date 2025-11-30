@@ -4,7 +4,6 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,14 +34,20 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Fragment responsible for creating a new event.
+ * Collects details including Title, Capacity, Waitlist Limit, and Geolocation requirements.
+ */
 public class OrganizerNewEventFragment extends Fragment {
 
-    // Added eventCapacityField to the list
-    private EditText eventTitleField, eventLimitField, eventCapacityField, eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
+    // UI Components
+    private EditText eventTitleField, eventCapacityField, eventLimitField;
+    private EditText eventAddressField, eventCityField, eventProvinceField, eventDescriptionField;
     private EditText eventDateField, eventTimeField, regStartDateField, regEndDateField;
-    private CheckBox qrCheckBox;
+    private CheckBox qrCheckBox, geoCheckBox;
     private Button createButton, uploadPosterButton;
 
+    // Data / Helpers
     User currentUser = MyApp.getInstance().getCurrentUser();
     private final Calendar eventCalendar = Calendar.getInstance();
     private final Calendar regStartCalendar = Calendar.getInstance();
@@ -53,11 +58,14 @@ public class OrganizerNewEventFragment extends Fragment {
     private Uri posterImageUri;
     private ActivityResultLauncher<String> pickImageLauncher;
 
-    public OrganizerNewEventFragment() { }
+    public OrganizerNewEventFragment() {
+        // Required empty public constructor
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Register image picker result handler
         pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
                 posterImageUri = uri;
@@ -75,9 +83,14 @@ public class OrganizerNewEventFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Bind Views
         eventTitleField = view.findViewById(R.id.edit_event_title);
-        eventCapacityField = view.findViewById(R.id.edit_capacity); // Bind the Capacity box
-        eventLimitField = view.findViewById(R.id.edit_limit);       // Bind the Waitlist Limit box
+        // Note: Ensure XML ID is correct for capacity field
+        eventCapacityField = view.findViewById(R.id.edit_capacity);
+        eventLimitField = view.findViewById(R.id.edit_limit);
+
+        qrCheckBox = view.findViewById(R.id.checkbox_qr);
+        geoCheckBox = view.findViewById(R.id.checkbox_geo);
 
         eventAddressField = view.findViewById(R.id.edit_address);
         eventCityField = view.findViewById(R.id.edit_city);
@@ -89,69 +102,74 @@ public class OrganizerNewEventFragment extends Fragment {
         regStartDateField = view.findViewById(R.id.edit_registration_start);
         regEndDateField = view.findViewById(R.id.edit_registration_end);
 
-        qrCheckBox = view.findViewById(R.id.checkbox_qr);
         createButton = view.findViewById(R.id.button_create);
         uploadPosterButton = view.findViewById(R.id.button_upload_poster);
         ImageButton backBtn = view.findViewById(R.id.button_back);
 
         setupPickers();
+
+        // Listeners
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
         uploadPosterButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         createButton.setOnClickListener(v -> saveEvent(view));
     }
 
+    /**
+     * Validates input and triggers event creation in Firestore.
+     */
     private void saveEvent(View view) {
         String title = eventTitleField.getText().toString().trim();
         String desc = eventDescriptionField.getText().toString().trim();
-
-        // 1. Get Capacity (Attendees)
-        String capStr = eventCapacityField.getText().toString().trim();
-        int capacity = capStr.isEmpty() ? 0 : Integer.parseInt(capStr);
-
-        // 2. Get Waitlist Limit (Queue)
-        String limitStr = eventLimitField.getText().toString().trim();
-        int waitlistLimit = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
 
         if (TextUtils.isEmpty(title)) {
             Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Parse Inputs
+        String limitStr = eventLimitField.getText().toString().trim();
+        String capStr = eventCapacityField.getText().toString().trim();
+
+        int waitlistLimit = limitStr.isEmpty() ? 0 : Integer.parseInt(limitStr);
+        int capacity = capStr.isEmpty() ? 100 : Integer.parseInt(capStr); // Default to 100 if empty
+        boolean geoRequired = geoCheckBox.isChecked();
+
         String location = eventAddressField.getText().toString() + ", " + eventCityField.getText().toString();
         String organizerId = (currentUser != null) ? currentUser.getUserId() : "unknown";
 
+        // Disable button to prevent double clicks
         createButton.setEnabled(false);
         createButton.setText("Creating...");
 
         new Thread(() -> {
             try {
+                // Step 1: Create basic event doc
                 com.google.android.gms.tasks.Task<Void> task = DbManager.getInstance().createEvent(
                         title, desc, organizerId, regStartCalendar.getTime(), regEndCalendar.getTime()
                 );
+
                 if (getActivity() != null) {
                     task.addOnSuccessListener(getActivity(), aVoid -> {
-                        // Pass both distinct numbers: capacity AND waitlistLimit
-                        findLastEventAndFillDetails(title, organizerId, location, capacity, waitlistLimit, eventCalendar.getTime(), posterImageUri);
+                        // Step 2: Update doc with extended details (Capacity, Geo, QR)
+                        findLastEventAndFillDetails(title, organizerId, location, capacity, waitlistLimit, eventCalendar.getTime(), posterImageUri, geoRequired);
                         Toast.makeText(getContext(), "Event Created!", Toast.LENGTH_SHORT).show();
                         Navigation.findNavController(view).navigateUp();
                     }).addOnFailureListener(getActivity(), e -> {
                         createButton.setEnabled(true);
                         createButton.setText("CREATE");
-                        Toast.makeText(getContext(), "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
             } catch (Exception e) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        createButton.setEnabled(true);
-                        createButton.setText("CREATE");
-                    });
-                }
+                // ignore
             }
         }).start();
     }
 
-    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, int wlLimit, Date start, @Nullable Uri posterUri) {
+    /**
+     * Helper to update the newly created event with fields not handled by createEvent().
+     * Specifically handles the 'geolocationRequired' flag for your teammate's logic.
+     */
+    private void findLastEventAndFillDetails(String title, String orgId, String loc, int cap, int wlLimit, Date start, @Nullable Uri posterUri, boolean geoRequired) {
         DbManager.getInstance().getDb().collection("events")
                 .whereEqualTo("eventName", title)
                 .whereEqualTo("organizerId", orgId)
@@ -162,20 +180,17 @@ public class OrganizerNewEventFragment extends Fragment {
                         String eventId = snapshots.getDocuments().get(0).getId();
                         Map<String, Object> updates = new HashMap<>();
                         updates.put("eventLocation", loc);
-                        updates.put("eventCapacity", cap);        // Saved as eventCapacity
-                        updates.put("waitingListLimit", wlLimit); // Saved as waitingListLimit (Your Story)
+                        updates.put("eventCapacity", cap);
                         updates.put("eventStartTime", start);
                         updates.put("waitlistCount", 0);
+                        updates.put("waitingListLimit", wlLimit);
+                        updates.put("geolocationRequired", geoRequired); // Important for teammate's logic
 
-                        if (qrCheckBox.isChecked()) {
-                            updates.put("qrCodeHash", eventId);
-                        }
+                        if (qrCheckBox.isChecked()) updates.put("qrCodeHash", eventId);
 
                         DbManager.getInstance().getDb().collection("events").document(eventId).set(updates, SetOptions.merge());
 
-                        if (posterUri != null) {
-                            DbManager.getInstance().uploadEventPoster(eventId, posterUri);
-                        }
+                        if (posterUri != null) DbManager.getInstance().uploadEventPoster(eventId, posterUri);
                     }
                 });
     }
@@ -183,18 +198,25 @@ public class OrganizerNewEventFragment extends Fragment {
     private void setupPickers() {
         makeReadOnly(eventDateField); makeReadOnly(eventTimeField);
         makeReadOnly(regStartDateField); makeReadOnly(regEndDateField);
+
         eventDateField.setOnClickListener(v -> showDate(eventCalendar, eventDateField));
         eventTimeField.setOnClickListener(v -> showTime(eventCalendar, eventTimeField));
         regStartDateField.setOnClickListener(v -> showDate(regStartCalendar, regStartDateField));
         regEndDateField.setOnClickListener(v -> showDate(regEndCalendar, regEndDateField));
     }
-    private void makeReadOnly(EditText et) { et.setFocusable(false); et.setClickable(true); }
+
+    private void makeReadOnly(EditText et) {
+        et.setFocusable(false);
+        et.setClickable(true);
+    }
+
     private void showDate(Calendar cal, EditText et) {
         new DatePickerDialog(getContext(), (v, y, m, d) -> {
             cal.set(Calendar.YEAR, y); cal.set(Calendar.MONTH, m); cal.set(Calendar.DAY_OF_MONTH, d);
             et.setText(dateFmt.format(cal.getTime()));
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
     }
+
     private void showTime(Calendar cal, EditText et) {
         new TimePickerDialog(getContext(), (v, h, m) -> {
             cal.set(Calendar.HOUR_OF_DAY, h); cal.set(Calendar.MINUTE, m);
