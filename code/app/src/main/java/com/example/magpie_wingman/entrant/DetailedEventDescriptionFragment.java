@@ -53,7 +53,9 @@ public class DetailedEventDescriptionFragment extends Fragment {
         WAITLIST,      // in waitlist
         INVITED,       // in invited
         REGISTRABLE,   // in registrable
-        REGISTERED     // in registered
+        REGISTERED,     // in registered
+        CANCELLED // in cancelled
+
     }
 
     // Event and user identifiers.
@@ -315,19 +317,32 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
         FirebaseFirestore db = DbManager.getInstance().getDb();
 
-        // Highest priority: registered
+        // Check canceled
         db.collection("events")
                 .document(eventId)
-                .collection("registered")
+                .collection("cancelled")
                 .document(entrantId)
                 .get()
-                .addOnSuccessListener(regDoc -> {
-                    if (regDoc.exists()) {
-                        membershipState = MembershipState.REGISTERED;
+                .addOnSuccessListener(cancelDoc -> {
+                    if (cancelDoc.exists()) {
+                        membershipState = MembershipState.CANCELLED;
                         renderJoinButton();
                     } else {
-                        // Next: registrable
-                        checkRegistrable(db);
+                        // Next check registered
+                        db.collection("events")
+                                .document(eventId)
+                                .collection("registered")
+                                .document(entrantId)
+                                .get()
+                                .addOnSuccessListener(regDoc -> {
+                                    if (regDoc.exists()) {
+                                        membershipState = MembershipState.REGISTERED;
+                                        renderJoinButton();
+                                    } else {
+                                        // Next registrable
+                                        checkRegistrable(db);
+                                    }
+                                });
                     }
                 });
     }
@@ -343,7 +358,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         membershipState = MembershipState.REGISTRABLE;
                         renderJoinButton();
                     } else {
-                        // Next: invited
+                        // Next check invited
                         checkInvited(db);
                     }
                 });
@@ -360,7 +375,7 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         membershipState = MembershipState.INVITED;
                         renderJoinButton();
                     } else {
-                        // Finally: waitlist
+                        // If still nothing check waitlist
                         DbManager.getInstance()
                                 .isUserInWaitlist(eventId, entrantId)
                                 .addOnSuccessListener(isIn -> {
@@ -375,11 +390,12 @@ public class DetailedEventDescriptionFragment extends Fragment {
 
     /**
      * Main button behavior depending on membershipState:
-     *  - NONE        -> join waitlist
-     *  - WAITLIST    -> leave waitlist
-     *  - INVITED     -> accept invitation (invited -> registrable)
+     *  - NONE -> join waitlist
+     *  - WAITLIST -> leave waitlist
+     *  - INVITED -> accept invitation (invited -> registrable)
      *  - REGISTRABLE -> register (registrable -> registered)
-     *  - REGISTERED  -> no-op
+     *  - REGISTERED -> nothing
+     *  - CANCELED -> also nothing
      */
     private void toggleJoinLeave() {
         if (joinButton == null) return;
@@ -463,6 +479,11 @@ public class DetailedEventDescriptionFragment extends Fragment {
                         "You are already registered.", Toast.LENGTH_SHORT).show();
                 joinButton.setEnabled(false);
                 break;
+            case CANCELLED:
+                Toast.makeText(requireContext(),
+                        "You have been removed from this event.", Toast.LENGTH_SHORT).show();
+                joinButton.setEnabled(false);
+                break;
         }
     }
 
@@ -493,6 +514,19 @@ public class DetailedEventDescriptionFragment extends Fragment {
             case REGISTERED:
                 joinButton.setEnabled(false);
                 joinButton.setText("Registered");
+                joinButton.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(0xFFCCCCCC) // light gray
+                );
+                joinButton.setTextColor(0xFF000000); // black text
+                break;
+
+            case CANCELLED:
+                joinButton.setEnabled(false);
+                joinButton.setText("You have been removed from this event");
+                joinButton.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(0xFFCCCCCC)
+                );
+                joinButton.setTextColor(0xFF000000);
                 break;
         }
     }
