@@ -51,16 +51,6 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
-
-            <ImageButton
-                android:id="@+id/button_info"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="Info"
-                android:src="@drawable/ic_info"
-                android:gravity="end"
-                app:tint="#000000" />
         </LinearLayout>
 
         <EditText
@@ -258,53 +248,6 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_sports"
-                android:background="@drawable/circle_white"
-                android:contentDescription="Sports" />
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_music"
-                android:background="@drawable/circle_white"
-                android:contentDescription="Music" />
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_art"
-                android:background="@drawable/circle_white"
-                android:contentDescription="Art" />
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_food"
-                android:background="@drawable/circle_white"
-                android:contentDescription="Food" />
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="8dp"
-                android:src="@drawable/ic_more"
-                android:background="@drawable/circle_white"
-                android:contentDescription="Other" />
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
