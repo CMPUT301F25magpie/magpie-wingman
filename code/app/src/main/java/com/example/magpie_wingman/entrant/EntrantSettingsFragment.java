@@ -24,6 +24,7 @@ import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.User;
+import com.example.magpie_wingman.data.model.UserRole;
 
 /**
  * Settings screen for entrant users backed by a custom layout
@@ -285,21 +286,47 @@ public class EntrantSettingsFragment extends Fragment {
 
     private void performDelete() {
         if (TextUtils.isEmpty(entrantId)) {
-            Toast.makeText(requireContext(), "Could not resolve your user ID.", Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(),
+                    "Could not resolve your user ID.",
+                    Toast.LENGTH_LONG).show();
             return;
         }
 
+
+        final Context appContext = requireContext().getApplicationContext();
+
+        User currentUser = MyApp.getInstance().getCurrentUser();
+        UserRole role;
+
+        if (currentUser != null && currentUser.isOrganizer()) {
+            // organizer: delete their events AND their account
+            role = UserRole.ORGANIZER;
+        } else {
+            // remove them from all events and delete the profile.
+            role = UserRole.ENTRANT;
+        }
+
         DbManager.getInstance()
-                .deleteEntrant(entrantId)
+                .deleteProfile(entrantId, role)
                 .addOnSuccessListener(v -> {
                     clearUserIdFromPrefs();
-                    Toast.makeText(requireContext(), "Profile deleted", Toast.LENGTH_SHORT).show();
-                    requireActivity().finish();
+
+                    Toast.makeText(appContext,
+                            "Profile deleted",
+                            Toast.LENGTH_SHORT).show();
+
+                    // Avoid requireActivity() here to prevent "fragment not attached" crashes
+                    if (getActivity() != null) {
+                        getActivity().finish();
+                    }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(requireContext(),
-                                "Delete failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                .addOnFailureListener(e -> {
+                    Toast.makeText(appContext,
+                            "Delete failed: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
     }
+
 
     // =============================================================================================
     // Local storage helpers
