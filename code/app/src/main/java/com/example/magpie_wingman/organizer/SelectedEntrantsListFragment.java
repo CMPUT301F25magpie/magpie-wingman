@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 /**
  * Fragment that displays the list of entrants who have been "Selected" (Invited to Apply).
- * This corresponds to the 'registrable' subcollection in Firestore.
+ * This corresponds to the 'invited' and 'registrable' subcollections in Firestore.
  * The Organizer can view this list and manually remove entrants if needed.
  */
 public class SelectedEntrantsListFragment extends Fragment implements SelectedEntrantsAdapter.OnEntrantRemoveListener {
@@ -36,7 +36,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     private TextView emptyStateText;
     private SelectedEntrantsAdapter adapter;
 
-    // now holds user + status (invited / registrable)
+    // now holds user and status (invited / registrable)
     private List<SelectedEntrantRow> selectedEntrantsList;
     private String eventId;
 
@@ -58,6 +58,11 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         }
     }
 
+    /**
+     * Retrieves the event ID passed to the fragment through arguments.
+     *
+     * @param savedInstanceState Saved state if the fragment is being recreated.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,12 +70,26 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
             eventId = getArguments().getString("eventId");
         }
     }
-
+    /**
+     * Inflates the selected entrants list layout for this fragment.
+     *
+     * @param inflater  The LayoutInflater used to inflate the views.
+     * @param container The parent view for the fragment's UI.
+     * @param savedInstanceState Saved fragment state, if any.
+     * @return The inflated view for the selected entrants list screen.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_selected_entrants_list, container, false);
     }
 
+    /**
+     * Initializes UI components including the RecyclerView, adapter, and back button.
+     * If a valid event ID was supplied, loads the invited and registrable entrants for display.
+     *
+     * @param view               Root view returned by {@link #onCreateView}.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -95,8 +114,10 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
     }
 
     /**
-     * Loads all users from both 'invited' and 'registrable' subcollections.
-     * This subset = all users who have received an invite, but haven't yet declined or registered.
+     * Loads all user IDs from both the 'invited' and 'registrable' subcollections of the event.
+     * For each ID, retrieves the user's name and constructs a {@link SelectedEntrantRow} indicating
+     * whether the user is invited (undecided) or registrable (accepted but not fully registered).
+     * The results are added to the RecyclerView's backing list and displayed to the user.
      */
     private void loadEntrants() {
         DbManager db = DbManager.getInstance();
@@ -116,7 +137,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
 
                                     Set<String> seen = new HashSet<>();
 
-                                    // invited -> "undecided"
+                                    // invited = "undecided" because they havent replied to the invitation yet
                                     for (String uid : invitedIds) {
                                         if (!seen.add(uid)) continue;
                                         db.getUserName(uid).addOnSuccessListener(name -> {
@@ -127,7 +148,7 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                                         });
                                     }
 
-                                    // registrable -> "accepted"
+                                    // registrable = "accepted" (but haven't finalized registration yet, like RSVP)
                                     for (String uid : registrableIds) {
                                         if (!seen.add(uid)) continue;
                                         db.getUserName(uid).addOnSuccessListener(name -> {
@@ -144,6 +165,12 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
                         Log.e("SelectedEntrants", "Error loading invited list", e));
     }
 
+    /**
+     * Shows or hides the empty-state UI depending on whether the list is empty.
+     *
+     * @param isEmpty True if the list is empty and the empty-state message should be shown;
+     *                false to show the RecyclerView instead.
+     */
     private void toggleEmptyState(boolean isEmpty) {
         if (isEmpty) {
             recyclerView.setVisibility(View.GONE);
@@ -154,6 +181,14 @@ public class SelectedEntrantsListFragment extends Fragment implements SelectedEn
         }
     }
 
+    /**
+     * Callback triggered when the organizer clicks the remove button for a specific entrant.
+     * Removes the entrant from either the 'registrable' or 'invited' subcollection depending
+     * on their status, updates the UI list, and shows a Toast confirmation.
+     *
+     * @param position The adapter position of the entrant being removed.
+     * @param user     The {@link UserProfile} representing the entrant to remove.
+     */
     @Override
     public void onRemoveClicked(int position, UserProfile user) {
         if (position < 0 || position >= selectedEntrantsList.size()) return;

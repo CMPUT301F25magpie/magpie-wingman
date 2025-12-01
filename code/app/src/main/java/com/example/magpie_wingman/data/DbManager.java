@@ -37,11 +37,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 /**
- * This utility class contains all of the "Helper Methods" that read from and write to the database
+ * This utility class contains various "Helper Methods" that read from and write to the database
  * Helper method functionalities include:
  * -  Creating and deleting users/events
- * -  Moving users to waitlist -> registrable -> registered subcollections in an event's doc
- * -  Removing users from the above subcollections
+ * -  Moving users to waitlist -> invited -> registrable -> registered subcollections in an event's doc
+ * -  Removing users from the above subcollections and moving to cancelled
  * -  Changing user's organizer perms
  * -  Getters and setters for user/events' info
  */
@@ -104,11 +104,18 @@ public class DbManager {
         }
     }
 
-    /**
-     * Creates a new user document.
-     * The userId will be generated using generateUserID and will also act as the document ID
-     * NOTE 26 related problems are due to constructor changes in instrumented tests (not material to prod) will fix later
-     */
+
+     /**
+     *  * Creates a new user document in Firestore with the given profile information and a
+     *  * generated user ID. The user is saved with organizer status and the device's Android ID.
+     *  *
+     *  * @param name      The user's display name.
+     *  * @param email     The user's email address.
+     *  * @param phone     The user's phone number.
+     *  * @param password  The user's password to store.
+     *  * @return          A Task representing the asynchronous Firestore write operation.
+     *  */
+
     public Task<Void> createUser(String name, String email, String phone, String password) {
         String userId = generateUserId(name);
 
@@ -139,6 +146,7 @@ public class DbManager {
      * @param organizerId      the userId of the organizer (to store reference)
      * @param regStart         registration start date (String or Timestamp)
      * @param regEnd           registration end date (String or Timestamp)
+     * @return                 a task that resolves to True on success
      */
     public Task<Void> createEvent(String eventName,
                                   String description,
@@ -175,6 +183,15 @@ public class DbManager {
                 .document(eventId)
                 .set(event, SetOptions.merge());
     }
+
+    /**
+     * Deletes an entrant user from the system by removing their record from all event-related
+     * subcollections (waitlist, invited, registrable, registered, cancelled) across every event,
+     * then deleting the user document itself. All operations are performed in a single batched write.
+     *
+     * @param userId  The ID of the user to remove from all event lists and from the users collection.
+     * @return        A Task that completes when all deletions have finished or fails if an error occurs.
+     */
     public Task<Void> deleteEntrant(String userId) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
 
@@ -243,6 +260,16 @@ public class DbManager {
         return tcs.getTask();
     }
 
+    /**
+     * Deletes an organizer account by removing all events they created and then
+     * deleting the organizer's user record from all event-related subcollections.
+     * This method waits for all associated event deletions to complete before
+     * removing the organizer as an entrant.
+     *
+     * @param organizerId  The ID of the organizer to delete.
+     * @return             A Task that completes when all related events and user data
+     *                     have been removed, or fails if an error occurs.
+     */
     public Task<Void> deleteOrganizer(String organizerId) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
 
@@ -271,6 +298,15 @@ public class DbManager {
         return tcs.getTask();
     }
 
+    /**
+     * Revokes an organizer's permissions and deletes all events owned by that organizer.
+     * The method first disables organizer privileges, then finds and removes every event
+     * associated with the organizer in Firestore.
+     *
+     * @param organizerId  The ID of the organizer whose role is being revoked and whose events are to be deleted.
+     * @return             A Task that completes when permissions are revoked and all related events are deleted,
+     *                     or fails if an error occurs.
+     */
     public Task<Void> revokeOrganizerAndDeleteEvents(String organizerId) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
 
@@ -301,7 +337,14 @@ public class DbManager {
 
         return tcs.getTask();
     }
-
+    /**
+     * Fetches user profiles from Firestore, optionally filtering by a specified role.
+     * This method retrieves all users or only organizers/entrants depending on the provided filter,
+     * then converts them into {@link UserProfile} objects.
+     *
+     * @param roleFilter  The role to filter by (ORGANIZER, ENTRANT), or null to return all users.
+     * @return            A Task containing a list of matching UserProfile objects, or an empty list if none match.
+     */
     public Task<List<UserProfile>> fetchProfiles(@Nullable UserRole roleFilter) {
         TaskCompletionSource<List<UserProfile>> tcs = new TaskCompletionSource<>();
 
@@ -453,10 +496,15 @@ public class DbManager {
 //                                              Entrant List flow methods
 //---------------------------------------------------------------------------------------------------------------------------
     /**
-     * Adds a userID document to the event document's waitlist subcollection (creates one if it doesn't exist yet)
-     * @param eventId - ID of event doc in question
-     * @param userId - ID of the user
-     * @return
+     * Adds a user to the waitlist of a specified event, optionally storing their
+     * latitude and longitude. The entry is saved under the user's ID and includes
+     * a timestamp indicating when they were added.
+     *
+     * @param eventId  The ID of the event whose waitlist the user is joining.
+     * @param userId   The ID of the user being added to the waitlist.
+     * @param lat      Optional latitude of the user at the time of joining, or null if not provided.
+     * @param lng      Optional longitude of the user at the time of joining, or null if not provided.
+     * @return         A Task representing the asynchronous Firestore write operation.
      */
     public Task<Void> addUserToWaitlist(String eventId, String userId, @Nullable Double lat, @Nullable Double lng) {
         Map<String, Object> data = new HashMap<>();
@@ -473,6 +521,15 @@ public class DbManager {
                 .document(userId)
                 .set(data, SetOptions.merge());
     }
+    /**
+     * Adds a user to the waitlist of the specified event, storing their user ID and
+     * the timestamp indicating when they joined. This version does not include any
+     * location data.
+     *
+     * @param eventId  The ID of the event whose waitlist the user should be added to.
+     * @param userId   The ID of the user being added to the waitlist.
+     * @return         A Task representing the asynchronous Firestore write operation.
+     */
     public Task<Void> addUserToWaitlist(String eventId, String userId) {
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
@@ -596,6 +653,15 @@ public class DbManager {
 
         return batch.commit();
     }
+    /**
+     * Moves a user from the registrable list to the registered list for a given event.
+     * This operation writes a minimal record into the registered collection and removes
+     * the user from the registrable collection in a single atomic batch.
+     *
+     * @param eventId  The ID of the event the user is registering for.
+     * @param userId   The ID of the user being moved to the registered list.
+     * @return         A Task representing the batched Firestore commit.
+     */
     public Task<Void> addUserToRegistered(String eventId, String userId) {
 
         com.google.firebase.firestore.WriteBatch batch = db.batch();
@@ -614,7 +680,7 @@ public class DbManager {
                         .collection("registered")
                         .document(userId);
 
-        // copy minimal data
+        // copy data
         Map<String, Object> data = new HashMap<>();
         data.put("userId", userId);
         data.put("movedAt", System.currentTimeMillis());
@@ -886,7 +952,7 @@ public class DbManager {
                     if (!task.isSuccessful() || task.getResult() == null) {
                         return null;
                     }
-                    // you saved regStart as Object, so return as-is
+                    // return regstart
                     return task.getResult().get("registrationStart");
                 });
     }
@@ -1009,11 +1075,6 @@ public class DbManager {
                 });
     }
 
-    public Task<QuerySnapshot> getEventsByOrganizer(String organizerId) {
-        return db.collection("events")
-                .whereEqualTo("organizerId", organizerId)
-                .get();
-    }
 
     /**
      * Updates the user's password.
@@ -1042,6 +1103,14 @@ public class DbManager {
                 .update("dateOfBirth", newDOB);
     }
 
+    /**
+     * Attempts to find a user whose account is associated with the given device ID
+     * and marked with the "remember me" flag. Returns the user's ID if a match is found,
+     * or null if no remembered user exists on this device.
+     *
+     * @param deviceId  The device's unique Android ID used to look up the user.
+     * @return          A Task resolving to the userId string, or null if no matching user is found.
+     */
     public Task<String> findUserByDeviceId(String deviceId) {
         return db.collection("users")
                 .whereEqualTo("deviceId", deviceId)
@@ -1098,6 +1167,13 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Checks whether the given email address is already associated with an existing user
+     * in the Firestore database. Returns true if a user with the email exists, false otherwise.
+     *
+     * @param email  The email address to check for in the users collection.
+     * @return       A Task resolving to true if the email is in use, or false if not.
+     */
     public com.google.android.gms.tasks.Task<Boolean> isEmailInUse(String email) {
         return db.collection("users")
                 .whereEqualTo("email", email)
@@ -1105,13 +1181,22 @@ public class DbManager {
                 .get()
                 .continueWith(task -> {
                     if (!task.isSuccessful() || task.getResult() == null) {
-                        // Treat failure as "not in use" for now, but you can tighten this if you want
+                        // Treat failure as "not in use"
                         return false;
                     }
                     return !task.getResult().isEmpty();
                 });
     }
 
+    /**
+     * Updates the date of birth for the user identified by the given email address.
+     * The method looks up the user by email and, if found, delegates the update to
+     * {@code updateDOB(...)}, otherwise completes without making changes.
+     *
+     * @param email   The email address of the user whose date of birth should be updated.
+     * @param newDOB  The new date of birth to set for the user.
+     * @return        A Task that completes after the DOB update is applied or no matching user is found.
+     */
     public com.google.android.gms.tasks.Task<Void> updateDOBByEmail(String email, java.util.Date newDOB) {
         return db.collection("users")
                 .whereEqualTo("email", email)
@@ -1119,7 +1204,7 @@ public class DbManager {
                 .get()
                 .continueWithTask(task -> {
                     if (!task.isSuccessful() || task.getResult() == null || task.getResult().isEmpty()) {
-                        // No user found or error; you can also choose to throw here instead
+                        // No user found or error
                         return com.google.android.gms.tasks.Tasks.forResult(null);
                     }
 
@@ -1128,6 +1213,13 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Updates the "remember me" flag for the specified user in Firestore.
+     *
+     * @param userId      The ID of the user whose remember-me preference is being updated.
+     * @param rememberMe  True to enable remember-me, false to disable it.
+     * @return            A Task representing the asynchronous update operation.
+     */
     public Task<Void> updateRememberMe(String userId, boolean rememberMe) {
         return db.collection("users")
                 .document(userId)
@@ -1135,8 +1227,11 @@ public class DbManager {
     }
 
     /**
-     * Fetches all events from the "events" collection as Event models
-     * for use in entrant lists.
+     * Retrieves all events from the Firestore "events" collection and converts them
+     * into {@link Event} objects. Ensures that each event has its eventId field populated,
+     * even if it was not stored explicitly.
+     *
+     * @return  A Task resolving to a list of all Event objects retrieved from Firestore.
      */
     public Task<List<Event>> getAllEvents() {
         return db.collection("events")
@@ -1163,6 +1258,15 @@ public class DbManager {
                 });
     }
 
+    /**
+     * Uploads an event poster image to Firebase Storage and updates the corresponding
+     * event document with the poster's download URL. Returns the final download URL
+     * once the upload and Firestore update are complete.
+     *
+     * @param eventId   The ID of the event whose poster is being uploaded.
+     * @param localUri  The local URI of the image file to upload.
+     * @return          A Task resolving to the download URL of the uploaded poster image.
+     */
     public Task<String> uploadEventPoster(String eventId, Uri localUri) {
         StorageReference ref = storage
                 .getReference()
@@ -1201,14 +1305,14 @@ public class DbManager {
     public Task<Void> removeEventPoster(String eventId, @Nullable String posterUrl) {
         TaskCompletionSource<Void> tcs = new TaskCompletionSource<>();
 
-        // Helper to just clear the Firestore field
+        // Helper to clear the Firestore field
         Runnable clearField = () -> db.collection("events")
                 .document(eventId)
                 .update("eventPosterURL", null)
                 .addOnSuccessListener(unused -> tcs.setResult(null))
                 .addOnFailureListener(tcs::setException);
 
-        // No URL? Just clear the field.
+        // No URL = clear the field.
         if (posterUrl == null || posterUrl.isEmpty()) {
             clearField.run();
             return tcs.getTask();
@@ -1218,12 +1322,12 @@ public class DbManager {
         try {
             ref = storage.getReferenceFromUrl(posterUrl);
         } catch (IllegalArgumentException e) {
-            // Not a Firebase Storage URL; just clear the field.
+            // Not a Firebase Storage URL = clear the field.
             clearField.run();
             return tcs.getTask();
         }
 
-        // Try deleting the file; regardless of success, clear the field.
+        // Try deleting the file and clear the field.
         ref.delete()
                 .addOnSuccessListener(unused -> clearField.run())
                 .addOnFailureListener(e -> clearField.run());
@@ -1329,70 +1433,17 @@ public class DbManager {
                     return users;
                 });
     }
+
     /**
-     * Returns all events that the given user has signed up for
-     * used in Entrant Event Fragment
+     * Updates a user's notification preference settings in Firestore. Only non-null
+     * values are updated, allowing callers to modify one or both preferences without
+     * overwriting the other.
      *
-     * @param User ID of the entrant user
-     * @return Task resolving to a List of Event models.
+     * @param userId      The ID of the user whose notification preferences are being updated.
+     * @param notifAdmin  The new admin-notification preference, or null to leave it unchanged.
+     * @param notifOrg    The new organizer-notification preference, or null to leave it unchanged.
+     * @return            A Task representing the asynchronous Firestore update.
      */
-    public Task<List<Event>> getEntrantEventHistory(String userId)  {
-        TaskCompletionSource<List<Event>> tcs = new TaskCompletionSource<>();
-        Executors.newSingleThreadExecutor().execute(() ->{
-            try {
-                // Get all events once
-                QuerySnapshot eventsSnap = Tasks.await(db.collection("events").get());
-                List<Event> history = new ArrayList<>();
-                for (DocumentSnapshot ev : eventsSnap.getDocuments()) {
-                    DocumentReference evRef = ev.getReference();
-                    boolean hasRegistration = false;
-                    // Check waitlist
-                    QuerySnapshot wl = Tasks.await(evRef.collection("waitlist")
-                            .whereEqualTo("userId", userId)
-                            .get()
-                    );
-                    if (!wl.isEmpty()) {
-                        hasRegistration = true;
-                    } else {
-                        // Check registrable
-                        QuerySnapshot rg =
-                                Tasks.await(
-                                        evRef.collection("registrable")
-                                                .whereEqualTo("userId", userId)
-                                                .get()
-                                );
-                        if (!rg.isEmpty()) {
-                            hasRegistration = true;
-                        } else {
-                            // Check registered
-                            QuerySnapshot rd =
-                                    Tasks.await(evRef.collection("registered")
-                                            .whereEqualTo("userId", userId)
-                                            .get()
-                                    );
-                            if (!rd.isEmpty()) {
-                                hasRegistration = true;
-                            }
-                        }
-                    }
-                    if (hasRegistration) {
-                        Event e = ev.toObject(Event.class);
-                        if (e != null) {
-                            // Ensure eventId is set even if it isn't a field in the doc
-                            if (e.getEventId() == null || e.getEventId().isEmpty()) {
-                                e.setEventId(ev.getId());
-                            }
-                            history.add(e);
-                        }
-                    }
-                }
-                tcs.setResult(history);
-            } catch (Exception e) {
-                tcs.setException(e);
-            }
-        });
-        return tcs.getTask();
-    }
 
     public Task<Void> updateNotificationPrefs(String userId,
                                               @Nullable Boolean notifAdmin,

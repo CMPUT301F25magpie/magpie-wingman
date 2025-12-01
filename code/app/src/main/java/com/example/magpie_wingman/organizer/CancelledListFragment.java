@@ -27,9 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shows the list of entrants who have been cancelled for this event.
- *
- * Data source: events/{eventId}/cancelled subcollection.
+ * Fragment that displays a list of entrants who have cancelled their participation
+ * in a given event. Cancelled entrants are stored in the Firestore subcollection:
+ *     events/{eventId}/cancelled
+ * <p>This fragment fetches the list of cancelled user IDs, resolves the display names
+ * using {@link DbManager#getUserName(String)}, and constructs simple row views
+ * (icon + name) dynamically inside a vertical LinearLayout container.</p>
  */
 public class CancelledListFragment extends Fragment {
 
@@ -38,8 +41,15 @@ public class CancelledListFragment extends Fragment {
     private LinearLayout listContainer;
 
     public CancelledListFragment() {
-        // Required empty public constructor
+
     }
+    /**
+     * Creates a new instance of {@link CancelledListFragment} with the provided event ID
+     * stored in its arguments bundle.
+     *
+     * @param eventId The Firestore event ID whose cancelled list should be displayed.
+     * @return A new {@link CancelledListFragment} containing the event ID as an argument.
+     */
 
     public static CancelledListFragment newInstance(String eventId) {
         CancelledListFragment f = new CancelledListFragment();
@@ -49,6 +59,14 @@ public class CancelledListFragment extends Fragment {
         return f;
     }
 
+    /**
+     * Inflates the cancelled entrants list layout.
+     *
+     * @param inflater  The LayoutInflater used to inflate XML views.
+     * @param container The parent into which the UI will be placed.
+     * @param savedInstanceState Previously saved state, if any.
+     * @return The root view for the cancelled list fragment.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container,
@@ -56,6 +74,14 @@ public class CancelledListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_cancelled_list, container, false);
     }
 
+    /**
+     * Initializes UI elements including the back button and the container that will
+     * hold dynamically-created rows. Retrieves the event ID from the fragment arguments
+     * and triggers the Firestore load for the cancelled entrants list.
+     *
+     * @param view               The root view returned by {@link #onCreateView}.
+     * @param savedInstanceState Saved fragment state, or null if newly created.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
@@ -80,6 +106,16 @@ public class CancelledListFragment extends Fragment {
         loadCancelledList(eventId);
     }
 
+    /**
+     * Loads all cancelled entrants for the specified event from Firestore.
+     * Retrieves the list of user IDs from "events/{eventId}/cancelled", then fetches
+     * each user's display name using {@link DbManager#getUserName(String)}.
+     *
+     * <p>Builds UI rows inside the fragment's LinearLayout container. Displays an
+     * empty-state message if no cancelled users exist or if a Firestore error occurs.</p>
+     *
+     * @param eventId The ID of the event whose cancelled entrants should be displayed.
+     */
     private void loadCancelledList(@NonNull String eventId) {
         DbManager db = DbManager.getInstance();
 
@@ -92,7 +128,7 @@ public class CancelledListFragment extends Fragment {
                         return;
                     }
 
-                    // Fetch names for display
+                    // get names
                     List<Task<String>> nameTasks = new ArrayList<>(userIds.size());
                     for (String uid : userIds) {
                         nameTasks.add(db.getUserName(uid));
@@ -123,7 +159,14 @@ public class CancelledListFragment extends Fragment {
                 });
     }
 
-    /** Build one row: person icon + name (matches mock). */
+    /**
+     * Creates a single row representing a cancelled entrant, consisting of a person icon
+     * and their display name.
+     *
+     * @param ctx  The context used to construct the view.
+     * @param name The display name to show in the row.
+     * @return A fully constructed horizontal LinearLayout representing one person row.
+     */
     private View makePersonRow(Context ctx, String name) {
         int padV = dp(ctx, 8);
         int iconSize = dp(ctx, 20);
@@ -158,6 +201,11 @@ public class CancelledListFragment extends Fragment {
         return row;
     }
 
+    /**
+     * Adds a simple TextView to the container showing an empty-state or error message.
+     *
+     * @param message The text to display to the user.
+     */
     private void addEmptyStateRow(String message) {
         TextView tv = new TextView(requireContext());
         tv.setLayoutParams(new LinearLayout.LayoutParams(
@@ -169,6 +217,14 @@ public class CancelledListFragment extends Fragment {
         listContainer.addView(tv);
     }
 
+    /**
+     * Converts density-independent pixels (dp) into raw pixels based on the device's
+     * screen density.
+     *
+     * @param ctx The context providing display metrics.
+     * @param dp  The dp value to convert.
+     * @return The corresponding pixel value as an integer.
+     */
     private static int dp(Context ctx, int dp) {
         return Math.round(dp * ctx.getResources().getDisplayMetrics().density);
     }

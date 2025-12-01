@@ -24,7 +24,13 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Fragment that displays the waiting list of entrants for a given event.
+ * The waitlist corresponds to the "waitlist" subcollection of an event in Firestore.
+ *
+ * <p>The fragment retrieves the list of user IDs from Firestore, resolves each
+ * to a name from the "users" collection, and displays them in a RecyclerView.</p>
+ */
 public class WaitingListFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -36,6 +42,14 @@ public class WaitingListFragment extends Fragment {
 
     public WaitingListFragment() {}
 
+    /**
+     * Inflates the waiting list layout for this fragment.
+     *
+     * @param inflater  The LayoutInflater used to inflate the fragment's view.
+     * @param container The parent view the UI is attached to.
+     * @param savedInstanceState Previously saved state, if available.
+     * @return The root view for the waiting list fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -44,6 +58,13 @@ public class WaitingListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_waiting_list, container, false);
     }
 
+    /**
+     * Initializes UI components including the RecyclerView, back button, and progress bar.
+     * Retrieves the event ID from fragment arguments and triggers loading of the waiting list.
+     *
+     * @param view               The root view created by {@link #onCreateView}.
+     * @param savedInstanceState Previously saved state, if available.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
@@ -71,6 +92,14 @@ public class WaitingListFragment extends Fragment {
         }
     }
 
+    /**
+     * Loads the list of users waiting for an event from Firestore. Queries the event's
+     * "waitlist" subcollection to get user IDs, then resolves each ID to a display name
+     * from the "users" collection.
+     *
+     * <p>The method updates the progress bar, empty-state message, and RecyclerView adapter
+     * based on the results. All operations are asynchronous and handled through Firestore listeners.</p>
+     */
     private void loadWaitlist() {
         waitlist = new ArrayList<>();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -135,7 +164,10 @@ public class WaitingListFragment extends Fragment {
                 });
     }
 
-    /** Adapter that uses item_waiting_person.xml */
+    /**
+     * RecyclerView adapter used to display a list of entrants on the waitlist.
+     * Each row corresponds to one person and uses the layout from item_waiting_person.xml.
+     */
     private static class WaitlistAdapter
             extends RecyclerView.Adapter<WaitlistAdapter.ViewHolder> {
 
@@ -145,11 +177,23 @@ public class WaitingListFragment extends Fragment {
             this.entrantList = entrantList;
         }
 
+        /**
+         * Replaces the current data set with a new list of entrant names and refreshes the UI.
+         *
+         * @param entrantList The new list of names to display in the RecyclerView.
+         */
         void setData(List<String> entrantList) {
             this.entrantList = entrantList;
             notifyDataSetChanged();
         }
 
+        /**
+         * Inflates a new view holder for the waitlist item layout.
+         *
+         * @param parent  The parent ViewGroup for the row.
+         * @param viewType Unused viewType parameter.
+         * @return A new {@link ViewHolder} instance for the row.
+         */
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent,
@@ -159,13 +203,20 @@ public class WaitingListFragment extends Fragment {
             return new ViewHolder(view);
         }
 
+        /**
+         * Binds the entrant's name to the row and sets the click listener for the
+         * location button, which currently displays a Toast placeholder.
+         *
+         * @param holder   The ViewHolder representing the row.
+         * @param position The position of the item being bound.
+         */
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder,
                                      int position) {
             String name = entrantList.get(position);
             holder.nameText.setText(name);
 
-            // For now, just show a Toast when location button is clicked
+
             holder.locationButton.setOnClickListener(v ->
                     Toast.makeText(v.getContext(),
                             "Show location for " + name,
@@ -173,6 +224,11 @@ public class WaitingListFragment extends Fragment {
             );
         }
 
+        /**
+         * Returns the number of entrants in the waitlist.
+         *
+         * @return The size of the entrant list, or 0 if the list is null.
+         */
         @Override
         public int getItemCount() {
             return entrantList != null ? entrantList.size() : 0;
@@ -186,7 +242,6 @@ public class WaitingListFragment extends Fragment {
                 super(itemView);
                 nameText = itemView.findViewById(R.id.text_person_name);
                 locationButton = itemView.findViewById(R.id.button_location);
-                // We still want white text if the row ever sits on dark bg
                 nameText.setTextColor(Color.BLACK);
             }
         }
