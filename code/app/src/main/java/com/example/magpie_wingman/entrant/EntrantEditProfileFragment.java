@@ -33,10 +33,7 @@ import java.util.Locale;
 public class EntrantEditProfileFragment extends Fragment {
 
     private EditText firstNameEt, lastNameEt, emailEt, dobEt, phoneEt, passwordEt;
-    private Button btnEntrant, btnOrganizer, btnUpdate;
-
-    // Tracks which role is currently selected
-    private boolean isOrganizerSelected = false;
+    private Button btnUpdate;
 
     private final SimpleDateFormat dobFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
@@ -66,24 +63,12 @@ public class EntrantEditProfileFragment extends Fragment {
         phoneEt      = v.findViewById(R.id.edit_phone);
         passwordEt   = v.findViewById(R.id.edit_password);
 
-        // Role buttons
-//        btnEntrant   = v.findViewById(R.id.button_entrant);
-//        btnOrganizer = v.findViewById(R.id.button_organizer);
-
         // Update button
         btnUpdate    = v.findViewById(R.id.button_update);
 
         // Date picker
         if (dobEt != null) {
             dobEt.setOnClickListener(_v -> showDatePicker());
-        }
-
-        // Role button click listeners
-        if (btnEntrant != null) {
-            btnEntrant.setOnClickListener(_v -> setRole(false));
-        }
-        if (btnOrganizer != null) {
-            btnOrganizer.setOnClickListener(_v -> setRole(true));
         }
 
         // Retrieve current logged-in user
@@ -111,12 +96,6 @@ public class EntrantEditProfileFragment extends Fragment {
             if (phone != null) phoneEt.setText(phone);
         });
 
-        dbm.getIsOrganizer(userId).addOnSuccessListener(isOrg -> {
-            // default to Entrant if null
-            boolean organizer = isOrg != null && isOrg;
-            setRole(organizer);
-        });
-
         // Load DOB
         dbm.getDb()
                 .collection("users").document(userId)
@@ -142,7 +121,6 @@ public class EntrantEditProfileFragment extends Fragment {
             String email = text(emailEt);
             String phone = text(phoneEt);
             String newPassword = text(passwordEt);
-            boolean isOrganizer = isOrganizerSelected;
 
             if (TextUtils.isEmpty(first)) {
                 firstNameEt.setError("First name required");
@@ -171,7 +149,6 @@ public class EntrantEditProfileFragment extends Fragment {
             ops.add(dbm.updateName(userId, fullName));
             ops.add(dbm.updateEmail(userId, email));
             ops.add(dbm.updatePhoneNumber(userId, phone));
-            ops.add(dbm.changeOrgPerms(userId, isOrganizer));
 
             if (dobDate != null) {
                 ops.add(dbm.updateDOB(userId, dobDate));
@@ -227,20 +204,6 @@ public class EntrantEditProfileFragment extends Fragment {
                 c.get(Calendar.DAY_OF_MONTH)
         );
         dlg.show();
-    }
-
-    private void setRole(boolean organizer) {
-        isOrganizerSelected = organizer;
-
-        if (btnEntrant == null || btnOrganizer == null) return;
-
-        if (organizer) {
-            btnOrganizer.setBackgroundResource(R.drawable.blue_button_bg);
-            btnEntrant.setBackgroundResource(R.drawable.white_button_bg);
-        } else {
-            btnEntrant.setBackgroundResource(R.drawable.blue_button_bg);
-            btnOrganizer.setBackgroundResource(R.drawable.white_button_bg);
-        }
     }
 
     private static String text(EditText et) {
