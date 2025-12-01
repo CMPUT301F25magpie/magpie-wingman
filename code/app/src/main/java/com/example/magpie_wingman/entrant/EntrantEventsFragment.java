@@ -67,11 +67,13 @@ public class EntrantEventsFragment extends Fragment {
             bundle.putString("entrantId", entrantId);
 
             NavController navController = Navigation.findNavController(view);
-            navController.navigate(R.id.action_entrantEventsFragment_to_detailedEventDescriptionFragment, bundle);
+            navController.navigate(
+                    R.id.action_entrantEventsFragment_to_detailedEventDescriptionFragment,
+                    bundle
+            );
         });
 
         recyclerView.setAdapter(adapter);
-        fetchEvents();
     }
 
     @Override
