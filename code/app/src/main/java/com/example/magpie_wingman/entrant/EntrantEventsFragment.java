@@ -1,7 +1,6 @@
 package com.example.magpie_wingman.entrant;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -142,7 +141,6 @@ public class EntrantEventsFragment extends Fragment {
      *  - "registrable" (allowed to register)
      *  - "invited"     (invited but not yet accepted)
      *  - "waitlist"    (still waiting)
-     *
      * If the entrant is found in any of these, the event is added to the list.
      * In all cases, we mark this event as processed and eventually
      * notify the adapter when all checks are done.
