@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.example.magpie_wingman.MyApp;
@@ -83,7 +84,8 @@ public class OrganizerNewEventFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Bind Views
+        NavController navController = Navigation.findNavController(view);
+
         eventTitleField = view.findViewById(R.id.edit_event_title);
         // Note: Ensure XML ID is correct for capacity field
         eventCapacityField = view.findViewById(R.id.edit_capacity);
@@ -105,6 +107,7 @@ public class OrganizerNewEventFragment extends Fragment {
         createButton = view.findViewById(R.id.button_create);
         uploadPosterButton = view.findViewById(R.id.button_upload_poster);
         ImageButton backBtn = view.findViewById(R.id.button_back);
+        ImageButton btn_Info = view.findViewById(R.id.button_info);
 
         setupPickers();
 
@@ -112,6 +115,9 @@ public class OrganizerNewEventFragment extends Fragment {
         backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
         uploadPosterButton.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         createButton.setOnClickListener(v -> saveEvent(view));
+
+        btn_Info.setOnClickListener(v -> navController.navigate(R.id.action_organizerNewEventFragment_to_organizerEditNewEventInfoFragment));
+
     }
 
     /**
