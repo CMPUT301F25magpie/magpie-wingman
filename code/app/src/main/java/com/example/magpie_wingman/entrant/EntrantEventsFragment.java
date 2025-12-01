@@ -74,6 +74,13 @@ public class EntrantEventsFragment extends Fragment {
         fetchEvents();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh events
+        fetchEvents();
+    }
+
     /**
      * Loads the current entrant's registration history.
      * For each event document, it checks the "waitlist",
@@ -127,9 +134,14 @@ public class EntrantEventsFragment extends Fragment {
 
     /**
      * Checks whether the current entrant appears in any of the event's
-     * membership subcollections: "waitlist", "registrable", or "registered".
+     * membership subcollections:
+     *  - "cancelled"   (removed / not selected)
+     *  - "registered"  (fully registered)
+     *  - "registrable" (allowed to register)
+     *  - "invited"     (invited but not yet accepted)
+     *  - "waitlist"    (still waiting)
      *
-     * If the entrant is found, the event is added to the list.
+     * If the entrant is found in any of these, the event is added to the list.
      * In all cases, we mark this event as processed and eventually
      * notify the adapter when all checks are done.
      */
@@ -144,54 +156,84 @@ public class EntrantEventsFragment extends Fragment {
             return;
         }
 
-        // 1) Check waitlist
-        eventRef.collection("waitlist")
-                .whereEqualTo("userId", userId)
+        // 1) Check CANCELLED
+        eventRef.collection("cancelled")
+                .document(userId)
                 .get()
-                .addOnSuccessListener(waitlistSnap -> {
-                    if (!waitlistSnap.isEmpty()) {
+                .addOnSuccessListener(cancelDoc -> {
+                    if (cancelDoc.exists()) {
+                        // User was cancelled from this event → still part of their history
                         eventList.add(event);
                         onEventCheckComplete(processedCount, totalEvents);
                     } else {
-                        // 2) Check registrable
-                        eventRef.collection("registrable")
-                                .whereEqualTo("userId", userId)
+                        // 2) Check REGISTERED
+                        eventRef.collection("registered")
+                                .document(userId)
                                 .get()
-                                .addOnSuccessListener(registrableSnap -> {
-                                    if (!registrableSnap.isEmpty()) {
+                                .addOnSuccessListener(regDoc -> {
+                                    if (regDoc.exists()) {
                                         eventList.add(event);
                                         onEventCheckComplete(processedCount, totalEvents);
                                     } else {
-                                        // 3) Check registered
-                                        eventRef.collection("registered")
-                                                .whereEqualTo("userId", userId)
+                                        // 3) Check REGISTRABLE
+                                        eventRef.collection("registrable")
+                                                .document(userId)
                                                 .get()
-                                                .addOnSuccessListener(registeredSnap -> {
-                                                    if (!registeredSnap.isEmpty()) {
+                                                .addOnSuccessListener(regableDoc -> {
+                                                    if (regableDoc.exists()) {
                                                         eventList.add(event);
+                                                        onEventCheckComplete(processedCount, totalEvents);
+                                                    } else {
+                                                        // 4) Check INVITED
+                                                        eventRef.collection("invited")
+                                                                .document(userId)
+                                                                .get()
+                                                                .addOnSuccessListener(invitedDoc -> {
+                                                                    if (invitedDoc.exists()) {
+                                                                        eventList.add(event);
+                                                                        onEventCheckComplete(processedCount, totalEvents);
+                                                                    } else {
+                                                                        // 5) Finally check WAITLIST
+                                                                        eventRef.collection("waitlist")
+                                                                                .document(userId)
+                                                                                .get()
+                                                                                .addOnSuccessListener(waitDoc -> {
+                                                                                    if (waitDoc.exists()) {
+                                                                                        eventList.add(event);
+                                                                                    }
+                                                                                    onEventCheckComplete(processedCount, totalEvents);
+                                                                                })
+                                                                                .addOnFailureListener(e -> {
+                                                                                    showShortToast("Error checking waitlist status.");
+                                                                                    onEventCheckComplete(processedCount, totalEvents);
+                                                                                });
+                                                                    }
+                                                                })
+                                                                .addOnFailureListener(e -> {
+
+                                                                    showShortToast("Error checking invited status.");
+                                                                    onEventCheckComplete(processedCount, totalEvents);
+                                                                });
                                                     }
-                                                    onEventCheckComplete(processedCount, totalEvents);
                                                 })
                                                 .addOnFailureListener(e -> {
-                                                    e.printStackTrace();
-                                                    showShortToast("Error checking registered status.");
+                                                    showShortToast("Error checking registrable status.");
                                                     onEventCheckComplete(processedCount, totalEvents);
                                                 });
                                     }
                                 })
                                 .addOnFailureListener(e -> {
-                                    e.printStackTrace();
-                                    showShortToast("Error checking registrable status.");
+                                    showShortToast("Error checking registered status.");
                                     onEventCheckComplete(processedCount, totalEvents);
                                 });
                     }
                 })
                 .addOnFailureListener(e -> {
-                    e.printStackTrace();
-                    showShortToast("Error checking waitlist status.");
+                    showShortToast("Error checking cancelled status.");
                     onEventCheckComplete(processedCount, totalEvents);
                 });
     }
+
 
     /**
      * Helper that increments the processed event counter and
