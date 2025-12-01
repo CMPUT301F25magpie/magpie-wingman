@@ -42,6 +42,11 @@ public class AdminEventsFragment extends Fragment
     /**
      * Called when the fragment needs its UI.
      * Inflates the layout that contains the header bar and the RecyclerView.
+     *
+     * @param inflater           LayoutInflater used to inflate the fragment layout.
+     * @param container          Optional parent view the fragment UI will attach to.
+     * @param savedInstanceState Previously saved state, or {@code null} if new.
+     * @return The root view for the admin events screen.
      */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -53,6 +58,9 @@ public class AdminEventsFragment extends Fragment
     /**
      * Called after the view is created.
      * Sets up the back button, the RecyclerView, and starts loading events from Firestore.
+     *
+     * @param view               The fragment's root view.
+     * @param savedInstanceState Previously saved state, or {@code null} if new.
      */
     @Override
     public void onViewCreated(@NonNull View view,

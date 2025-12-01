@@ -105,6 +105,14 @@ public class DetailedEventDescriptionFragment extends Fragment {
     /**
      * Convenience factory method for creating a new instance of this fragment
      * with the given event details bundled as arguments.
+     *
+     * @param eventId       Unique ID of the event.
+     * @param eventName     Display name of the event.
+     * @param eventLocation Human-readable location string.
+     * @param eventStartTime Start time of the event in milliseconds since epoch.
+     * @param description   Full description text of the event.
+     * @param posterUrl     Optional URL for the event poster image; may be {@code null}.
+     * @return A new {@link DetailedEventDescriptionFragment} with arguments set.
      */
     public static DetailedEventDescriptionFragment newInstance(String eventId,
                                                                String eventName,

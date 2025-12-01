@@ -19,6 +19,16 @@ import com.example.magpie_wingman.R;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
+/**
+ * Fragment responsible for scanning event QR codes.
+ *
+ * <p>Implements <b>US 01.06.01</b>: As an entrant I want to view event
+ * details within the app by scanning the promotional QR code.</p>
+ *
+ * <p>This class uses the ZXing Android Embedded library to launch a
+ * camera activity. When a code is detected, it extracts the event ID
+ * string and navigates the user to the {@link DetailedEventDescriptionFragment}.</p>
+ */
 public class ScanQRFragment extends Fragment {
 
     // 1. The Scanner Launcher
@@ -73,6 +83,11 @@ public class ScanQRFragment extends Fragment {
         });
     }
 
+    /**
+     * Navigates to the detailed event screen for the given event ID.
+     *
+     * @param eventId ID of the event encoded in the scanned QR code.
+     */
     private void navigateToEventDetails(String eventId) {
         Bundle bundle = new Bundle();
         bundle.putString("eventId", eventId);

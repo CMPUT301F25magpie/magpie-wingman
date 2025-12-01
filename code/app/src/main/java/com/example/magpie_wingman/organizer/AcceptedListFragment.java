@@ -234,6 +234,8 @@ public class AcceptedListFragment extends Fragment {
             /**
              * ViewHolder for a single registered entrant row. Displays the entrant's name
              * and provides a location button (placeholder functionality).
+             *
+             * @param itemView the inflated row view for this holder
              */
             ViewHolder(@NonNull View itemView) {
                 super(itemView);

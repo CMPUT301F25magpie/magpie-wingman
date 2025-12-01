@@ -134,7 +134,9 @@ public class OrganizerEditEventFragment extends Fragment {
     }
 
     /**
-     * Fetches event details from Firestore to pre-fill fields.
+     * Fetches event details from Firestore to pre-fill the edit fields.
+     *
+     * @param eventId The ID of the event to load from Firestore.
      */
     private void loadEvent(String eventId) {
         DbManager.getInstance().getDb().collection("events").document(eventId).get()
@@ -143,8 +145,10 @@ public class OrganizerEditEventFragment extends Fragment {
     }
 
     /**
-     * Parses Firestore document and updates UI.
-     * Checks 'geolocationRequired' to toggle the checkbox.
+     * Parses the Firestore document and updates the UI fields.
+     * Checks the {@code geolocationRequired} field to toggle the Geo checkbox.
+     *
+     * @param doc The Firestore document snapshot containing event data.
      */
     private void applyEventSnapshot(DocumentSnapshot doc) {
         if (!doc.exists()) return;
@@ -210,7 +214,8 @@ public class OrganizerEditEventFragment extends Fragment {
     }
 
     /**
-     * Saves changes to Firestore, including Geo requirement.
+     * Saves changes to Firestore, including Geo requirement and registration dates.
+     * Performs basic validation and shows error messages via Toast when needed.
      */
     private void saveChanges() {
         if (TextUtils.isEmpty(eventId)) return;

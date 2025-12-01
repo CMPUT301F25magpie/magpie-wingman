@@ -144,6 +144,11 @@ public class EntrantEventsFragment extends Fragment {
      * If the entrant is found in any of these, the event is added to the list.
      * In all cases, we mark this event as processed and eventually
      * notify the adapter when all checks are done.
+     *
+     * @param eventRef       Firestore document reference for the event.
+     * @param event          The local Event model corresponding to {@code eventRef}.
+     * @param processedCount Atomic counter tracking how many events have been processed.
+     * @param totalEvents    Total number of events to check; used to know when all are done.
      */
     private void checkEventMembership(DocumentReference eventRef,
                                       Event event,
@@ -238,6 +243,9 @@ public class EntrantEventsFragment extends Fragment {
     /**
      * Helper that increments the processed event counter and
      * notifies the adapter once all events have been checked.
+     *
+     * @param processedCount Atomic counter tracking how many events have been processed.
+     * @param totalEvents    Total number of events that should be checked.
      */
     private void onEventCheckComplete(AtomicInteger processedCount, int totalEvents) {
         if (processedCount.incrementAndGet() == totalEvents) {
