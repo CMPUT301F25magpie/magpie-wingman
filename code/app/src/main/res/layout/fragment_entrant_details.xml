@@ -67,7 +67,7 @@
                 android:id="@+id/text_event_details"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Lorem ipsum dolor sit amet consectetur adipiscing elit. Consequat adipiscing elit quisque faucibus ex sapien vitae. Pretium tellus convallis tempus tellus eu aenean."
+                android:text="Joining waitlist will allow user to be chosen during lottery selection (random selection). Once selected (user will receive notification) and have the event moved into their invitations. User can then join the event, moving them into the selected entrants list."
                 android:textColor="@android:color/white"
                 android:textSize="14sp"
                 android:lineSpacingExtra="4dp"/>

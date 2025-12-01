@@ -1,66 +1,96 @@
 package com.example.magpie_wingman.admin;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link AdminNotificationLogFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * Admin screen: shows log of all notifications sent to entrants.
+ *
+ * US 03.08.01 – As an administrator, I want to review logs of all notifications sent to entrants by organizers.
  */
 public class AdminNotificationLogFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private AdminNotificationLogAdapter adapter;
+    private DbManager dbManager;
 
     public AdminNotificationLogFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AdminNotificationLogFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static AdminNotificationLogFragment newInstance(String param1, String param2) {
-        AdminNotificationLogFragment fragment = new AdminNotificationLogFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public static AdminNotificationLogFragment newInstance(String p1, String p2) {
+        AdminNotificationLogFragment f = new AdminNotificationLogFragment();
+        Bundle b = new Bundle();
+        b.putString("param1", p1);
+        b.putString("param2", p2);
+        f.setArguments(b);
+        return f;
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+        dbManager = DbManager.getInstance();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_admin_notification_log, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        ImageButton backBtn = view.findViewById(R.id.button_back);
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+
+        RecyclerView recycler = view.findViewById(R.id.recycler_view_admin_notifications);
+        recycler.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        adapter = new AdminNotificationLogAdapter();
+        recycler.setAdapter(adapter);
+
+        loadNotifications();
+    }
+
+    private void loadNotifications() {
+        dbManager.getAllNotifications()
+                .addOnSuccessListener(list -> {
+                    adapter.setNotifications(list);
+
+                    if (getContext() != null) {
+                        Toast.makeText(
+                                getContext(),
+                                "Loaded " + list.size() + " notifications",
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (getContext() != null) {
+                        Toast.makeText(
+                                getContext(),
+                                "Failed: " + e.getMessage(),
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+                    e.printStackTrace();
+                });
     }
 }

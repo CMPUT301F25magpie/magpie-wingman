@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.magpie_wingman.R;
@@ -52,7 +53,7 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         ImageButton backButton = view.findViewById(R.id.button_back);
-        EditText searchBar = view.findViewById(R.id.search_bar_profiles);
+        TextView searchBar = view.findViewById(R.id.search_bar_profiles);
 
 
         adapter = new ProfileAdapter(userProfileList, this);

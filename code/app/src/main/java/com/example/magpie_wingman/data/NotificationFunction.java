@@ -57,6 +57,21 @@ public class NotificationFunction {
                 for (DocumentSnapshot doc : docs) {
                     String userId = doc.getId();
 
+                    // Look up this user's notification preference
+                    DocumentSnapshot userSnap = Tasks.await(
+                            db.collection("users")
+                                    .document(userId)
+                                    .get()
+                    );
+
+                    Boolean notifOrg = userSnap.getBoolean("notifOrganizer");
+
+                    // Treat null as "on" so existing users still get notifications
+                    if (notifOrg != null && !notifOrg) {
+                        // User has opted out of organizer notifications
+                        continue;
+                    }
+
                     Map<String, Object> notif = new HashMap<>();
                     notif.put("message", message);
                     notif.put("timestamp", now);

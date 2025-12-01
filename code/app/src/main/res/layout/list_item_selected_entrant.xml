@@ -31,6 +31,16 @@
         android:textSize="14sp"
         tools:text="Person 5" />
 
+    <!-- Invitee status (accepted vs undecided) -->
+    <TextView
+        android:id="@+id/text_view_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#777"
+        android:layout_marginEnd="10dp"
+        android:textSize="12sp"
+        android:layout_marginStart="8dp" />
+
     <!-- Remove Icon -->
     <ImageView
         android:id="@+id/id_close"
@@ -39,4 +49,6 @@
         android:src="@drawable/ic_close"
         android:contentDescription="Remove Entrant"
         app:tint="#FF3B30" />
+
+
 </LinearLayout>

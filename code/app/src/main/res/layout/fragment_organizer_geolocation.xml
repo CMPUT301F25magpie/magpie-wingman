@@ -55,7 +55,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Location of:"
+            android:text="Location of Entrants"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:layout_marginEnd="8dp" />
@@ -66,8 +66,7 @@
             android:layout_height="40dp"
             android:background="@drawable/rounded_white"
             android:paddingHorizontal="8dp"
-            android:spinnerMode="dropdown"
-            android:entries="@array/sample_persons" />
+            android:spinnerMode="dropdown" />
     </LinearLayout>
 
     <!-- MAP VIEW -->

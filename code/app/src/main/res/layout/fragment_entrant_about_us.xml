@@ -85,6 +85,6 @@
             android:textSize="14sp"
             android:lineSpacingExtra="4dp"
             android:paddingHorizontal="12dp"
-            android:text="Lorem ipsum dolor sit amet consectetur adipiscing elit. Consequat adipiscing elit quisque faucibus ex sapien vitae. Ex sapien vitae pellentesque sem placerat in id. Placerat in id cursus mi pretium tellus duis. Pretium tellus duis convallis tempus leo eu aenean." />
+            android:text="We are a small tech start up team working on delivering clean and efficient products to our users. Our goal is to provide dynamic, scalable solutions to problems and apply software engineering techniques throughout our development process."/>
     </LinearLayout>
 </ScrollView>

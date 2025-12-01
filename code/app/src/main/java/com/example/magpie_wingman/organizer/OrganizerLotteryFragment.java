@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -15,8 +16,11 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.magpie_wingman.R;
+import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.NotificationFunction;
-import com.example.magpie_wingman.data.LotteryFunction;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 /**
  * US 02.05.02 and US 02.05.01
@@ -25,6 +29,7 @@ public class OrganizerLotteryFragment extends Fragment {
 
     private EditText sampleInput;
     private Button selectButton;
+    private CheckBox drawToCapacityCheckBox;
     private String eventId;
 
     @Nullable
@@ -37,6 +42,7 @@ public class OrganizerLotteryFragment extends Fragment {
 
         sampleInput = view.findViewById(R.id.edit_maximum);
         selectButton = view.findViewById(R.id.button_select);
+        drawToCapacityCheckBox = view.findViewById(R.id.checkbox_draw_to_capacity);
 
         // Toolbar back navigation
         NavController navController = NavHostFragment.findNavController(this);
@@ -50,19 +56,32 @@ public class OrganizerLotteryFragment extends Fragment {
 
         selectButton.setOnClickListener(v -> runLottery());
 
+        // "Draw to capacity" checkbox logic
+        if (drawToCapacityCheckBox != null) {
+            drawToCapacityCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    autoFillSampleToCapacity();
+                }
+            });
+        }
+
         return view;
     }
 
     private void runLottery() {
         if (eventId == null || eventId.isEmpty()) {
-            Toast.makeText(getContext(), "Event ID missing — open lottery from event details.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(),
+                    "Event ID missing — open lottery from event details.",
+                    Toast.LENGTH_LONG).show();
             return;
         }
 
         String input = sampleInput.getText().toString().trim();
 
         if (input.isEmpty()) {
-            Toast.makeText(getContext(), R.string.error_empty_number, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(),
+                    R.string.error_empty_number,
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -70,17 +89,22 @@ public class OrganizerLotteryFragment extends Fragment {
         try {
             sampleCount = Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            Toast.makeText(getContext(), R.string.error_invalid_number, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(),
+                    R.string.error_invalid_number,
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (sampleCount <= 0) {
-            Toast.makeText(getContext(), R.string.error_non_positive_number, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(),
+                    R.string.error_non_positive_number,
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Step 1 – Run the random selection (US 02.05.02)
-        LotteryFunction.sampleEntrantsForEvent(eventId, sampleCount)
+        // Lottery draw(US 02.05.02)
+        DbManager.getInstance()
+                .drawInvitees(eventId, sampleCount)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(
                             getContext(),
@@ -88,15 +112,27 @@ public class OrganizerLotteryFragment extends Fragment {
                             Toast.LENGTH_SHORT
                     ).show();
 
-                    // Step 2 – Notify winners (US 02.05.01)
+                    // Notify winners (moved to invited)
                     NotificationFunction notifier = new NotificationFunction();
-                    String message = getString(R.string.msg_selected_notification);
-                    notifier.notifyEntrants(eventId, "registrable", message)
-                            .addOnSuccessListener(unused -> Toast.makeText(
-                                    getContext(),
-                                    R.string.msg_notify_success,
-                                    Toast.LENGTH_SHORT
-                            ).show())
+                    String winnerMessage = getString(R.string.msg_selected_notification);
+
+                    notifier.notifyEntrants(eventId, "invited", winnerMessage)
+                            .addOnSuccessListener(unused -> {
+                                // Notify losers (remaining in waitlist )
+                                String loserMessage = getString(R.string.msg_not_selected_notification);
+                                notifier.notifyEntrants(eventId, "waitlist", loserMessage)
+                                        .addOnSuccessListener(unused2 -> Toast.makeText(
+                                                        getContext(),
+                                                        R.string.msg_notify_success,
+                                                        Toast.LENGTH_SHORT
+                                                ).show()
+                                        )
+                                        .addOnFailureListener(e -> Toast.makeText(
+                                                getContext(),
+                                                getString(R.string.error_notify_failed, e.getMessage()),
+                                                Toast.LENGTH_LONG
+                                        ).show());
+                            })
                             .addOnFailureListener(e -> Toast.makeText(
                                     getContext(),
                                     getString(R.string.error_notify_failed, e.getMessage()),
@@ -108,5 +144,98 @@ public class OrganizerLotteryFragment extends Fragment {
                         getString(R.string.error_lottery_failed, e.getMessage()),
                         Toast.LENGTH_LONG
                 ).show());
+    }
+
+    /**
+     * Auto-fills the sampleInput EditText based on capacity logic:
+     *  - If eventCapacity exists:
+     *      drawCount = eventCapacity - (invited + registrable + registered)
+     *  - If eventCapacity is null/missing:
+     *      drawCount = current waitlist size.
+     */
+    private void autoFillSampleToCapacity() {
+        if (eventId == null || eventId.isEmpty()) {
+            Toast.makeText(getContext(),
+                    "Event ID missing — cannot compute capacity.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        FirebaseFirestore db = DbManager.getInstance().getDb();
+        DocumentReference eventRef = db.collection("events").document(eventId);
+
+        eventRef.get().addOnSuccessListener(doc -> {
+            if (!doc.exists()) {
+                Toast.makeText(getContext(),
+                        "Event not found.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            Long capLong = doc.getLong("eventCapacity");
+
+            // Fetch counts for invited, registrable, registered, waitlist
+            eventRef.collection("invited").get()
+                    .addOnSuccessListener(invSnap -> {
+                        int invitedCount = safeSize(invSnap);
+
+                        eventRef.collection("registrable").get()
+                                .addOnSuccessListener(regableSnap -> {
+                                    int registrableCount = safeSize(regableSnap);
+
+                                    eventRef.collection("registered").get()
+                                            .addOnSuccessListener(registeredSnap -> {
+                                                int registeredCount = safeSize(registeredSnap);
+
+                                                eventRef.collection("waitlist").get()
+                                                        .addOnSuccessListener(waitSnap -> {
+                                                            int waitlistCount = safeSize(waitSnap);
+
+                                                            int drawCount;
+                                                            if (capLong != null) {
+                                                                int capacity = capLong.intValue();
+                                                                int used = invitedCount
+                                                                        + registrableCount
+                                                                        + registeredCount;
+
+                                                                int slotsLeft = capacity - used;
+                                                                if (slotsLeft < 0) {
+                                                                    slotsLeft = 0; // event over capacity already
+                                                                }
+
+                                                                // Do not draw more than there are people in the waitlist
+                                                                drawCount = Math.min(waitlistCount, slotsLeft);
+                                                            } else {
+                                                                // No capacity set -> draw up to full waitlist
+                                                                drawCount = waitlistCount;
+                                                            }
+
+                                                            sampleInput.setText(
+                                                                    String.valueOf(drawCount));
+                                                        })
+                                                        .addOnFailureListener(e ->
+                                                                showCapacityError(e.getMessage()));
+                                            })
+                                            .addOnFailureListener(e ->
+                                                    showCapacityError(e.getMessage()));
+                                })
+                                .addOnFailureListener(e ->
+                                        showCapacityError(e.getMessage()));
+                    })
+                    .addOnFailureListener(e ->
+                            showCapacityError(e.getMessage()));
+
+        }).addOnFailureListener(e ->
+                showCapacityError(e.getMessage()));
+    }
+
+    private int safeSize(@Nullable QuerySnapshot snap) {
+        return (snap == null) ? 0 : snap.size();
+    }
+
+    private void showCapacityError(@Nullable String msg) {
+        Toast.makeText(getContext(),
+                "Failed to compute capacity: " + (msg != null ? msg : ""),
+                Toast.LENGTH_LONG).show();
     }
 }
