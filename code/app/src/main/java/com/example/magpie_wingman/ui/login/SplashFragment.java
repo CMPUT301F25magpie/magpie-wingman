@@ -20,11 +20,26 @@ import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.example.magpie_wingman.data.model.User;
 import com.google.firebase.firestore.DocumentSnapshot;
+/**
+ * Fragment responsible for displaying the app's splash screen and performing the
+ * automatic login check. It briefly shows an animated logo and meanwhile determines whether
+ * a user should be logged in automatically based on the device ID/rememberMe attribute.
+ *
+ * <p>If a matching remembered user is found, the user is loaded and redirected to
+ * the entrant landing screen. Otherwise, the fragment navigates to the login screen.</p>
+ */
 
 public class SplashFragment extends Fragment {
 
-    private static final long SPLASH_DELAY_MS = 800L; // short delay for logo
-
+    private static final long SPLASH_DELAY_MS = 800L; // delay to allow logo animation and provide time for the firestore checks
+    /**
+     * Inflates the splash screen layout for this fragment.
+     *
+     * @param inflater  The LayoutInflater used to inflate the view.
+     * @param container The parent view that the fragment's UI is attached to.
+     * @param savedInstanceState Saved state if the fragment is being recreated.
+     * @return The inflated splash screen view.
+     */
     @Nullable
     @Override
     public View onCreateView(
@@ -34,7 +49,14 @@ public class SplashFragment extends Fragment {
     ) {
         return inflater.inflate(R.layout.fragment_splash, container, false);
     }
-
+    /**
+     * Initializes the splash screen logic by starting a fade-in animation on the logo
+     * and scheduling a delayed automatic login check. After a short delay, it calls
+     * {@link #runAutoLogin(NavController)} to determine the correct navigation path.
+     *
+     * @param view               The root view of the fragment.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     public void onViewCreated(
             @NonNull View view,
@@ -45,18 +67,28 @@ public class SplashFragment extends Fragment {
         NavController navController = Navigation.findNavController(view);
         ImageView logo = view.findViewById(R.id.splashLogo);
 
-        // Fade animation
+        // Trying to make it look less clunky
         logo.setAlpha(0f);
         logo.animate()
                 .alpha(1f)
                 .setDuration(500L)
                 .start();
 
-        // Delay → then auto login check
+        // autologin check while query runs
         new Handler(Looper.getMainLooper())
                 .postDelayed(() -> runAutoLogin(navController), SPLASH_DELAY_MS);
     }
-
+    /**
+     * Attempts to automatically log the user in based on the device's Android ID.
+     * The method queries Firestore through {@link DbManager#findUserByDeviceId(String)}
+     * to locate a user who enabled the "remember me" option.
+     *
+     * <p>If a matching user is found, their user document is retrieved and passed to
+     * {@link #handleUserDocForAutoLogin(NavController, DocumentSnapshot)}. Otherwise,
+     * the user is safely navigated to the login screen.</p>
+     *
+     * @param navController The NavController used to perform navigation.
+     */
     private void runAutoLogin(NavController navController) {
         if (!isAdded()) return;
 
@@ -95,6 +127,17 @@ public class SplashFragment extends Fragment {
                 });
     }
 
+    /**
+     * Processes a Firestore user document retrieved during auto-login. Determines whether
+     * the user should be auto-logged in based on their "rememberMe" and "isAdmin" flags.
+     *
+     * <p>If the user is eligible for auto-login, their {@link User} object is constructed
+     * and stored globally in {@link MyApp}. Then the user is navigated to the entrant
+     * landing screen. Otherwise, they are navigated to the login screen.</p>
+     *
+     * @param navController The NavController used for navigation.
+     * @param doc           The Firestore document representing the user.
+     */
     private void handleUserDocForAutoLogin(
             NavController navController,
             DocumentSnapshot doc
@@ -116,19 +159,30 @@ public class SplashFragment extends Fragment {
             return;
         }
 
-        // Build user and store globally
+        // Build user and store globally in Myapp for access
         User user = User.from(doc);
         MyApp.getInstance().setCurrentUser(user);
 
         safeNavigateToEntrantLanding(navController);
     }
-
+    /**
+     * Safely navigates the user to the login screen. Any navigation exceptions are caught
+     * and ignored to prevent crashes if called when the fragment is no longer active.
+     *
+     * @param navController The NavController used to perform navigation.
+     */
     private void safeNavigateToLogin(NavController navController) {
         try {
             navController.navigate(R.id.loginFragment);
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Safely navigates the user to the entrant landing screen. Exceptions during
+     * navigation are caught and ignored to prevent crashes during fragment transitions.
+     *
+     * @param navController The NavController used for navigation.
+     */
     private void safeNavigateToEntrantLanding(NavController navController) {
         try {
             navController.navigate(R.id.entrantLandingFragment3);

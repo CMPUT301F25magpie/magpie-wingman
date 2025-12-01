@@ -22,9 +22,26 @@ import com.example.magpie_wingman.MyApp;
 import com.example.magpie_wingman.R;
 import com.example.magpie_wingman.data.DbManager;
 import com.google.firebase.firestore.FirebaseFirestore;
-
+/**
+ * Fragment responsible for handling user login via email and password.
+ * Displays the login UI, validates user input, attempts authentication
+ * through {@link DbManager}, and navigates to the appropriate landing
+ * screen based on the user's role (entrant or admin).
+ *
+ * <p>This fragment also supports a "Remember Me" feature, storing the
+ * device's Android ID and preference flag for future automatic login.</p>
+ */
 public class LoginFragment extends Fragment {
 
+
+    /**
+     * Inflates the login screen layout for this fragment.
+     *
+     * @param inflater  The LayoutInflater used to inflate views in the fragment.
+     * @param container The parent view that the fragment's UI should be attached to.
+     * @param savedInstanceState Saved state for the fragment, if available.
+     * @return The inflated login fragment view.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -33,6 +50,15 @@ public class LoginFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_login, container, false);
     }
 
+    /**
+     * Called after the fragment's view has been created. Initializes UI elements,
+     * configures navigation to the sign-up screen, and sets up the login button
+     * logic. Handles authentication flow, admin vs entrant navigation, and
+     * updates the user's remember-me and device ID settings in Firestore.
+     *
+     * @param view               The root view returned by {@link #onCreateView}.
+     * @param savedInstanceState Saved state for the fragment, if available.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
@@ -40,7 +66,7 @@ public class LoginFragment extends Fragment {
 
         NavController navController = Navigation.findNavController(view);
 
-        // ---- UI references from fragment_login.xml ----
+        // UI references
         EditText emailInput    = view.findViewById(R.id.username);   // email field
         EditText passwordInput = view.findViewById(R.id.password);
         CheckBox rememberMe    = view.findViewById(R.id.rememberMe);
@@ -51,11 +77,11 @@ public class LoginFragment extends Fragment {
         DbManager dbManager = DbManager.getInstance();
         FirebaseFirestore db = dbManager.getDb();
 
-        // ---- Sign up navigation ----
+        // Sign up nav
         btnSignUpText.setOnClickListener(v ->
                 navController.navigate(R.id.action_loginFragment_to_signUpFragment));
 
-        // ---- REAL email/password login using DbManager.loginWithEmailAndPassword ----
+        // email/password login using DbManager.loginWithEmailAndPassword
         loginButton.setOnClickListener(v -> {
             String email    = emailInput.getText().toString().trim();
             String password = passwordInput.getText().toString();
@@ -75,7 +101,7 @@ public class LoginFragment extends Fragment {
                         MyApp.getInstance().setCurrentUser(user);
                         String userId = user.getUserId();
 
-                        // Now fetch the user document to check isAdmin and handle rememberMe/deviceId
+                        // get user document to check isAdmin and use rememberMe/deviceId
                         db.collection("users")
                                 .document(userId)
                                 .get()
@@ -100,9 +126,10 @@ public class LoginFragment extends Fragment {
                                     );
 
                                     if (isAdmin) {
-                                        // Admins: never auto-login for safety
+                                        // Admins never auto-login for safety, must input employee credentials
+                                        // that's admin@magpie.com and Admin123
                                         dbManager.updateRememberMe(userId, false);
-                                        // (Optional) still keep deviceId current, but it won't be used for auto-login
+
                                         db.collection("users")
                                                 .document(userId)
                                                 .update("deviceId", deviceId);
@@ -111,13 +138,13 @@ public class LoginFragment extends Fragment {
                                                 R.id.action_loginFragment_to_adminLandingFragment22
                                         );
                                     } else {
-                                        // Normal user/organizer: Option 2 behavior
+
                                         boolean remember = rememberMe.isChecked();
 
-                                        // Use helper for rememberMe
+
                                         dbManager.updateRememberMe(userId, remember);
 
-                                        // Tie auto-login to THIS device
+
                                         db.collection("users")
                                                 .document(userId)
                                                 .update("deviceId", deviceId);
@@ -129,7 +156,7 @@ public class LoginFragment extends Fragment {
                                 })
                                 .addOnFailureListener(e -> {
                                     loginButton.setEnabled(true);
-                                    // If doc fetch fails, just show an error and stay on login
+
                                     Toast.makeText(requireContext(),
                                             "Login failed. Please try again.",
                                             Toast.LENGTH_SHORT).show();
@@ -144,14 +171,5 @@ public class LoginFragment extends Fragment {
                     });
         });
 
-        // ---- Bottom test buttons (unchanged) ----
-//        btnEntrant.setOnClickListener(v ->
-//                navController.navigate(R.id.action_loginFragment_to_entrantLandingFragment3));
-//
-//        btnOrganizer.setOnClickListener(v ->
-//                navController.navigate(R.id.action_loginFragment_to_organizerLandingFragment2));
-//
-//        btnAdmin.setOnClickListener(v ->
-//                navController.navigate(R.id.action_loginFragment_to_adminLandingFragment22));
     }
 }

@@ -42,12 +42,28 @@ public class AcceptedListFragment extends Fragment {
 
     @Nullable
     @Override
+    /**
+     * Inflates the layout for the list of accepted (registered) entrants.
+     *
+     * @param inflater  The LayoutInflater used to inflate XML layout files.
+     * @param container The parent view the fragment UI attaches to.
+     * @param savedInstanceState Previously saved fragment state, if any.
+     * @return The inflated view representing the accepted entrants list screen.
+     */
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_accepted_list, container, false);
     }
 
+    /**
+     * Initializes UI components such as RecyclerView, progress bar, and back button.
+     * Retrieves the event ID from the fragment arguments and triggers loading of the
+     * registered entrants list.
+     *
+     * @param view               The root view returned by {@link #onCreateView}.
+     * @param savedInstanceState Saved instance data, or null if newly created.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
@@ -78,6 +94,13 @@ public class AcceptedListFragment extends Fragment {
         }
     }
 
+    /**
+     * Loads all fully registered entrants for the given event from Firestore.
+     * Queries the "registered" subcollection under the event document, then resolves each
+     * user ID to a display name from users
+     *
+     * <p>Updates the RecyclerView adapter depending on the outcome. All results are retrieved by Firestore listeners.</p>
+     */
     private void loadRegisteredEntrants() {
         registeredNames = new ArrayList<>();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -144,8 +167,8 @@ public class AcceptedListFragment extends Fragment {
     }
 
     /**
-     * Simple adapter that reuses the same row layout as the waitlist list
-     * (item_waiting_person.xml), but for registered entrants.
+     * RecyclerView adapter for displaying the list of fully registered entrants.
+     * Uses the same row layout as the waitlist view (item_waiting_person.xml).
      */
     private static class AcceptedAdapter
             extends RecyclerView.Adapter<AcceptedAdapter.ViewHolder> {
@@ -156,6 +179,11 @@ public class AcceptedListFragment extends Fragment {
             this.entrantList = entrantList;
         }
 
+        /**
+         * Replaces the adapter's current data with a new list of entrant names and refreshes the view.
+         *
+         * @param entrantList A list of names to display in the RecyclerView.
+         */
         void setData(List<String> entrantList) {
             this.entrantList = entrantList;
             notifyDataSetChanged();
@@ -169,7 +197,13 @@ public class AcceptedListFragment extends Fragment {
                     .inflate(R.layout.item_waiting_person, parent, false);
             return new ViewHolder(view);
         }
-
+        /**
+         * Binds an entrant's name to the row UI and assigns a click listener to the
+         * location button, which currently displays a placeholder Toast.
+         *
+         * @param holder   The ViewHolder holding row views.
+         * @param position The position of the item being bound.
+         */
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder,
                                      int position) {
@@ -183,6 +217,11 @@ public class AcceptedListFragment extends Fragment {
             );
         }
 
+        /**
+         * Returns the number of registered entrants in the adapter.
+         *
+         * @return The number of items in the list, or 0 if the list is null.
+         */
         @Override
         public int getItemCount() {
             return entrantList != null ? entrantList.size() : 0;
@@ -192,6 +231,12 @@ public class AcceptedListFragment extends Fragment {
             final TextView nameText;
             final ImageButton locationButton;
 
+            /**
+             * ViewHolder for a single registered entrant row. Displays the entrant's name
+             * and provides a location button (placeholder functionality).
+             *
+             * @param itemView the inflated row view for this holder
+             */
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 nameText = itemView.findViewById(R.id.text_person_name);

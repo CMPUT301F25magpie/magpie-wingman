@@ -2,11 +2,16 @@ package com.example.magpie_wingman.organizer;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import com.example.magpie_wingman.R;
 
@@ -63,4 +68,14 @@ public class OrganizerEditNewEventInfoFragment extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_organizer_edit_new_event_info, container, false);
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        NavController navController = Navigation.findNavController(view);
+        ImageButton backBtn = view.findViewById(R.id.button_back);
+        backBtn.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+    }
+
 }

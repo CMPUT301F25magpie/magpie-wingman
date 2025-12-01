@@ -51,6 +51,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
+            
+            <ImageButton
+                android:id="@+id/button_info"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="Info"
+                android:src="@drawable/ic_info"
+                android:gravity="end"
+                app:tint="#000000" />
         </LinearLayout>
 
         <EditText

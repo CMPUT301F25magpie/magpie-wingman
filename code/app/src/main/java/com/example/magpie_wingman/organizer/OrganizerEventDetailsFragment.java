@@ -31,6 +31,13 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+/**
+ * Organizer-facing event details screen.
+ *
+ * <p>Shows the event poster, title, date/time, and address, and provides
+ * navigation to the waitlist, selected, and accepted entrant lists, as well
+ * as edit, finalize, and geolocation features.</p>
+ */
 public class OrganizerEventDetailsFragment extends Fragment {
 
     private String eventId;
@@ -155,7 +162,9 @@ public class OrganizerEventDetailsFragment extends Fragment {
 
     /**
      * Downloads the image from the given URL on a background thread and sets it
-     * into image_event_poster on the main thread.
+     * into {@code image_event_poster} on the main thread.
+     *
+     * @param urlString The URL string pointing to the poster image to download.
      */
     private void loadPosterImageAsync(@NonNull String urlString) {
         new Thread(() -> {

@@ -23,9 +23,23 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
+/**
+ * Fragment responsible for handling user account creation. Displays the sign-up UI,
+ * validates the user's input, checks email uniqueness, and creates a new user in
+ * Firestore via {@link DbManager}. Optionally parses and stores the user's date of birth.
+ *
+ * <p>After successful registration, the user is redirected back to the login screen.</p>
+ */
 public class SignUpFragment extends Fragment {
 
+    /**
+     * Inflates the sign-up screen layout for this fragment.
+     *
+     * @param inflater  The LayoutInflater used to inflate the fragment's view.
+     * @param container The parent view that the fragment's UI will attach to.
+     * @param savedInstanceState Saved state if the fragment is being re-created.
+     * @return The inflated view for the sign-up screen.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -34,6 +48,16 @@ public class SignUpFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_sign_up, container, false);
     }
 
+    /**
+     * Initializes the sign-up UI, sets up navigation back to the login screen,
+     * and implements account creation logic. Validates field input, parses the
+     * user's date of birth (if provided), checks whether the email already exists,
+     * and creates the new user using {@link DbManager}. Successfully registered
+     * users are redirected to the login fragment.
+     *
+     * @param view               The fragment's root view.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
@@ -114,7 +138,7 @@ public class SignUpFragment extends Fragment {
                         db.createUser(fullName, email, phone, password)
                                 .addOnSuccessListener(unused -> {
 
-                                    // Add DOB if provided
+                                    //not sure why we have DOB as a field but it's in the UI so I added it as an optional field
                                     if (finalDob != null) {
                                         db.updateDOBByEmail(email, finalDob)
                                                 .addOnSuccessListener(unused2 -> {
@@ -148,6 +172,6 @@ public class SignUpFragment extends Fragment {
                         registerButton.setEnabled(true);
                     });
 
-        }); // end click listener
-    } // end onViewCreated
+        });
+    }
 }

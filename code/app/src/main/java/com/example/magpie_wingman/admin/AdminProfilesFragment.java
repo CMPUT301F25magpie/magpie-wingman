@@ -87,7 +87,12 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
         refreshProfiles(null);
     }
 
-    /** Loads profiles from Firestore and refreshes the list. */
+    /**
+     * Loads profiles from Firestore and refreshes the list.
+     *
+     * @param filter Optional user-role filter. If non-null, only profiles
+     *               with this role are loaded; otherwise, all profiles are loaded.
+     */
     private void refreshProfiles(@Nullable UserRole filter) {
         DbManager.getInstance().fetchProfiles(filter)
                 .addOnSuccessListener(list -> {
@@ -107,6 +112,9 @@ public class AdminProfilesFragment extends Fragment implements ProfileAdapter.On
 
     /**
      * Filters profiles by name using the fullProfileList as the source.
+     * The comparison is case-insensitive and matches partial names.
+     *
+     * @param query The search text entered by the admin.
      */
     private void filterProfiles(@NonNull String query) {
         String q = query.trim().toLowerCase();

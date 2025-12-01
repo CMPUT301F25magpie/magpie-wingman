@@ -21,10 +21,19 @@ import com.example.magpie_wingman.data.NotificationFunction;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
-
 /**
+ * Fragment that allows an organizer to run a lottery on the waitlist for an event.
  * US 02.05.02 and US 02.05.01
+ * Features include:
+ * Selecting a number of entrants to draw into the "invited" list
+ * Auto-filling the draw count based on event capacity. This is how the "Backfill cancelled entrants" user stories work
+ * When an organizer wishes to replace spots previously occupied by now-cancelled entrants, they just re-do draw by capacity and extra spots are pulled from waitlist
+ * Sending notifications to selected and non-selected entrants
+ * The lottery is executed using {@link DbManager#drawInvitees(String, int)}, and
+ * all notifications are sent using {@link NotificationFunction}.</p>
  */
+
+
 public class OrganizerLotteryFragment extends Fragment {
 
     private EditText sampleInput;
@@ -32,6 +41,16 @@ public class OrganizerLotteryFragment extends Fragment {
     private CheckBox drawToCapacityCheckBox;
     private String eventId;
 
+    /**
+     * Inflates the lottery screen UI and initializes all view references such as input fields,
+     * buttons, and checkboxes. Retrieves the eventId from fragment arguments and attaches
+     * click listeners for running the lottery and auto-filling the sample size.
+     *
+     * @param inflater  LayoutInflater used to inflate the fragment's layout.
+     * @param container The parent view that will contain the fragment.
+     * @param savedInstanceState Saved state if the fragment is being recreated.
+     * @return The inflated root view for the lottery screen.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -44,7 +63,6 @@ public class OrganizerLotteryFragment extends Fragment {
         selectButton = view.findViewById(R.id.button_select);
         drawToCapacityCheckBox = view.findViewById(R.id.checkbox_draw_to_capacity);
 
-        // Toolbar back navigation
         NavController navController = NavHostFragment.findNavController(this);
         View toolbar = view.findViewById(R.id.button_back);
         if (toolbar != null) toolbar.setOnClickListener(v -> navController.navigateUp());
@@ -56,7 +74,7 @@ public class OrganizerLotteryFragment extends Fragment {
 
         selectButton.setOnClickListener(v -> runLottery());
 
-        // "Draw to capacity" checkbox logic
+        // Draw to capacity checkbox
         if (drawToCapacityCheckBox != null) {
             drawToCapacityCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
@@ -68,6 +86,15 @@ public class OrganizerLotteryFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Validates user input and performs the lottery draw for the current event.
+     * Steps performed:
+     *  Ensures eventId and input sample count are valid
+     *  Calls {@link DbManager#drawInvitees(String, int)} to select entrants from the waitlist
+     *  Sends notifications to selected (invited) entrants
+     *  Sends notifications to non-selected (remaining waitlist) entrants
+     *  Displays success or error messages to the organizer
+     */
     private void runLottery() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(getContext(),
@@ -102,7 +129,7 @@ public class OrganizerLotteryFragment extends Fragment {
             return;
         }
 
-        // Lottery draw(US 02.05.02)
+        // Lottery draw from db
         DbManager.getInstance()
                 .drawInvitees(eventId, sampleCount)
                 .addOnSuccessListener(aVoid -> {
@@ -174,7 +201,7 @@ public class OrganizerLotteryFragment extends Fragment {
 
             Long capLong = doc.getLong("eventCapacity");
 
-            // Fetch counts for invited, registrable, registered, waitlist
+            // get # of users for invited, registrable, registered, waitlist
             eventRef.collection("invited").get()
                     .addOnSuccessListener(invSnap -> {
                         int invitedCount = safeSize(invSnap);
@@ -206,7 +233,7 @@ public class OrganizerLotteryFragment extends Fragment {
                                                                 // Do not draw more than there are people in the waitlist
                                                                 drawCount = Math.min(waitlistCount, slotsLeft);
                                                             } else {
-                                                                // No capacity set -> draw up to full waitlist
+                                                                // No capacity set = draw up to full waitlist
                                                                 drawCount = waitlistCount;
                                                             }
 
@@ -229,10 +256,23 @@ public class OrganizerLotteryFragment extends Fragment {
                 showCapacityError(e.getMessage()));
     }
 
+    /**
+     * Safely returns the number of documents in a {@link QuerySnapshot},
+     * returning 0 if the snapshot is null.
+     *
+     * @param snap The Firestore QuerySnapshot, or null.
+     * @return The number of documents in {@code snap}, or 0 if null.
+     */
     private int safeSize(@Nullable QuerySnapshot snap) {
         return (snap == null) ? 0 : snap.size();
     }
 
+    /**
+     * Displays a Toast describing an error that occurred during the capacity
+     * auto-fill calculation.
+     *
+     * @param msg Optional error message to append to the Toast. May be null.
+     */
     private void showCapacityError(@Nullable String msg) {
         Toast.makeText(getContext(),
                 "Failed to compute capacity: " + (msg != null ? msg : ""),
