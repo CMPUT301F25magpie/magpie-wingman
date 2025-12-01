@@ -30,19 +30,51 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Fragment that lets an entrant view and edit their profile details.
+ *
+ * <p>This screen supports:
+ * <ul>
+ *     <li>Viewing current profile fields (name, email, phone, date of birth)</li>
+ *     <li>Editing and validating profile information</li>
+ *     <li>Persisting changes to Firestore via {@link DbManager}</li>
+ *     <li>Optionally updating the entrant's password (if a new one is provided)</li>
+ * </ul>
+ *
+ * <p>The fragment reads the currently logged-in {@link User} from {@link MyApp},
+ * fetches additional profile data from Firestore, and then batches all update
+ * operations using {@link Tasks#whenAllComplete(List)}.</p>
+ */
 public class EntrantEditProfileFragment extends Fragment {
 
     private EditText firstNameEt, lastNameEt, emailEt, dobEt, phoneEt, passwordEt;
     private Button btnUpdate;
 
+    /**
+     * Date formatter for displaying and parsing date of birth in dd/MM/yyyy format.
+     */
     private final SimpleDateFormat dobFmt = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
+    /**
+     * Inflates the fragment layout containing the entrant profile form.
+     *
+     * @param inflater  layout inflater used to inflate views
+     * @param container optional parent view
+     * @param savedInstanceState previously saved state, if any
+     * @return the inflated root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_entrant_edit_profile, container, false);
     }
 
+    /**
+     * Initializes UI components, wires up listeners, and loads the current user's profile data.
+     *
+     * @param v root view returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}
+     * @param savedInstanceState previously saved state, if any
+     */
     @Override
     public void onViewCreated(View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -77,7 +109,19 @@ public class EntrantEditProfileFragment extends Fragment {
         loadUser(userId);
     }
 
-    // Loads profile data
+    /**
+     * Loads the current user's profile from Firestore and pre-populates the form.
+     * Also attaches the click listener that performs validation and pushes updates.
+     *
+     * <p>This method:
+     * <ul>
+     *     <li>Fetches and splits the display name into first/last</li>
+     *     <li>Loads email, phone, and date of birth</li>
+     *     <li>Builds a batched list of update operations when the user clicks "Update"</li>
+     * </ul>
+     *
+     * @param userId Firestore document ID of the current user
+     */
     private void loadUser(String userId) {
         DbManager dbm = DbManager.getInstance();
 
@@ -179,6 +223,10 @@ public class EntrantEditProfileFragment extends Fragment {
         });
     }
 
+    /**
+     * Shows a {@link DatePickerDialog} to let the user select their date of birth.
+     * If a valid date is already entered, the dialog initially opens on that date.
+     */
     private void showDatePicker() {
         Calendar c = Calendar.getInstance();
 
@@ -206,11 +254,30 @@ public class EntrantEditProfileFragment extends Fragment {
         dlg.show();
     }
 
+    /**
+     * Extracts and trims the text from an {@link EditText}.
+     *
+     * @param et the EditText to read from
+     * @return trimmed text value, or an empty string if null
+     */
     private static String text(EditText et) {
         if (et == null || et.getText() == null) return "";
         return et.getText().toString().trim();
     }
 
+    /**
+     * Splits a full display name into a first name and last name.
+     *
+     * <p>Heuristic:
+     * <ul>
+     *     <li>Everything before the last space = first name(s)</li>
+     *     <li>Everything after the last space = last name</li>
+     *     <li>If no space is present, the whole string is treated as first name</li>
+     * </ul>
+     *
+     * @param full full name string
+     * @return a 2-element array: index 0 = first name, index 1 = last name
+     */
     private static String[] splitName(String full) {
         if (TextUtils.isEmpty(full)) return new String[]{"", ""};
         int lastSpace = full.lastIndexOf(' ');
@@ -218,6 +285,20 @@ public class EntrantEditProfileFragment extends Fragment {
         return new String[]{full.substring(0, lastSpace), full.substring(lastSpace + 1)};
     }
 
+    /**
+     * Builds a single display name from first and last name components.
+     *
+     * <p>Rules:
+     * <ul>
+     *     <li>Concatenates first and last with a single space</li>
+     *     <li>Trims leading/trailing whitespace</li>
+     *     <li>Collapses multiple spaces into a single space</li>
+     * </ul>
+     *
+     * @param first first name
+     * @param last last name
+     * @return a normalized full name string
+     */
     private static String buildFullName(String first, String last) {
         return (first + " " + (TextUtils.isEmpty(last) ? "" : last)).trim().replaceAll("\\s+", " ");
     }
