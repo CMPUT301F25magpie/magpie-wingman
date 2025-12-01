@@ -53,7 +53,7 @@ Event organizers can optionally require location verification when entrants join
 
 [CRC Cards] - https://github.com/CMPUT301F25magpie/magpie-wingman/blob/f9233f7428dada8a560ed31b860bc9532f9f3a6b/Project_Documents/CRC_Cards_Magpie.pdf
 
-[UML Diagram] - https://github.com/CMPUT301F25magpie/magpie-wingman/blob/amin/Project_Documents/UML_Magpie.pdf
+[UML Diagram] - https://github.com/CMPUT301F25magpie/magpie-wingman/blob/main/Project_Documents/UML_Magpie.pdf
 
 
 
